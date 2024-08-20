@@ -1,0 +1,28 @@
+docker:
+  watchByDefault: false
+  pollInterval: 5m
+
+notifications:
+  discord:
+    webhook: {{ env.DISCORD_WEBHOOK }}
+    # Optional: Customize the username that appears in Discord
+    # Optional: Customize the notification content
+    template: |
+      Service {{ .Name }} has been updated:
+      - Old version: {{ .Old.Tag }}
+      - New version: {{ .New.Tag }}
+      - Update status: {{ .Status }}
+
+services:
+  - name: mau-app-codigo
+    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+  - name: mau-app-maumercado
+    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+  - name: mau-app_pocketbase
+    image: ghcr.io/muchobien/pocketbase:latest
+  - name: mau-app_typesense
+    image: typesense/typesense:0.24.0
+  - name: tooling_caddy
+    image: caddy:2
+  - name: tooling_cloudflared
+    image: cloudflare/cloudflared:latest

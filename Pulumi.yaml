@@ -1,0 +1,11 @@
+name: mau-app
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm
+    typescript: true
+description: My portfolio and blog with an introduction of myself and a contact form
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: https://www.pulumi.com/ai/api/project/f8aaaf37-02d8-45fe-b5d8-b6d9af5b685a.zip

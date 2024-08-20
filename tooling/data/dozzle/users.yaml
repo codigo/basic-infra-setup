@@ -1,0 +1,7 @@
+users:
+  # "admin" here is username
+  maumercado:
+    name: "Mau"
+    # Just sha-256 which can be computed with "echo -n password | shasum -a 256"
+    password: "{{ secrets.DOZZLE_PASSWORD }}"
+    email: mau@codigo.sh

@@ -1,0 +1,32 @@
+{
+	auto_https off
+	admin off
+	email mau@codigo.sh
+}
+
+:80 {
+	@codigo host codigo.sh
+	handle @codigo {
+		reverse_proxy mau-app-codigo:3000
+	}
+
+	@maumercado host maumercado.com
+	handle @maumercado {
+		reverse_proxy mau-app-maumercado:3000
+	}
+
+	@pocketbase host pocketbase.codigo.sh
+	handle @pocketbase {
+		reverse_proxy pocketbase:8090
+	}
+
+	@typesense host typesense.codigo.sh
+	handle @typesense {
+		reverse_proxy typesense:8108
+	}
+
+	@dozzle host dozzle.codigo.sh
+	handle @dozzle {
+		reverse_proxy dozzle:8080
+	}
+}

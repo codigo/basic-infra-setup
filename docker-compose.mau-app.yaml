@@ -1,0 +1,82 @@
+services:
+  mau-app-codigo:
+    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      ORIGIN: "{{ vars.ORIGIN_CODIGO }}"
+    networks:
+      - internal_net
+      - caddy_net
+
+  mau-app-maumercado:
+    image: "{{ vars,CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      ORIGIN: "{{ vars.ORIGIN_MAUMERCADO }}"
+    networks:
+      - internal_net
+      - caddy_net
+
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    command:
+      - --encryptionEnv
+      - ENCRYPTION
+    environment:
+      ENCRYPTION: /run/secrets/encryption_key
+    volumes:
+      - ./mau-app/data/pocketbase/pb_data:/pb_data
+      - ./mau-app/data/pocketbase/pb_public:/pb_public
+      - .//mau-app/data/pocketbase/pb_migrations:/pb_migrations
+    networks:
+      - internal_net
+      - caddy_net
+
+  typesense:
+    image: typesense/typesense:26.0
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - ./mau-app/data/typesense:/data
+    command:
+      - --data-dir
+      - /data
+      - --api-key
+      - TYPESENSE_API_KEY
+    environment:
+      TYPESENSE_API_KEY: /run/secrets/typesense_api_key
+    networks:
+      - internal_net
+      - caddy_net
+
+secrets:
+  encryption_key:
+    external:
+      name: mau-app_pb_encryption_key
+  typesense_api_key:
+    external:
+      name: mau-app_typesense_api_key
+
+networks:
+  internal_net:
+    driver: overlay
+  caddy_net:
+    external: true
+
+volumes:
+  pb_data:
+  pb_public:
+  pb_migrations:
+  typesense-data:

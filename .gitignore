@@ -1,0 +1,13 @@
+
+/bin/
+/node_modules/
+*.env.*
+*.env
+
+**/typesense/*
+!**/typesense/.gitkeep
+
+**/pocketbase/*
+!**/pocketbase/.gitkeep
+
+.DS_Store
