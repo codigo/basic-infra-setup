@@ -25,9 +25,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Pulumi CLI
-        uses: pulumi/setup-pulumi@v2
-
       - name: Process configuration files
         run: |
           # Process users.yaml if it contains placeholders
@@ -56,6 +53,7 @@ jobs:
             fi
           done
 
+      - uses: pulumi/actions@v5
       - name: Configure Pulumi
         run: |
           pulumi config set aws:region ${{ secrets.AWS_REGION }}
@@ -75,13 +73,14 @@ jobs:
           pulumi config set --secret backupDataScript "$(cat ./bin/backupData.js)"
           pulumi config set --secret uploadToS3Script "$(cat ./bin/uploadToS3.js)"
           pulumi config set --secret restoreBackupScript "$(cat ./bin/restoreBackup.js)"
-
-        env:
-          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          pulumi config set --secret restoreFromS3Script "$(cat ./bin/restoreFromS3.js)"
+          cat ${{ secrets.SSH_PRIVATE_KEY }} | pulumi config set sshPrivateKey --secret
 
       - name: Deploy infrastructure
-        run: |
-          cat ${{ secrets.SSH_PRIVATE_KEY }} | pulumi config set sshPrivateKey --secret
-          pulumi up --yes
+        uses: pulumi/actions@v5
+        with:
+          command: up
+          stack-name: codigo/${{ github.event.client_payload.name }}/prod
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
