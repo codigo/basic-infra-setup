@@ -53,8 +53,8 @@ jobs:
             fi
           done
 
-      - uses: pulumi/actions@v5
       - name: Configure Pulumi
+        uses: pulumi/actions@v5
         run: |
           pulumi config set aws:region ${{ secrets.AWS_REGION }}
           pulumi config set awsAccessKeyId --secret ${{ secrets.AWS_ACCESS_KEY_ID }}
