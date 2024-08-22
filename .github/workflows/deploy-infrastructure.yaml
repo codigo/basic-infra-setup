@@ -72,7 +72,7 @@ jobs:
           pulumi config set sshPublicKey "${{ secrets.SSH_PUBLIC_KEY }}"
           pulumi config set mauAppTypeSenseKey --secret ${{ secrets.MAU_APP_TYPESENSE_API_KEY }}
           pulumi config set mauAppPBEncryptionKey --secret ${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}
-          pulumi confit set backupDir ${{ vars.BACKUP_DIR }}
+          pulumi config set backupDir ${{ vars.BACKUP_DIR }}
           pulumi config set dockerComposeMauApp "$(cat ./docker-compose.mau-app.yaml)"
           pulumi config set dockerComposeTooling "$(cat ./docker-compose.tooling.yaml)"
           pulumi config set dozzleUsers "$(cat ./tooling/data/dozzle/users.yaml)"
