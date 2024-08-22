@@ -37,6 +37,20 @@ export function configureServer(server: pulumi.Output<Server>, publicIp: pulumi.
     create: "docker swarm init",
   }, { dependsOn: installDocker });
 
+  // Create Docker networks
+  const createNetworks = new command.remote.Command("createNetworks", {
+    connection: {
+      host: publicIp,
+      user: "codigo",
+      privateKey: sshPrivateKey,
+    },
+    create: `
+      docker network create --driver overlay internal_net
+      docker network create --driver overlay caddy_net
+      docker network create --driver overlay dozzle
+    `,
+  }, { dependsOn: initDockerSwarm });
+
   // Set up Docker Swarm secrets
   const setupSecrets = new command.remote.Command("setupSecrets", {
     connection: {
@@ -48,6 +62,6 @@ export function configureServer(server: pulumi.Output<Server>, publicIp: pulumi.
       echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
       echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
     `,
-  }, { dependsOn: initDockerSwarm });
+  }, { dependsOn: createNetworks });
 
 }
