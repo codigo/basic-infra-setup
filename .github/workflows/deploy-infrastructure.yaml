@@ -64,11 +64,11 @@ jobs:
 
           # Set configs from bin scripts
           for script in backupData uploadToS3 restoreBackup; do
-            pulumi config set --secret ${script}Script "$(cat ./bin/${script}.js)"
+            pulumi config set ${script}Script "$(cat ./bin/${script}.js)"
           done
 
           # Set SSH private key
-          echo ${{ secrets.SSH_PRIVATE_KEY }} | tr -d '\r' | pulumi config set sshPrivateKey --secret
+          echo ${{ secrets.SSH_PRIVATE_KEY }} | pulumi config set sshPrivateKey --secret
 
           # Set backup directory
           pulumi config set backupDir ${{ vars.BACKUP_DIR }}
