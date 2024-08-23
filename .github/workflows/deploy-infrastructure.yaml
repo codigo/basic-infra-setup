@@ -81,7 +81,7 @@ jobs:
           pulumi config set --secret backupDataScript "$(cat ./bin/backupData.js)"
           pulumi config set --secret uploadToS3Script "$(cat ./bin/uploadToS3.js)"
           pulumi config set --secret restoreBackupScript "$(cat ./bin/restoreBackup.js)"
-          cat -- ${{ secrets.SSH_PRIVATE_KEY }} | pulumi config set sshPrivateKey --secret
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | pulumi config set sshPrivateKey --secret
 
       - name: Deploy infrastructure
         uses: pulumi/actions@v5
