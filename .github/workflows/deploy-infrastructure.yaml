@@ -40,37 +40,38 @@ jobs:
             fi
           done
 
-      - name: Setup and Configure Pulumi
+      - name: Setup Pulumi
         uses: pulumi/actions@v5
-        with:
-          command: |
-            pulumi stack select codigo/${{ github.event.client_payload.name }}/prod
-            pulumi config set aws:region ${{ secrets.AWS_REGION }}
-            pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
-            pulumi config set appName ${{ github.event.client_payload.name }}
-            
-            # Set configs from secrets
-            pulumi config set awsAccessKeyId --secret "${{ secrets.AWS_ACCESS_KEY_ID }}"
-            pulumi config set awsSecretAccessKey --secret "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-            pulumi config set sshPublicKey --secret "${{ secrets.SSH_PUBLIC_KEY }}"
-            pulumi config set mauAppTypeSenseKey --secret "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
-            pulumi config set mauAppPBEncryptionKey --secret "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
 
-            # Set configs from files
-            for file in docker-compose.mau-app.yaml docker-compose.tooling.yaml ./tooling/data/dozzle/users.yaml ./tooling/data/shepherd/shepherd-config.yaml ./tooling/data/caddy/Caddyfile; do
-              pulumi config set $(basename $file .yaml | tr '.-' '_') "$(cat $file)"
-            done
+      - name: Configure Pulumi
+        run: |
+          pulumi stack select codigo/${{ github.event.client_payload.name }}/prod
+          pulumi config set aws:region ${{ secrets.AWS_REGION }}
+          pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
+          pulumi config set appName ${{ github.event.client_payload.name }}
+          
+          # Set configs from secrets
+          pulumi config set awsAccessKeyId --secret "${{ secrets.AWS_ACCESS_KEY_ID }}"
+          pulumi config set awsSecretAccessKey --secret "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          pulumi config set sshPublicKey --secret "${{ secrets.SSH_PUBLIC_KEY }}"
+          pulumi config set mauAppTypeSenseKey --secret "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
+          pulumi config set mauAppPBEncryptionKey --secret "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
 
-            # Set configs from bin scripts
-            for script in backupData uploadToS3 restoreBackup; do
-              pulumi config set --secret ${script}Script "$(cat ./bin/${script}.js)"
-            done
+          # Set configs from files
+          for file in docker-compose.mau-app.yaml docker-compose.tooling.yaml ./tooling/data/dozzle/users.yaml ./tooling/data/shepherd/shepherd-config.yaml ./tooling/data/caddy/Caddyfile; do
+            pulumi config set $(basename $file .yaml | tr '.-' '_') "$(cat $file)"
+          done
 
-            # Set SSH private key
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | pulumi config set sshPrivateKey --secret
+          # Set configs from bin scripts
+          for script in backupData uploadToS3 restoreBackup; do
+            pulumi config set --secret ${script}Script "$(cat ./bin/${script}.js)"
+          done
 
-            # Set backup directory
-            pulumi config set backupDir ${{ vars.BACKUP_DIR }}
+          # Set SSH private key
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | pulumi config set sshPrivateKey --secret
+
+          # Set backup directory
+          pulumi config set backupDir "${{ vars.BACKUP_DIR }}"
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
