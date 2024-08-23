@@ -1,3 +1,0 @@
-config:
-  pulumi:tags:
-    pulumi:template: https://www.pulumi.com/ai/api/project/f8aaaf37-02d8-45fe-b5d8-b6d9af5b685a.zip

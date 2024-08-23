@@ -29,8 +29,10 @@ export function createIAMResources() {
           "s3:DeleteObject",
         ],
         Resource: [
-          pulumi.interpolate`arn:aws:s3:::${appName}-bucket/*`,
-          pulumi.interpolate`arn:aws:s3:::tooling-bucket/*`,
+          `arn:aws:s3:::${appName}-bucket`,
+          `arn:aws:s3:::${appName}-bucket/*`,
+          "arn:aws:s3:::tooling-bucket",
+          "arn:aws:s3:::tooling-bucket/*",
         ],
       },
     ],
