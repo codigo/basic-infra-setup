@@ -2,7 +2,10 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export function configureServer(server: pulumi.Output<Server>, publicIp: pulumi.Output<string>) {
+export function configureServer(
+  server: pulumi.Output<Server>,
+  publicIp: pulumi.Output<string>,
+) {
   const config = new pulumi.Config();
   const sshPrivateKey = config.requireSecret("sshPrivateKey");
   const sshPublicKey = config.require("sshPublicKey");
@@ -26,13 +29,15 @@ export function configureServer(server: pulumi.Output<Server>, publicIp: pulumi.
   });
 
   // Disable root SSH access
-  const disableRootSSH = new command.remote.Command("disableRootSSH", {
-    connection: {
-      host: publicIp,
-      user: "root",
-      privateKey: sshPrivateKey,
-    },
-    create: `
+  const disableRootSSH = new command.remote.Command(
+    "disableRootSSH",
+    {
+      connection: {
+        host: publicIp,
+        user: "root",
+        privateKey: sshPrivateKey,
+      },
+      create: `
             sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
             sed -i 's/^#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config
             echo "PermitRootLogin no" >> /etc/ssh/sshd_config
@@ -42,20 +47,26 @@ export function configureServer(server: pulumi.Output<Server>, publicIp: pulumi.
             systemctl restart sshd
             rm -f /root/.ssh/authorized_keys
         `,
-  }, { dependsOn: createUser });
+    },
+    { dependsOn: createUser },
+  );
 
   // Install NVM and Node.js
-  const installNode = new command.remote.Command("installNode", {
-    connection: {
-      host: publicIp,
-      user: "codigo",
-      privateKey: sshPrivateKey,
-    },
-    create: `
+  const installNode = new command.remote.Command(
+    "installNode",
+    {
+      connection: {
+        host: publicIp,
+        user: "codigo",
+        privateKey: sshPrivateKey,
+      },
+      create: `
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
             source ~/.nvm/nvm.sh && nvm install node && npm install -g aws-sdk
         `,
-  }, { dependsOn: disableRootSSH });
+    },
+    { dependsOn: disableRootSSH },
+  );
 
   return { sshPrivateKey };
 }

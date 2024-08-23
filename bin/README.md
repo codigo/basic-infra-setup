@@ -7,6 +7,7 @@ This backup system is designed to create compressed backups of specific director
 ### backupData.js
 
 This script is responsible for creating compressed backups of specific directories. It:
+
 - Searches for directories in the user's home folder that contain a `data` subdirectory.
 - Creates a compressed tar.gz backup of each matching directory, preserving the entire directory structure.
 - Stores the backups in a specified backup directory.
@@ -15,12 +16,14 @@ This script is responsible for creating compressed backups of specific directori
 ### uploadToS3.js
 
 This script handles the uploading of backup files to an S3 bucket. It:
+
 - Uploads the backup files created by `backupData.js` to the specified S3 bucket.
 - Organizes the backups in the S3 bucket into folders based on the original directory names.
 
 ### restoreBackup.js
 
 This script allows for the restoration of backups from S3. It:
+
 - Retrieves a specific backup (or the latest backup) from S3 for a given project.
 - Restores the backup to a project directory, overwriting existing files if necessary.
 - Can be used to restore either a specific backup file or the latest available backup for a project.
@@ -65,6 +68,7 @@ Let's say you have the following directory structure in your home folder:
 1. The `backupData.js` script will identify `project1` and `project2` as directories to backup because they contain a `data` subdirectory.
 
 2. It will create backup files in the `BACKUP_DIR`:
+
    ```
    BACKUP_DIR/
    ├── project1_2024-08-19-12-00-00.tar.gz
@@ -74,6 +78,7 @@ Let's say you have the following directory structure in your home folder:
 3. Each tar.gz file will contain the entire directory structure of the respective project.
 
 4. The `uploadToS3.js` script will then upload these files to the S3 bucket with the following structure:
+
    ```
    S3_BACKUPS_BUCKET/
    ├── backups/
@@ -84,12 +89,15 @@ Let's say you have the following directory structure in your home folder:
    ```
 
 5. To restore a backup, you would use the `restoreBackup.js` script, specifying the project name and optionally the backup file name. For example:
+
    ```
    node restoreBackup.js project1 project1_2024-08-19-12-00-00.tar.gz
    ```
+
    This would download the specified backup from S3 and restore it to the `RESTORE_DIR` (or `HOME` if `RESTORE_DIR` is not set), overwriting any existing files.
 
    If you don't specify a backup file name, the script will automatically retrieve the latest backup:
+
    ```
    node restoreBackup.js project1
    ```

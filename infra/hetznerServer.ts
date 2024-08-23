@@ -17,5 +17,8 @@ export function createHetznerServer() {
     sshKeys: [sshKey.id],
   });
 
-  return { server: pulumi.output(server as hcloud.Server), publicIp: server.ipv4Address };
+  return {
+    server: pulumi.output(server as hcloud.Server),
+    publicIp: server.ipv4Address,
+  };
 }

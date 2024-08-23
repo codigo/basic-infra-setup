@@ -2,7 +2,7 @@ import { createS3Bucket } from "./infra/s3";
 import { createIAMResources } from "./infra/iam";
 import { createHetznerServer } from "./infra/hetznerServer";
 import { configureServer } from "./infra/serverConfig";
-import { copyToolingDataFilesToServer } from "./infra/serverCopyToolingFiles"
+import { copyToolingDataFilesToServer } from "./infra/serverCopyToolingFiles";
 import { copyMauAppDataFilesToServer } from "./infra/serverCopyMauAppFiles";
 import { configureServerEnv } from "./infra/setupEnvs";
 import { deployDockerStacks } from "./infra/deployDockerStacks";
