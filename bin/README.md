@@ -2,6 +2,29 @@
 
 This backup system is designed to create compressed backups of specific directories, upload them to an S3 bucket, and restore them when needed. It consists of three main scripts: `backupData.js`, `uploadToS3.js`, and `restoreBackup.js`.
 
+## Scripts
+
+### backupData.js
+
+This script is responsible for creating compressed backups of specific directories. It:
+- Searches for directories in the user's home folder that contain a `data` subdirectory.
+- Creates a compressed tar.gz backup of each matching directory, preserving the entire directory structure.
+- Stores the backups in a specified backup directory.
+- Automatically removes old backups (older than 7 days).
+
+### uploadToS3.js
+
+This script handles the uploading of backup files to an S3 bucket. It:
+- Uploads the backup files created by `backupData.js` to the specified S3 bucket.
+- Organizes the backups in the S3 bucket into folders based on the original directory names.
+
+### restoreBackup.js
+
+This script allows for the restoration of backups from S3. It:
+- Retrieves a specific backup (or the latest backup) from S3 for a given project.
+- Restores the backup to a project directory, overwriting existing files if necessary.
+- Can be used to restore either a specific backup file or the latest available backup for a project.
+
 ## How it works
 
 1. The `backupData.js` script searches for directories in the user's home folder that contain a `data` subdirectory.
