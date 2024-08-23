@@ -4,6 +4,7 @@ import * as pulumi from "@pulumi/pulumi";
 export function createIAMResources() {
   const config = new pulumi.Config();
   const appName = config.require("appName");
+
   // Create an IAM user
   const iamUser = new aws.iam.User(`${appName}-user`, {
     name: `${appName}-user`,
@@ -35,11 +36,17 @@ export function createIAMResources() {
     ],
   };
 
-  // Attach the policy to the IAM user
-  const userPolicy = new aws.iam.UserPolicy(`${appName}-user-policy`, {
-    user: iamUser.name,
+  // Create an IAM policy
+  const policy = new aws.iam.Policy(`${appName}-user-policy`, {
+    description: `A policy for ${appName}-user`,
     policy: JSON.stringify(policyDocument),
   });
+
+  // Attach the policy to the IAM user
+  const userPolicy = new aws.iam.UserPolicyAttachment(`${appName}-user-policy-attach`, {
+    user: iamUser.name,
+    policyArn: policy.arn,
+  }, { dependsOn: [iamUser, policy] });
 
   return { iamUser, accessKey };
 }
