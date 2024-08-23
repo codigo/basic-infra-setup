@@ -26,7 +26,7 @@ export function copyMauAppDataFilesToServer(server: pulumi.Output<Server>, publi
   // SCP commands to copy docker compose tooling string to the server
   const scpDockerComposeTooling = new command.remote.CopyToRemote("scp docker compose tooling", {
     connection,
-    source: new pulumi.asset.StringAsset(`docker-compose.mau-app.yaml`),
+    source: new pulumi.asset.StringAsset(`docker_compose_mau_app`),
     remotePath: "~/docker-compose.mau-app.yaml",
   }, { dependsOn: createMauAppFolders });
 
