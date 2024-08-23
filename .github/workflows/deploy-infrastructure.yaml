@@ -51,11 +51,11 @@ jobs:
           pulumi config set appName ${{ github.event.client_payload.name }}
 
           # Set configs from secrets
-          pulumi config set awsAccessKeyId --secret "${{ secrets.AWS_ACCESS_KEY_ID }}"
-          pulumi config set awsSecretAccessKey --secret "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          pulumi config set sshPublicKey --secret "${{ secrets.SSH_PUBLIC_KEY }}"
-          pulumi config set mauAppTypeSenseKey --secret "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
-          pulumi config set mauAppPBEncryptionKey --secret "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
+          pulumi config set awsAccessKeyId --secret ${{ secrets.AWS_ACCESS_KEY_ID }}
+          pulumi config set awsSecretAccessKey --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          pulumi config set sshPublicKey --secret ${{ secrets.SSH_PUBLIC_KEY }}
+          pulumi config set mauAppTypeSenseKey --secret ${{ secrets.MAU_APP_TYPESENSE_API_KEY }}
+          pulumi config set mauAppPBEncryptionKey --secret ${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}
 
           # Set configs from files
           for file in docker-compose.mau-app.yaml docker-compose.tooling.yaml ./tooling/data/dozzle/users.yaml ./tooling/data/shepherd/shepherd-config.yaml ./tooling/data/caddy/Caddyfile; do
@@ -68,10 +68,10 @@ jobs:
           done
 
           # Set SSH private key
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | pulumi config set sshPrivateKey --secret
+          echo ${{ secrets.SSH_PRIVATE_KEY }} | tr -d '\r' | pulumi config set sshPrivateKey --secret
 
           # Set backup directory
-          pulumi config set backupDir "${{ vars.BACKUP_DIR }}"
+          pulumi config set backupDir ${{ vars.BACKUP_DIR }}
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
