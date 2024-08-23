@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const { exec } = require('child_process');
-const util = require('util');
+const fs = require("fs");
+const path = require("path");
+const { exec } = require("child_process");
+const util = require("util");
 
 const execAsync = util.promisify(exec);
 
@@ -17,18 +17,22 @@ async function createBackups() {
 
     // Find all directories that contain a 'data' subdirectory
     const dirsToBackup = [];
-    const allDirs = fs.readdirSync(BASE_DIR, { withFileTypes: true })
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
+    const allDirs = fs
+      .readdirSync(BASE_DIR, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name);
 
     for (const dir of allDirs) {
       const fullPath = path.join(BASE_DIR, dir);
-      if (fs.existsSync(path.join(fullPath, 'data'))) {
+      if (fs.existsSync(path.join(fullPath, "data"))) {
         dirsToBackup.push(dir);
       }
     }
 
-    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:T]/g, "-")
+      .split(".")[0];
 
     for (const dir of dirsToBackup) {
       const sourcePath = path.join(BASE_DIR, dir);
@@ -53,9 +57,9 @@ async function createBackups() {
       }
     }
 
-    console.log('Backup process completed successfully.');
+    console.log("Backup process completed successfully.");
   } catch (error) {
-    console.error('Error during backup process:', error);
+    console.error("Error during backup process:", error);
   }
 }
 

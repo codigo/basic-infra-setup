@@ -1,6 +1,6 @@
-const AWS = require('aws-sdk');
-const fs = require('fs');
-const path = require('path');
+const AWS = require("aws-sdk");
+const fs = require("fs");
+const path = require("path");
 
 // Configure AWS SDK
 AWS.config.update({ region: process.env.AWS_REGION });
@@ -16,7 +16,7 @@ async function uploadToS3() {
     try {
       await s3.headBucket({ Bucket: S3_BUCKET }).promise();
     } catch (error) {
-      if (error.code === 'NotFound') {
+      if (error.code === "NotFound") {
         console.error(`Error: The S3 bucket '${S3_BUCKET}' does not exist.`);
         return;
       } else {
@@ -27,18 +27,18 @@ async function uploadToS3() {
     const files = fs.readdirSync(BACKUP_DIR);
 
     for (const file of files) {
-      if (file.endsWith('.tar.gz')) {
+      if (file.endsWith(".tar.gz")) {
         const filePath = path.join(BACKUP_DIR, file);
         const fileContent = fs.readFileSync(filePath);
 
         // Extract folder name from the file name
-        const folderName = file.split('_')[0];
+        const folderName = file.split("_")[0];
 
         // Set up S3 upload parameters
         const params = {
           Bucket: S3_BUCKET,
           Key: `backups/${folderName}/${file}`, // Use folder structure in S3
-          Body: fileContent
+          Body: fileContent,
         };
 
         try {
@@ -51,9 +51,9 @@ async function uploadToS3() {
       }
     }
 
-    console.log('Upload process completed.');
+    console.log("Upload process completed.");
   } catch (error) {
-    console.error('Error during upload process:', error);
+    console.error("Error during upload process:", error);
   }
 }
 
