@@ -7,9 +7,9 @@ export function copyToolingDataFilesToServer(server: pulumi.Output<Server>, publ
   // Define the server details and credentials
   const config = new pulumi.Config();
   const sshPrivateKey = config.requireSecret("sshPrivateKey");
-  const dozzleUsers = config.require("dozzleUsers");
-  const shepherdConfig = config.require("shepherdConfig");
-  const caddyFile = config.require("caddyfile");
+  const dozzleUsers = config.require("users");
+  const shepherdConfig = config.require("shepherd_config");
+  const caddyFile = config.require("Caddyfile");
 
   const backupDataScript = config.require("backupDataScript");
   const uploadToS3Script = config.require("uploadToS3Script");
@@ -35,7 +35,7 @@ export function copyToolingDataFilesToServer(server: pulumi.Output<Server>, publ
   // SCP commands to copy docker compose tooling string to the server
   const scpDockerComposeTooling = new command.remote.CopyToRemote("scp docker compose tooling", {
     connection,
-    source: new pulumi.asset.StringAsset(`docker-compose.tooling.yaml`),
+    source: new pulumi.asset.StringAsset(`docker_compose_tooling`),
     remotePath: "~/docker-compose.tooling.yaml",
   }, { dependsOn: createToolingFolders });
 

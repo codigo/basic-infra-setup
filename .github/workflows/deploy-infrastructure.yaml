@@ -46,10 +46,10 @@ jobs:
       - name: Configure Pulumi
         run: |
           pulumi stack select codigo/${{ github.event.client_payload.name }}/prod
-          pulumi config set aws:region ${{ secrets.AWS_REGION }}
+          pulumi config set aws:region ${{ vars.AWS_REGION }}
           pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
           pulumi config set appName ${{ github.event.client_payload.name }}
-          
+
           # Set configs from secrets
           pulumi config set awsAccessKeyId --secret "${{ secrets.AWS_ACCESS_KEY_ID }}"
           pulumi config set awsSecretAccessKey --secret "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
