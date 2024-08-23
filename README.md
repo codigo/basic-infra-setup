@@ -19,6 +19,18 @@ This repository contains the infrastructure-as-code and deployment configuration
 - Monitoring and logging tools (Dozzle, Shepherd)
 - Reverse proxy (Caddy)
 
+## Project Structure
+
+- `.github/workflows/`: Contains GitHub Actions workflow files for CI/CD
+- `bin/`: Utility scripts for the project
+- `infra/`: Pulumi infrastructure-as-code files
+- `mau-app/`: Main application code and configuration
+- `tooling/`: Additional tools and utilities for the project
+- `docker-compose.mau-app.yaml`: Docker Compose file for the main application
+- `docker-compose.tooling.yaml`: Docker Compose file for tooling services
+- `index.ts`: Main entry point for Pulumi infrastructure code
+- `Pulumi.yaml`: Pulumi project configuration
+
 ## Setup
 
 1. Fork this repository
@@ -45,6 +57,15 @@ This repository contains the infrastructure-as-code and deployment configuration
 - Root SSH access is disabled
 - Only `codigo` user can SSH into the server
 - Sensitive data stored in GitHub secrets and Pulumi config
+
+## Development
+
+To work on this project locally:
+
+1. Ensure you have Node.js and npm installed
+2. Install Pulumi CLI
+3. Run `npm install` to install dependencies
+4. Use `pulumi preview` to check infrastructure changes before applying
 
 For detailed setup instructions and troubleshooting, please refer to the project documentation.
 
