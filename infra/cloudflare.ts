@@ -6,6 +6,7 @@ const config = new pulumi.Config();
 const accountId = config.require("cloudflareAccountId");
 const maumercadoZoneId = config.require("cloudflareMaumercadoZoneId");
 const codigoZoneId = config.require("cloudflareCodigoZoneId");
+
 export function createCloudflareTunnels(serverIp: string) {
     // Create a random password for the maumercado tunnel secret
     const maumercadoTunnelSecret = new random.RandomPassword("maumercado-tunnel-secret", {
@@ -14,7 +15,7 @@ export function createCloudflareTunnels(serverIp: string) {
     });
 
     // Create Cloudflare tunnel for maumercado.com
-    const maumercadoTunnel = new cloudflare.Tunnel("maumercado-tunnel", {
+    const maumercadoTunnel = new cloudflare.ZeroTrustTunnelCloudflared("maumercado-tunnel", {
         accountId: accountId,
         name: "maumercado-tunnel",
         secret: maumercadoTunnelSecret.result,
@@ -53,7 +54,7 @@ export function createCloudflareTunnels(serverIp: string) {
     });
 
     // Create Cloudflare tunnel for codigo.sh
-    const codigoTunnel = new cloudflare.Tunnel("codigo-tunnel", {
+    const codigoTunnel = new cloudflare.ZeroTrustTunnelCloudflared("codigo-tunnel", {
         accountId: accountId,
         name: "codigo-tunnel",
         secret: codigoTunnelSecret.result,
