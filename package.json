@@ -8,8 +8,10 @@
   "author": "",
   "dependencies": {
     "@pulumi/aws": "^6.49.1",
+    "@pulumi/cloudflare": "^5.37.1",
     "@pulumi/command": "^1.0.1",
     "@pulumi/hcloud": "^1.20.0",
-    "@pulumi/pulumi": "*"
+    "@pulumi/pulumi": "*",
+    "@pulumi/random": "^4.16.3"
   }
 }
