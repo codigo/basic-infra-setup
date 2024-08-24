@@ -62,10 +62,13 @@ jobs:
           # Set configs from secrets
           pulumi config set awsAccessKeyId --secret ${{ secrets.AWS_ACCESS_KEY_ID }}
           pulumi config set awsSecretAccessKey --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          pulumi config set sshPublicKey --secret "file://~/.ssh/id_rsa.pub"
           pulumi config set mauAppTypeSenseKey --secret "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
           pulumi config set mauAppPBEncryptionKey --secret "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
           pulumi config set cloudflareApiToken --secret ${{ secrets.CLOUDFLARE_TUNNEL_SECRET }}
+
+          # Set SSH keys
+          pulumi config set sshPublicKey --secret "$(cat ~/.ssh/id_rsa.pub | base64 -w 0)"
+          pulumi config set sshPrivateKey --secret "$(cat ~/.ssh/id_rsa | base64 -w 0)"
 
           # Set configs from files
           for file in docker-compose.mau-app.yaml docker-compose.tooling.yaml ./tooling/data/dozzle/users.yaml ./tooling/data/shepherd/shepherd-config.yaml ./tooling/data/caddy/Caddyfile; do
@@ -76,9 +79,6 @@ jobs:
           for script in backupData uploadToS3 restoreBackup; do
             pulumi config set ${script}Script "$(cat ./bin/${script}.js)"
           done
-
-          # Set SSH private key using file path
-          pulumi config set sshPrivateKey --secret "file://~/.ssh/id_rsa"
 
           # Set backup directory
           pulumi config set backupDir ${{ vars.BACKUP_DIR }}

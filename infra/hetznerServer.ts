@@ -5,8 +5,11 @@ export function createHetznerServer() {
   const config = new pulumi.Config();
   const appName = config.require("appName");
 
-  // Get the public key from the configuration
-  let publicKey = config.require("sshPublicKey");
+  // Get the base64-encoded public key from the configuration
+  let encodedPublicKey = config.require("sshPublicKey");
+
+  // Decode the base64-encoded public key
+  let publicKey = Buffer.from(encodedPublicKey, 'base64').toString('utf-8');
 
   // Trim any leading or trailing whitespace
   publicKey = publicKey.trim();
