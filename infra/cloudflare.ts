@@ -3,9 +3,9 @@ import * as cloudflare from "@pulumi/cloudflare";
 import * as random from "@pulumi/random";
 
 const config = new pulumi.Config();
-const accountId = config.require("cloudflare:accountId");
-const maumercadoZoneId = config.require("cloudflare:maumercadoZoneId");
-const codigoZoneId = config.require("cloudflare:codigoZoneId");
+const accountId = config.require("cloudflareAccountId");
+const maumercadoZoneId = config.require("cloudflareMaumercadoZoneId");
+const codigoZoneId = config.require("cloudflareCodigoZoneId");
 export function createCloudflareTunnels(serverIp: string) {
     // Create a random password for the maumercado tunnel secret
     const maumercadoTunnelSecret = new random.RandomPassword("maumercado-tunnel-secret", {
