@@ -41,6 +41,17 @@ jobs:
             fi
           done
 
+      - name: Setup SSH keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PUBLIC_KEY }}" > ~/.ssh/id_rsa.pub
+          chmod 600 ~/.ssh/id_rsa
+          chmod 644 ~/.ssh/id_rsa.pub
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+
       - name: Setup Pulumi
         uses: pulumi/actions@v5
 
@@ -54,7 +65,7 @@ jobs:
           # Set configs from secrets
           pulumi config set awsAccessKeyId --secret ${{ secrets.AWS_ACCESS_KEY_ID }}
           pulumi config set awsSecretAccessKey --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          pulumi config set sshPublicKey --secret "${{ secrets.SSH_PUBLIC_KEY }}"
+          pulumi config set sshPublicKey --secret "file://~/.ssh/id_rsa.pub"
           pulumi config set mauAppTypeSenseKey --secret "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
           pulumi config set mauAppPBEncryptionKey --secret "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
           pulumi config set cloudflareApiToken --secret ${{ secrets.CLOUDFLARE_TUNNEL_SECRET }}
@@ -69,10 +80,8 @@ jobs:
             pulumi config set ${script}Script "$(cat ./bin/${script}.js)"
           done
 
-          # Set SSH private key using heredoc
-          pulumi config set sshPrivateKey --secret - << EOD
-          ${{ secrets.SSH_PRIVATE_KEY }}
-          EOD
+          # Set SSH private key using file path
+          pulumi config set sshPrivateKey --secret "file://~/.ssh/id_rsa"
 
           # Set backup directory
           pulumi config set backupDir ${{ vars.BACKUP_DIR }}
