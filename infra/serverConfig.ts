@@ -8,7 +8,12 @@ export function configureServer(
 ) {
   const config = new pulumi.Config();
   const sshPrivateKey = config.requireSecret("sshPrivateKey");
-  const sshPublicKey = config.require("sshPublicKey");
+  const encodedSshPublicKey = config.require("sshPublicKey");
+
+  // Decode the base64-encoded public key
+  const sshPublicKey = pulumi.all([encodedSshPublicKey]).apply(([encoded]) => 
+    Buffer.from(encoded, 'base64').toString('utf-8')
+  );
 
   // Create 'codigo' user and set up SSH
   const createUser = new command.remote.Command("createUser", {
