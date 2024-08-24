@@ -18,7 +18,7 @@ export function copyMauAppDataFilesToServer(
 
   // SCP commands to copy docker compose app string to the server
   const createMauAppFolders = new command.remote.Command(
-    "create tooling data folders",
+    "create mau app data folders",
     {
       connection,
       create: pulumi.interpolate`
