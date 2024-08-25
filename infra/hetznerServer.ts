@@ -35,6 +35,7 @@ export function createHetznerServer() {
     serverType: "cx11",
     image: "ubuntu-24.04",
     sshKeys: [sshKey.id],
+    location: "ash",
   });
 
   return {

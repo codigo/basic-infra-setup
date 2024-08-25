@@ -8,7 +8,7 @@ export function configureServer(
 ) {
   const config = new pulumi.Config();
   const sshPrivateKey = config.requireSecret("sshPrivateKey");
-  const encodedSshPublicKey = config.require("sshPublicKey");
+  const encodedSshPublicKey = config.requireSecret("sshPublicKey");
 
   // Decode the base64-encoded public key
   const sshPublicKey = pulumi
@@ -30,6 +30,7 @@ export function configureServer(
             chown -R codigo:codigo /home/codigo/.ssh
             chmod 700 /home/codigo/.ssh
             chmod 600 /home/codigo/.ssh/authorized_keys
+            echo "StrictHostKeyChecking no" > /home/codigo/.ssh/config
         `,
   });
 

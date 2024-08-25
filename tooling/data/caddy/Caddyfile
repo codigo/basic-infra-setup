@@ -5,12 +5,12 @@
 }
 
 :80 {
-	@codigo host codigo.sh
+	@codigo host codigo.sh www.codigo.sh
 	handle @codigo {
 		reverse_proxy mau-app-codigo:3000
 	}
 
-	@maumercado host maumercado.com
+	@maumercado host maumercado.com www.maumercado.com
 	handle @maumercado {
 		reverse_proxy mau-app-maumercado:3000
 	}
