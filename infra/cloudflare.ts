@@ -45,6 +45,7 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
 
   // Helper function to create or update DNS records
   function createDnsRecord(
+    resourceName: string,
     name: string,
     zoneId: string,
     type: string,
@@ -52,7 +53,7 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
     proxied: boolean = true,
   ) {
     return new cloudflare.Record(
-      name,
+      resourceName,
       {
         zoneId: zoneId,
         name: name,
@@ -66,12 +67,14 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
 
   // Maumercado.com DNS records
   const maumercadoDns = createDnsRecord(
+    "maumercado-root",
     "maumercado.com",
     maumercadoZoneId,
     "CNAME",
     maumercadoTunnel.cname,
   );
   const wwwMaumercadoDns = createDnsRecord(
+    "maumercado-www",
     "www",
     maumercadoZoneId,
     "A",
@@ -80,27 +83,42 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
 
   // Codigo.sh DNS records
   const codigoDns = createDnsRecord(
+    "codigo-root",
     "codigo.sh",
     codigoZoneId,
     "CNAME",
     codigoTunnel.cname,
   );
-  const wwwCodigoDns = createDnsRecord("www", codigoZoneId, "A", serverIp);
+  const wwwCodigoDns = createDnsRecord(
+    "codigo-www",
+    "www",
+    codigoZoneId,
+    "A",
+    serverIp,
+  );
 
   // Additional service DNS records
   const pocketbaseDns = createDnsRecord(
+    "codigo-pocketbase",
     "pocketbase",
     codigoZoneId,
     "A",
     serverIp,
   );
   const typesenseDns = createDnsRecord(
+    "codigo-typesense",
     "typesense",
     codigoZoneId,
     "A",
     serverIp,
   );
-  const dozzleDns = createDnsRecord("dozzle", codigoZoneId, "A", serverIp);
+  const dozzleDns = createDnsRecord(
+    "codigo-dozzle",
+    "dozzle",
+    codigoZoneId,
+    "A",
+    serverIp,
+  );
 
   // Create Cloudflare tunnel config for maumercado.com
   const maumercadoConfig = new cloudflare.ZeroTrustTunnelCloudflaredConfig(
