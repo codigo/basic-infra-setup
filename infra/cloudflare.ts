@@ -7,89 +7,98 @@ const accountId = config.require("cloudflareAccountId");
 const maumercadoZoneId = config.require("cloudflareMaumercadoZoneId");
 const codigoZoneId = config.require("cloudflareCodigoZoneId");
 
-export function createCloudflareTunnels(serverIp: string) {
-    // Create a random password for the maumercado tunnel secret
-    const maumercadoTunnelSecret = new random.RandomPassword("maumercado-tunnel-secret", {
-        length: 32,
-        special: false,
-    });
+export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
+  // Create a random password for the maumercado tunnel secret
+  const maumercadoTunnelSecret = new random.RandomPassword(
+    "maumercado-tunnel-secret",
+    {
+      length: 32,
+      special: false,
+    },
+  );
 
-    // Create Cloudflare tunnel for maumercado.com
-    const maumercadoTunnel = new cloudflare.ZeroTrustTunnelCloudflared("maumercado-tunnel", {
-        accountId: accountId,
-        name: "maumercado-tunnel",
-        secret: maumercadoTunnelSecret.result,
-    });
+  // Create Cloudflare tunnel for maumercado.com
+  const maumercadoTunnel = new cloudflare.ZeroTrustTunnelCloudflared(
+    "maumercado-tunnel",
+    {
+      accountId: accountId,
+      name: "maumercado-tunnel",
+      secret: maumercadoTunnelSecret.result,
+    },
+  );
 
-    // Create DNS record for maumercado.com
-    const maumercadoDns = new cloudflare.Record("maumercado-dns", {
-        zoneId: maumercadoZoneId,
-        name: "maumercado.com",
-        type: "CNAME",
-        value: maumercadoTunnel.cname,
-        proxied: true,
-    });
+  // Create DNS record for maumercado.com
+  const maumercadoDns = new cloudflare.Record("maumercado-dns", {
+    zoneId: maumercadoZoneId,
+    name: "maumercado.com",
+    type: "CNAME",
+    value: maumercadoTunnel.cname,
+    proxied: true,
+  });
 
-    // Create Cloudflare tunnel config for maumercado.com
-    const maumercadoConfig = new cloudflare.TunnelConfig("maumercado-config", {
-        accountId: accountId,
-        tunnelId: maumercadoTunnel.id,
-        config: {
-            ingressRules: [
-                {
-                    hostname: "maumercado.com",
-                    service: `http://${serverIp}:80`,
-                },
-                {
-                    service: "http_status:404",
-                },
-            ],
+  // Create Cloudflare tunnel config for maumercado.com
+  const maumercadoConfig = new cloudflare.TunnelConfig("maumercado-config", {
+    accountId: accountId,
+    tunnelId: maumercadoTunnel.id,
+    config: pulumi.all([serverIp]).apply(([ip]) => ({
+      ingressRules: [
+        {
+          hostname: "maumercado.com",
+          service: `http://${ip}:80`,
         },
-    });
-
-    // Create a random password for the codigo tunnel secret
-    const codigoTunnelSecret = new random.RandomPassword("codigo-tunnel-secret", {
-        length: 32,
-        special: false,
-    });
-
-    // Create Cloudflare tunnel for codigo.sh
-    const codigoTunnel = new cloudflare.ZeroTrustTunnelCloudflared("codigo-tunnel", {
-        accountId: accountId,
-        name: "codigo-tunnel",
-        secret: codigoTunnelSecret.result,
-    });
-
-    // Create DNS record for codigo.sh
-    const codigoDns = new cloudflare.Record("codigo-dns", {
-        zoneId: codigoZoneId,
-        name: "codigo.sh",
-        type: "CNAME",
-        value: codigoTunnel.cname,
-        proxied: true,
-    });
-
-    // Create Cloudflare tunnel config for codigo.sh
-    const codigoConfig = new cloudflare.TunnelConfig("codigo-config", {
-        accountId: accountId,
-        tunnelId: codigoTunnel.id,
-        config: {
-            ingressRules: [
-                {
-                    hostname: "codigo.sh",
-                    service: `http://${serverIp}:80`,
-                },
-                {
-                    service: "http_status:404",
-                },
-            ],
+        {
+          service: "http_status:404",
         },
-    });
+      ],
+    })),
+  });
 
-    return {
-        maumercadoTunnel,
-        maumercadoDns,
-        codigoTunnel,
-        codigoDns,
-    };
+  // Create a random password for the codigo tunnel secret
+  const codigoTunnelSecret = new random.RandomPassword("codigo-tunnel-secret", {
+    length: 32,
+    special: false,
+  });
+
+  // Create Cloudflare tunnel for codigo.sh
+  const codigoTunnel = new cloudflare.ZeroTrustTunnelCloudflared(
+    "codigo-tunnel",
+    {
+      accountId: accountId,
+      name: "codigo-tunnel",
+      secret: codigoTunnelSecret.result,
+    },
+  );
+
+  // Create DNS record for codigo.sh
+  const codigoDns = new cloudflare.Record("codigo-dns", {
+    zoneId: codigoZoneId,
+    name: "codigo.sh",
+    type: "CNAME",
+    value: codigoTunnel.cname,
+    proxied: true,
+  });
+
+  // Create Cloudflare tunnel config for codigo.sh
+  const codigoConfig = new cloudflare.TunnelConfig("codigo-config", {
+    accountId: accountId,
+    tunnelId: codigoTunnel.id,
+    config: pulumi.all([serverIp]).apply(([ip]) => ({
+      ingressRules: [
+        {
+          hostname: "codigo.sh",
+          service: `http://${ip}:80`,
+        },
+        {
+          service: "http_status:404",
+        },
+      ],
+    })),
+  });
+
+  return {
+    maumercadoTunnel,
+    maumercadoDns,
+    codigoTunnel,
+    codigoDns,
+  };
 }

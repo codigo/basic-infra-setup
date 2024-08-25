@@ -33,7 +33,8 @@ copyMauAppDataFilesToServer(server, publicIp);
 deployDockerStacks(server, publicIp);
 
 // Create Cloudflare tunnels
-const { maumercadoTunnel, maumercadoDns, codigoTunnel, codigoDns } = createCloudflareTunnels(`${publicIp}`);
+const { maumercadoTunnel, maumercadoDns, codigoTunnel, codigoDns } =
+  createCloudflareTunnels(publicIp);
 
 // Export important values
 export const serverId = server.id;
