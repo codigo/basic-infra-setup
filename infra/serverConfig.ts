@@ -15,24 +15,29 @@ export function configureServer(
     .all([encodedSshPublicKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
+  // Debug logging
+  console.log(
+    "SSH Public Key length:",
+    sshPublicKey.apply((key) => key.length),
+  );
+  sshPrivateKey.apply((key) =>
+    console.log("SSH Private Key length:", key.length),
+  );
+
   // Common SSH connection options
-  const commonSshOptions = {
-    host: publicIp,
-    privateKey: sshPrivateKey,
-    sshConfigArgs: [
-      "-v",
-      "-o",
-      "StrictHostKeyChecking=no",
-      "-o",
-      "UserKnownHostsFile=/dev/null",
-    ],
-  };
+  const commonSshOptions = pulumi
+    .all([publicIp, sshPrivateKey])
+    .apply(([ip, key]) => ({
+      host: ip,
+      username: "root",
+      privateKey: key,
+    }));
 
   // Create 'codigo' user and set up SSH
   const createUser = new command.remote.Command(
     "createUser",
     {
-      connection: { ...commonSshOptions, user: "root" },
+      connection: commonSshOptions,
       create: pulumi.interpolate`
       useradd -m -s /bin/bash codigo
       echo "codigo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -47,11 +52,19 @@ export function configureServer(
     { additionalSecretOutputs: ["stdout", "stderr"] },
   );
 
+  // Log output and errors
+  createUser.stdout.apply((stdout) => {
+    if (stdout) console.log("createUser stdout:", stdout);
+  });
+  createUser.stderr.apply((stderr) => {
+    if (stderr) console.error("createUser stderr:", stderr);
+  });
+
   // Disable root SSH access
   const disableRootSSH = new command.remote.Command(
     "disableRootSSH",
     {
-      connection: { ...commonSshOptions, user: "root" },
+      connection: commonSshOptions,
       create: `
         sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
         sed -i 's/^#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config
@@ -66,11 +79,20 @@ export function configureServer(
     { dependsOn: createUser, additionalSecretOutputs: ["stdout", "stderr"] },
   );
 
+  disableRootSSH.stdout.apply((stdout) => {
+    if (stdout) console.log("disableRootSSH stdout:", stdout);
+  });
+  disableRootSSH.stderr.apply((stderr) => {
+    if (stderr) console.error("disableRootSSH stderr:", stderr);
+  });
+
   // Install NVM and Node.js
   const installNode = new command.remote.Command(
     "installNode",
     {
-      connection: { ...commonSshOptions, user: "codigo" },
+      connection: pulumi
+        .all([commonSshOptions])
+        .apply(([options]) => ({ ...options, username: "codigo" })),
       create: `
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
         export NVM_DIR="$HOME/.nvm"
@@ -84,6 +106,13 @@ export function configureServer(
       additionalSecretOutputs: ["stdout", "stderr"],
     },
   );
+
+  installNode.stdout.apply((stdout) => {
+    if (stdout) console.log("installNode stdout:", stdout);
+  });
+  installNode.stderr.apply((stderr) => {
+    if (stderr) console.error("installNode stderr:", stderr);
+  });
 
   return { sshPrivateKey };
 }
