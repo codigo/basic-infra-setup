@@ -71,8 +71,8 @@ jobs:
           pulumi config set --secret cloudflareApiToken "${{ secrets.CLOUDFLARE_TUNNEL_SECRET }}"
 
           # Set SSH keys
-          pulumi config set --secret sshPublicKey "$(cat ~/.ssh/id_rsa.pub)"
-          pulumi config set --secret sshPrivateKey "$(cat ~/.ssh/id_rsa)"
+          cat ~/.ssh/id_rsa.pub | openssl base64 | tr -d '\n' | pulumi config set sshPublicKey --secret
+          cat ~/.ssh/id_rsa | openssl base64 | tr -d '\n' | pulumi config set sshPrivateKey --secret
 
           # Set configs from files
           for file in docker-compose.mau-app.yaml docker-compose.tooling.yaml ./tooling/data/dozzle/users.yaml ./tooling/data/shepherd/shepherd-config.yaml ./tooling/data/caddy/Caddyfile; do
