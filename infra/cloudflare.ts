@@ -14,7 +14,7 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
     {
       length: 32,
       special: false,
-    }
+    },
   );
 
   // Create Cloudflare tunnel for maumercado.com
@@ -24,7 +24,7 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
       accountId: accountId,
       name: "maumercado-tunnel",
       secret: maumercadoTunnelSecret.result,
-    }
+    },
   );
 
   // Create a random password for the codigo tunnel secret
@@ -40,86 +40,127 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
       accountId: accountId,
       name: "codigo-tunnel",
       secret: codigoTunnelSecret.result,
-    }
+    },
   );
 
   // Helper function to create or update DNS records
-  function createDnsRecord(name: string, zoneId: string, type: string, content: pulumi.Output<string>, proxied: boolean = true) {
-    return new cloudflare.Record(name, {
-      zoneId: zoneId,
-      name: name,
-      type: type,
-      content: content,
-      proxied: proxied,
-    }, { deleteBeforeReplace: true });
+  function createDnsRecord(
+    name: string,
+    zoneId: string,
+    type: string,
+    content: pulumi.Output<string>,
+    proxied: boolean = true,
+  ) {
+    return new cloudflare.Record(
+      name,
+      {
+        zoneId: zoneId,
+        name: name,
+        type: type,
+        content: content,
+        proxied: proxied,
+      },
+      { deleteBeforeReplace: true },
+    );
   }
 
   // Maumercado.com DNS records
-  const maumercadoDns = createDnsRecord("maumercado.com", maumercadoZoneId, "CNAME", maumercadoTunnel.cname);
-  const wwwMaumercadoDns = createDnsRecord("www", maumercadoZoneId, "A", serverIp);
+  const maumercadoDns = createDnsRecord(
+    "maumercado.com",
+    maumercadoZoneId,
+    "CNAME",
+    maumercadoTunnel.cname,
+  );
+  const wwwMaumercadoDns = createDnsRecord(
+    "www",
+    maumercadoZoneId,
+    "A",
+    serverIp,
+  );
 
   // Codigo.sh DNS records
-  const codigoDns = createDnsRecord("codigo.sh", codigoZoneId, "CNAME", codigoTunnel.cname);
+  const codigoDns = createDnsRecord(
+    "codigo.sh",
+    codigoZoneId,
+    "CNAME",
+    codigoTunnel.cname,
+  );
   const wwwCodigoDns = createDnsRecord("www", codigoZoneId, "A", serverIp);
 
   // Additional service DNS records
-  const pocketbaseDns = createDnsRecord("pocketbase", codigoZoneId, "A", serverIp);
-  const typesenseDns = createDnsRecord("typesense", codigoZoneId, "A", serverIp);
+  const pocketbaseDns = createDnsRecord(
+    "pocketbase",
+    codigoZoneId,
+    "A",
+    serverIp,
+  );
+  const typesenseDns = createDnsRecord(
+    "typesense",
+    codigoZoneId,
+    "A",
+    serverIp,
+  );
   const dozzleDns = createDnsRecord("dozzle", codigoZoneId, "A", serverIp);
 
   // Create Cloudflare tunnel config for maumercado.com
-  const maumercadoConfig = new cloudflare.ZeroTrustTunnelCloudflaredConfig("maumercado-config", {
-    accountId: accountId,
-    tunnelId: maumercadoTunnel.id,
-    config: pulumi.all([serverIp]).apply(([ip]) => ({
-      ingressRules: [
-        {
-          hostname: "maumercado.com",
-          service: `http://${ip}:80`,
-        },
-        {
-          hostname: "www.maumercado.com",
-          service: `http://${ip}:80`,
-        },
-        {
-          service: "http_status:404",
-        },
-      ],
-    })),
-  });
+  const maumercadoConfig = new cloudflare.ZeroTrustTunnelCloudflaredConfig(
+    "maumercado-config",
+    {
+      accountId: accountId,
+      tunnelId: maumercadoTunnel.id,
+      config: pulumi.all([serverIp]).apply(([ip]) => ({
+        ingressRules: [
+          {
+            hostname: "maumercado.com",
+            service: `http://${ip}:80`,
+          },
+          {
+            hostname: "www.maumercado.com",
+            service: `http://${ip}:80`,
+          },
+          {
+            service: "http_status:404",
+          },
+        ],
+      })),
+    },
+  );
 
   // Create Cloudflare tunnel config for codigo.sh
-  const codigoConfig = new cloudflare.ZeroTrustTunnelCloudflaredConfig("codigo-config", {
-    accountId: accountId,
-    tunnelId: codigoTunnel.id,
-    config: pulumi.all([serverIp]).apply(([ip]) => ({
-      ingressRules: [
-        {
-          hostname: "codigo.sh",
-          service: `http://${ip}:80`,
-        },
-        {
-          hostname: "www.codigo.sh",
-          service: `http://${ip}:80`,
-        },
-        {
-          hostname: "pocketbase.codigo.sh",
-          service: `http://${ip}:80`,
-        },
-        {
-          hostname: "typesense.codigo.sh",
-          service: `http://${ip}:80`,
-        },
-        {
-          hostname: "dozzle.codigo.sh",
-          service: `http://${ip}:80`,
-        },
-        {
-          service: "http_status:404",
-        },
-      ],
-    })),
-  });
+  const codigoConfig = new cloudflare.ZeroTrustTunnelCloudflaredConfig(
+    "codigo-config",
+    {
+      accountId: accountId,
+      tunnelId: codigoTunnel.id,
+      config: pulumi.all([serverIp]).apply(([ip]) => ({
+        ingressRules: [
+          {
+            hostname: "codigo.sh",
+            service: `http://${ip}:80`,
+          },
+          {
+            hostname: "www.codigo.sh",
+            service: `http://${ip}:80`,
+          },
+          {
+            hostname: "pocketbase.codigo.sh",
+            service: `http://${ip}:80`,
+          },
+          {
+            hostname: "typesense.codigo.sh",
+            service: `http://${ip}:80`,
+          },
+          {
+            hostname: "dozzle.codigo.sh",
+            service: `http://${ip}:80`,
+          },
+          {
+            service: "http_status:404",
+          },
+        ],
+      })),
+    },
+  );
 
   return {
     maumercadoTunnel,
