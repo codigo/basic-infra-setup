@@ -3,15 +3,21 @@
   "description": "My portfolio and blog with an introduction of myself and a contact form",
   "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format": "npx prettier --write ."
   },
   "author": "",
   "dependencies": {
-    "@pulumi/aws": "^6.49.1",
+    "@pulumi/aws": "^6.50.1",
     "@pulumi/cloudflare": "^5.37.1",
     "@pulumi/command": "^1.0.1",
     "@pulumi/hcloud": "^1.20.0",
     "@pulumi/pulumi": "*",
-    "@pulumi/random": "^4.16.3"
+    "@pulumi/random": "^4.16.3",
+    "aws-sdk": "^2.1682.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.5.0",
+    "typescript": "^5.2.2"
   }
 }

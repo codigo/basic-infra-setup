@@ -45,10 +45,14 @@ export function createIAMResources() {
   });
 
   // Attach the policy to the IAM user
-  const userPolicy = new aws.iam.UserPolicyAttachment(`${appName}-user-policy-attach`, {
-    user: iamUser.name,
-    policyArn: policy.arn,
-  }, { dependsOn: [iamUser, policy] });
+  const userPolicy = new aws.iam.UserPolicyAttachment(
+    `${appName}-user-policy-attach`,
+    {
+      user: iamUser.name,
+      policyArn: policy.arn,
+    },
+    { dependsOn: [iamUser, policy] },
+  );
 
   return { iamUser, accessKey };
 }

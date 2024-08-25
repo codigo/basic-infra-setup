@@ -9,14 +9,20 @@ export function createHetznerServer() {
   let encodedPublicKey = config.require("sshPublicKey");
 
   // Decode the base64-encoded public key
-  let publicKey = Buffer.from(encodedPublicKey, 'base64').toString('utf-8');
+  let publicKey = Buffer.from(encodedPublicKey, "base64").toString("utf-8");
 
   // Trim any leading or trailing whitespace
   publicKey = publicKey.trim();
 
   // Ensure the key type is specified
-  if (!publicKey.startsWith("ssh-rsa") && !publicKey.startsWith("ssh-ed25519") && !publicKey.startsWith("ecdsa-sha2-nistp")) {
-    throw new Error("Invalid SSH key format. The key should start with ssh-rsa, ssh-ed25519, or ecdsa-sha2-nistp.");
+  if (
+    !publicKey.startsWith("ssh-rsa") &&
+    !publicKey.startsWith("ssh-ed25519") &&
+    !publicKey.startsWith("ecdsa-sha2-nistp")
+  ) {
+    throw new Error(
+      "Invalid SSH key format. The key should start with ssh-rsa, ssh-ed25519, or ecdsa-sha2-nistp.",
+    );
   }
 
   const sshKey = new hcloud.SshKey("deploy-key", {
