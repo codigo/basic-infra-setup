@@ -8,7 +8,6 @@ export function copyToolingDataFilesToServer(
 ) {
   // Define the server details and credentials
   const config = new pulumi.Config();
-  const sshPrivateKey = config.requireSecret("sshPrivateKey");
   const dozzleUsers = config.require("users");
   const shepherdConfig = config.require("shepherd_config");
   const caddyFile = config.require("Caddyfile");
@@ -16,6 +15,12 @@ export function copyToolingDataFilesToServer(
   const backupDataScript = config.require("backupDataScript");
   const uploadToS3Script = config.require("uploadToS3Script");
   const restoreBackupScript = config.require("restoreBackupScript");
+
+  const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  const sshPrivateKey = pulumi
+    .all([encodedSshPrivateKey])
+    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   const connection = {
     host: publicIp,

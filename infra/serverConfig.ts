@@ -7,12 +7,17 @@ export function configureServer(
   publicIp: pulumi.Output<string>,
 ) {
   const config = new pulumi.Config();
-  const sshPrivateKey = config.requireSecret("sshPrivateKey");
+  const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
   const encodedSshPublicKey = config.requireSecret("sshPublicKey");
 
   // Decode the base64-encoded public key
   const sshPublicKey = pulumi
     .all([encodedSshPublicKey])
+    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
+
+  // Decode the base64-encoded private key
+  const sshPrivateKey = pulumi
+    .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   // Debug logging
