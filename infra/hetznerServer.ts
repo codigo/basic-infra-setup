@@ -32,10 +32,10 @@ export function createHetznerServer() {
 
   const server = new hcloud.Server(`${appName}-server`, {
     name: `${appName}-server`,
-    serverType: "cx11",
+    serverType: "cpx11",
     image: "ubuntu-24.04",
     sshKeys: [sshKey.id],
-    location: "ash",
+    location: "hil"
   });
 
   return {
