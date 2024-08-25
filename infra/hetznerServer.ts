@@ -40,13 +40,17 @@ export function createHetznerServer() {
     publicKey: publicKey,
   });
 
-  const server = new hcloud.Server(`${appName}-server`, {
-    name: `${appName}-server`,
-    serverType: "cpx11",
-    image: "ubuntu-24.04",
-    sshKeys: [sshKey.id],
-    location: "hil",
-  });
+  const server = new hcloud.Server(
+    `${appName}-server`,
+    {
+      name: `${appName}-server`,
+      serverType: "cpx11",
+      image: "ubuntu-24.04",
+      sshKeys: [sshKey.id],
+      location: "hil",
+    },
+    { dependsOn: sshKey },
+  );
 
   return {
     server: pulumi.output(server as hcloud.Server),

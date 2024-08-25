@@ -9,7 +9,11 @@ export function configureServerEnv(
   appBucket: pulumi.Output<Bucket>,
 ) {
   const config = new pulumi.Config();
-  const sshPrivateKey = config.requireSecret("sshPrivateKey");
+  const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  const sshPrivateKey = pulumi
+    .all([encodedSshPrivateKey])
+    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   // Create necessary environment variables in the server
   const createEnvVars = new command.remote.Command("createEnvVars", {

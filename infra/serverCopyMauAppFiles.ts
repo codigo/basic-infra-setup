@@ -8,7 +8,11 @@ export function copyMauAppDataFilesToServer(
 ) {
   // Define the server details and credentials
   const config = new pulumi.Config();
-  const sshPrivateKey = config.requireSecret("sshPrivateKey");
+  const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  const sshPrivateKey = pulumi
+    .all([encodedSshPrivateKey])
+    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   const connection = {
     host: publicIp,

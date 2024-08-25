@@ -7,7 +7,12 @@ export function deployDockerStacks(
   publicIp: pulumi.Output<string>,
 ) {
   const config = new pulumi.Config();
-  const sshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  const sshPrivateKey = pulumi
+    .all([encodedSshPrivateKey])
+    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   // SSH command to deploy docker stacks
   const deployDockerStacks = new command.remote.Command("deployDockerStacks", {

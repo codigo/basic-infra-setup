@@ -9,7 +9,12 @@ export function configureServer(
   const config = new pulumi.Config();
   const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
-  const sshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  const sshPrivateKey = pulumi
+    .all([encodedSshPrivateKey])
+    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   // Install Docker
   const installDocker = new command.remote.Command("installDocker", {
