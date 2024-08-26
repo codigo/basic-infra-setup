@@ -19,7 +19,7 @@ export function copyMauAppDataFilesToServer(
     .all([publicIp, sshPrivateKey])
     .apply(([ip, key]) => ({
       host: ip,
-      user: "root", // Corrected property
+      user: "codigo", // Corrected property
       privateKey: key,
     }));
 
@@ -41,17 +41,5 @@ export function copyMauAppDataFilesToServer(
       create: pulumi.interpolate`echo '${docker_compose_mau_app}' > ~/docker-compose.mau-app.yaml`,
     },
     { dependsOn: createMauAppFolders },
-  );
-
-  // Restore the pocketbase data
-  const restoreMauAppData = new command.remote.Command(
-    "restore pocketbase data",
-    {
-      connection: commonSshOptions,
-      create: pulumi.interpolate`
-      ~/bin/restoreBackup.js mau-app
-    `,
-    },
-    { dependsOn: scpDockerComposeTooling },
   );
 }

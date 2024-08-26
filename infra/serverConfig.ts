@@ -47,9 +47,12 @@ export function configureServer(
       echo "codigo ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers
       sudo mkdir -p /home/codigo/.ssh
       echo "${sshPublicKey}" | sudo tee -a /home/codigo/.ssh/authorized_keys
-      sudo chown -R codigo:codigo /home/codigo/.ssh
+      sudo chown -R codigo:codigo /home/codigo
       sudo chmod 700 /home/codigo/.ssh
       sudo chmod 600 /home/codigo/.ssh/authorized_keys
+      sudo touch /home/codigo/.bashrc
+      sudo chown codigo:codigo /home/codigo/.bashrc
+      sudo chmod 644 /home/codigo/.bashrc
       echo "StrictHostKeyChecking no" | sudo tee /home/codigo/.ssh/config
     `,
     },
@@ -94,6 +97,38 @@ export function configureServer(
     if (stderr) console.error("disableRootSSH stderr:", stderr);
   });
 
+  // Install Docker
+  const installDocker = new command.remote.Command(
+    "installDocker",
+    {
+    connection: commonSshOptions.apply((options) => ({
+      ...options, user: "codigo",
+    })),
+      create: `
+        sudo apt-get update
+        sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+        sudo apt-get update
+        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+        sudo usermod -aG docker codigo
+        sudo systemctl enable docker
+        sudo systemctl start docker
+      `,
+    },
+    {
+      dependsOn: disableRootSSH,
+      additionalSecretOutputs: ["stdout", "stderr"],
+    },
+  );
+
+  installDocker.stdout.apply((stdout) => {
+    if (stdout) console.log("installDocker stdout:", stdout);
+  });
+  installDocker.stderr.apply((stderr) => {
+    if (stderr) console.error("installDocker stderr:", stderr);
+  });
+
   // Install NVM and Node.js
   const installNode = new command.remote.Command(
     "install Node",
@@ -112,7 +147,7 @@ export function configureServer(
       `,
     },
     {
-      dependsOn: disableRootSSH,
+      dependsOn: installDocker,
       additionalSecretOutputs: ["stdout", "stderr"],
     },
   );
