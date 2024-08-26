@@ -43,15 +43,15 @@ export function configureServer(
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`
-        useradd -m -s /bin/bash codigo
-        echo "codigo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-        mkdir -p /home/codigo/.ssh
-        echo "${sshPublicKey}" >> /home/codigo/.ssh/authorized_keys
-        chown -R codigo:codigo /home/codigo/.ssh
-        chmod 700 /home/codigo/.ssh
-        chmod 600 /home/codigo/.ssh/authorized_keys
-        echo "StrictHostKeyChecking no" > /home/codigo/.ssh/config
-      `,
+      sudo useradd -m -s /bin/bash codigo
+      echo "codigo ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers
+      sudo mkdir -p /home/codigo/.ssh
+      echo "${sshPublicKey}" | sudo tee -a /home/codigo/.ssh/authorized_keys
+      sudo chown -R codigo:codigo /home/codigo/.ssh
+      sudo chmod 700 /home/codigo/.ssh
+      sudo chmod 600 /home/codigo/.ssh/authorized_keys
+      echo "StrictHostKeyChecking no" | sudo tee /home/codigo/.ssh/config
+    `,
     },
     { additionalSecretOutputs: ["stdout", "stderr"] },
   );
@@ -70,15 +70,19 @@ export function configureServer(
     {
       connection: commonSshOptions,
       create: `
-        sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
-        sed -i 's/^#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config
-        echo "PermitRootLogin no" >> /etc/ssh/sshd_config
-        sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
-        sed -i 's/^#PasswordAuthentication/PasswordAuthentication/' /etc/ssh/sshd_config
-        echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
-        systemctl restart sshd
-        rm -f /root/.ssh/authorized_keys
-      `,
+      sudo sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+      sudo sed -i 's/^#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config
+      echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config
+      sudo sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+      sudo sed -i 's/^#PasswordAuthentication/PasswordAuthentication/' /etc/ssh/sshd_config
+      echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config
+      if command -v systemctl &> /dev/null; then
+        sudo systemctl restart sshd
+      else
+        sudo service sshd restart || sudo service ssh restart
+      fi
+      sudo rm -f /root/.ssh/authorized_keys
+    `,
     },
     { dependsOn: createUser, additionalSecretOutputs: ["stdout", "stderr"] },
   );
