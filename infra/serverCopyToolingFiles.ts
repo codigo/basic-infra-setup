@@ -8,6 +8,9 @@ export function copyToolingDataFilesToServer(
 ) {
   // Define the server details and credentials
   const config = new pulumi.Config();
+
+  const docker_compose_tooling = config.require("docker_compose_tooling");
+
   const dozzleUsers = config.require("users");
   const shepherdConfig = config.require("shepherd_config");
   const caddyFile = config.require("Caddyfile");
@@ -37,79 +40,74 @@ export function copyToolingDataFilesToServer(
       mkdir -p /home/codigo/bin &&
       mkdir -p /home/codigo/tooling/data/caddy &&
       mkdir -p /home/codigo/tooling/data/dozzle &&
-      mkdir -p /home/codigo/tooling/data/shepherd
+      mkdir -p /home/codigo/tooling/data/shepherd &&
+      mkdir -p /home/codigo/tooling/data/typesense
     `,
     },
   );
 
   // SCP commands to copy docker compose tooling string to the server
-  const scpDockerComposeTooling = new command.remote.CopyToRemote(
-    "scp docker compose tooling",
+
+  const scpDockerComposeTooling = new command.remote.Command(
+    "copy docker compose tooling",
     {
       connection,
-      source: new pulumi.asset.StringAsset(`docker_compose_tooling`),
-      remotePath: "~/docker-compose.tooling.yaml",
+      create: pulumi.interpolate`echo '${docker_compose_tooling}' > ~/docker-compose.tooling.yaml`,
     },
     { dependsOn: createToolingFolders },
   );
 
   // SCP commands to copy necessary tooling data files to the server
-  const scpToolingDataDozzle = new command.remote.CopyToRemote(
-    "scp tooling data dozzle",
+  const scpToolingDataDozzle = new command.remote.Command(
+    "copy dozzle users file",
     {
       connection,
-      source: new pulumi.asset.StringAsset(dozzleUsers),
-      remotePath: "~/tooling/data/dozzle/users.yaml",
+      create: pulumi.interpolate`echo '${dozzleUsers}' > ~/tooling/data/dozzle/users.yaml`,
     },
     { dependsOn: createToolingFolders },
   );
 
-  const scpToolingDataShepherd = new command.remote.CopyToRemote(
-    "copy tooling data shepherd",
+  const scpToolingDataShepherd = new command.remote.Command(
+    "copy shepherd config",
     {
       connection,
-      source: new pulumi.asset.StringAsset(shepherdConfig),
-      remotePath: "~/tooling/data/shepherd/shepherd-config.yaml",
+      create: pulumi.interpolate`echo '${shepherdConfig}' > ~/tooling/data/shepherd/shepherd-config.yaml`,
     },
     { dependsOn: createToolingFolders },
   );
 
-  const scpCaddyFile = new command.remote.CopyToRemote(
-    "copy caddyfile",
+  const scpCaddyFile = new command.remote.Command(
+    "copy caddy file",
     {
       connection,
-      source: new pulumi.asset.StringAsset(caddyFile),
-      remotePath: "~/tooling/data/caddy/Caddyfile",
+      create: pulumi.interpolate`echo '${caddyFile}' > ~/tooling/data/caddy/Caddyfile`,
     },
     { dependsOn: createToolingFolders },
   );
 
-  const scpBinRestoreBackups = new command.remote.CopyToRemote(
-    "copy restoreBackup",
+  const scpBinRestoreBackups = new command.remote.Command(
+    "copy restore backup script",
     {
       connection,
-      source: new pulumi.asset.StringAsset(restoreBackupScript),
-      remotePath: "~/bin/restoreBackup.js",
+      create: pulumi.interpolate`echo '${restoreBackupScript}' > ~/bin/restoreBackup.js`,
     },
     { dependsOn: createToolingFolders },
   );
 
-  const scpBinBackupData = new command.remote.CopyToRemote(
-    "copy backupData",
+  const scpBinBackupData = new command.remote.Command(
+    "copy backup data script",
     {
       connection,
-      source: new pulumi.asset.StringAsset(backupDataScript),
-      remotePath: "~/bin/backupData.js",
+      create: pulumi.interpolate`echo '${backupDataScript}' > ~/bin/backupData.js`,
     },
     { dependsOn: createToolingFolders },
   );
 
-  const scpBinUploadToS3 = new command.remote.CopyToRemote(
-    "copy uploadToS3",
+  const scpBinUploadToS3 = new command.remote.Command(
+    "copy upload to S3 script",
     {
       connection,
-      source: new pulumi.asset.StringAsset(uploadToS3Script),
-      remotePath: "~/bin/uploadToS3.js",
+      create: pulumi.interpolate`echo '${uploadToS3Script}' > ~/bin/uploadToS3.js`,
     },
     { dependsOn: createToolingFolders },
   );

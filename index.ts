@@ -1,3 +1,4 @@
+import * as pulumi from "@pulumi/pulumi";
 import { createS3Bucket } from "./infra/s3";
 import { createIAMResources } from "./infra/iam";
 import { createHetznerServer } from "./infra/hetznerServer";
@@ -18,23 +19,34 @@ const { iamUser, accessKey } = createIAMResources();
 const { server, publicIp } = createHetznerServer();
 
 // Configure server
-configureServer(server, publicIp);
+const configuredServer = publicIp.apply((ip) =>
+  configureServer(server, pulumi.output(ip)),
+);
 
 // Copy tooling data files to server
-copyToolingDataFilesToServer(server, publicIp);
+const toolingFilesCopied = configuredServer.apply(() =>
+  copyToolingDataFilesToServer(server, publicIp),
+);
 
 // Configure server environment variables
-configureServerEnv(server, publicIp, appBucket);
+const envConfigured = toolingFilesCopied.apply(() =>
+  configureServerEnv(server, publicIp, appBucket),
+);
 
 // Copy Mau App data files to server
-copyMauAppDataFilesToServer(server, publicIp);
+const mauAppFilesCopied = envConfigured.apply(() =>
+  copyMauAppDataFilesToServer(server, publicIp),
+);
 
 // Deploy docker stacks
-deployDockerStacks(server, publicIp);
+const dockerStacksDeployed = mauAppFilesCopied.apply(() =>
+  deployDockerStacks(server, publicIp),
+);
 
 // Create Cloudflare tunnels
-const { maumercadoTunnel, maumercadoDns, codigoTunnel, codigoDns } =
-  createCloudflareTunnels(publicIp);
+const cloudflareTunnels = dockerStacksDeployed.apply(() =>
+  createCloudflareTunnels(publicIp),
+);
 
 // Export important values
 export const serverId = server.id;
@@ -43,7 +55,15 @@ export const appBucketName = appBucket.id;
 export const iamUserName = iamUser.name;
 export const iamAccessKeyId = accessKey.id;
 export const iamSecretAccessKey = accessKey.secret;
-export const maumercadoTunnelId = maumercadoTunnel.id;
-export const maumercadoDnsId = maumercadoDns.id;
-export const codigoTunnelId = codigoTunnel.id;
-export const codigoDnsId = codigoDns.id;
+export const maumercadoTunnelId = cloudflareTunnels.apply(
+  (tunnels) => tunnels.maumercadoTunnel.id,
+);
+export const maumercadoDnsId = cloudflareTunnels.apply(
+  (tunnels) => tunnels.maumercadoDns.id,
+);
+export const codigoTunnelId = cloudflareTunnels.apply(
+  (tunnels) => tunnels.codigoTunnel.id,
+);
+export const codigoDnsId = cloudflareTunnels.apply(
+  (tunnels) => tunnels.codigoDns.id,
+);

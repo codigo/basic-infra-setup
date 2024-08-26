@@ -11,19 +11,18 @@ export function configureServer(
   const encodedSshPublicKey = config.requireSecret("sshPublicKey");
 
   // Decode the base64-encoded public key
-  const sshPublicKey = pulumi
-    .all([encodedSshPublicKey])
-    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
+  const sshPublicKey = encodedSshPublicKey.apply((encoded) =>
+    Buffer.from(encoded, "base64").toString("utf-8"),
+  );
 
   // Decode the base64-encoded private key
-  const sshPrivateKey = pulumi
-    .all([encodedSshPrivateKey])
-    .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
+  const sshPrivateKey = encodedSshPrivateKey.apply((encoded) =>
+    Buffer.from(encoded, "base64").toString("utf-8"),
+  );
 
   // Debug logging
-  console.log(
-    "SSH Public Key length:",
-    sshPublicKey.apply((key) => key.length),
+  sshPublicKey.apply((key) =>
+    console.log("SSH Public Key length:", key.length),
   );
   sshPrivateKey.apply((key) =>
     console.log("SSH Private Key length:", key.length),
@@ -34,7 +33,7 @@ export function configureServer(
     .all([publicIp, sshPrivateKey])
     .apply(([ip, key]) => ({
       host: ip,
-      username: "root",
+      user: "root",
       privateKey: key,
     }));
 
@@ -44,15 +43,15 @@ export function configureServer(
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`
-      useradd -m -s /bin/bash codigo
-      echo "codigo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-      mkdir -p /home/codigo/.ssh
-      echo "${sshPublicKey}" >> /home/codigo/.ssh/authorized_keys
-      chown -R codigo:codigo /home/codigo/.ssh
-      chmod 700 /home/codigo/.ssh
-      chmod 600 /home/codigo/.ssh/authorized_keys
-      echo "StrictHostKeyChecking no" > /home/codigo/.ssh/config
-    `,
+        useradd -m -s /bin/bash codigo
+        echo "codigo ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+        mkdir -p /home/codigo/.ssh
+        echo "${sshPublicKey}" >> /home/codigo/.ssh/authorized_keys
+        chown -R codigo:codigo /home/codigo/.ssh
+        chmod 700 /home/codigo/.ssh
+        chmod 600 /home/codigo/.ssh/authorized_keys
+        echo "StrictHostKeyChecking no" > /home/codigo/.ssh/config
+      `,
     },
     { additionalSecretOutputs: ["stdout", "stderr"] },
   );
@@ -93,16 +92,18 @@ export function configureServer(
 
   // Install NVM and Node.js
   const installNode = new command.remote.Command(
-    "installNode",
+    "install Node",
     {
-      connection: pulumi
-        .all([commonSshOptions])
-        .apply(([options]) => ({ ...options, username: "codigo" })),
+      connection: commonSshOptions.apply((options) => ({
+        ...options,
+        user: "codigo",
+      })),
       create: `
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
         export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-        nvm install node
+        [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+        nvm install 22 && \
+        nvm alias default 22 && \
         npm install -g aws-sdk
       `,
     },

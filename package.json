@@ -13,8 +13,7 @@
     "@pulumi/command": "^1.0.1",
     "@pulumi/hcloud": "^1.20.0",
     "@pulumi/pulumi": "*",
-    "@pulumi/random": "^4.16.3",
-    "aws-sdk": "^2.1682.0"
+    "@pulumi/random": "^4.16.3"
   },
   "devDependencies": {
     "@types/node": "22.5.0",
