@@ -15,17 +15,17 @@
 		reverse_proxy mau-app-maumercado:3000
 	}
 
-	@pocketbase host pocketbase.codigo.sh
+	@pocketbase host pocketbase.codigo.sh pocketbase.maumercado.com
 	handle @pocketbase {
 		reverse_proxy pocketbase:8090
 	}
 
-	@typesense host typesense.codigo.sh
+	@typesense host typesense.codigo.sh typesense.maumercado.com
 	handle @typesense {
 		reverse_proxy typesense:8108
 	}
 
-	@dozzle host dozzle.codigo.sh
+	@dozzle host dozzle.codigo.sh dozzle.maumercado.com
 	handle @dozzle {
 		reverse_proxy dozzle:8080
 	}

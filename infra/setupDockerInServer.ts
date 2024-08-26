@@ -20,18 +20,18 @@ export function configureServer(
   const installDocker = new command.remote.Command("installDocker", {
     connection: {
       host: publicIp,
-      user: "root",
+      user: "codigo", // Use the non-root user "codigo"
       privateKey: sshPrivateKey,
     },
     create: `
-              apt-get update
-              apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-              add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-              apt-get update
-              apt-get install -y docker-ce
-              usermod -aG docker codigo
-          `,
+      sudo apt-get update
+      sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      sudo apt-get update
+      sudo apt-get install -y docker-ce
+      sudo usermod -aG docker codigo
+    `,
   });
 
   // Initialize Docker Swarm
@@ -58,9 +58,9 @@ export function configureServer(
         privateKey: sshPrivateKey,
       },
       create: `
-      docker network create --driver overlay internal_net
-      docker network create --driver overlay caddy_net
-      docker network create --driver overlay dozzle
+        docker network create --driver overlay internal_net
+        docker network create --driver overlay caddy_net
+        docker network create --driver overlay dozzle
     `,
     },
     { dependsOn: initDockerSwarm },
@@ -76,8 +76,8 @@ export function configureServer(
         privateKey: sshPrivateKey,
       },
       create: `
-      echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
-      echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
+        echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
+        echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
     `,
     },
     { dependsOn: createNetworks },

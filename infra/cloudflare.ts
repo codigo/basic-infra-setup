@@ -80,6 +80,20 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
     "A",
     serverIp,
   );
+  const maumercadoPocketbaseDns = createDnsRecord(
+    "maumercado-pocketbase",
+    "pocketbase",
+    maumercadoZoneId,
+    "A",
+    serverIp,
+  );
+  const maumercadoTypesenseDns = createDnsRecord(
+    "maumercado-typesense",
+    "typesense",
+    maumercadoZoneId,
+    "A",
+    serverIp,
+  );
 
   // Codigo.sh DNS records
   const codigoDns = createDnsRecord(
@@ -98,14 +112,14 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
   );
 
   // Additional service DNS records
-  const pocketbaseDns = createDnsRecord(
+  const codigoPocketbaseDns = createDnsRecord(
     "codigo-pocketbase",
     "pocketbase",
     codigoZoneId,
     "A",
     serverIp,
   );
-  const typesenseDns = createDnsRecord(
+  const codigoTypesenseDns = createDnsRecord(
     "codigo-typesense",
     "typesense",
     codigoZoneId,
@@ -134,6 +148,14 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
           },
           {
             hostname: "www.maumercado.com",
+            service: `http://${ip}:80`,
+          },
+          {
+            hostname: "pocketbase.maumercado.com",
+            service: `http://${ip}:80`,
+          },
+          {
+            hostname: "typesense.maumercado.com",
             service: `http://${ip}:80`,
           },
           {
@@ -184,11 +206,13 @@ export function createCloudflareTunnels(serverIp: pulumi.Output<string>) {
     maumercadoTunnel,
     maumercadoDns,
     wwwMaumercadoDns,
+    maumercadoPocketbaseDns,
+    maumercadoTypesenseDns,
     codigoTunnel,
     codigoDns,
     wwwCodigoDns,
-    pocketbaseDns,
-    typesenseDns,
+    codigoPocketbaseDns,
+    codigoTypesenseDns,
     dozzleDns,
   };
 }
