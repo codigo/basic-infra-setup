@@ -16,13 +16,19 @@ export function configureServer(
     .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
+
+  const connection = pulumi
+    .all([publicIp, sshPrivateKey])
+    .apply(([ip, key]) => ({
+      host: ip,
+      user: "codigo",
+      privateKey: key,
+    }));
+
+
   // Install Docker
   const installDocker = new command.remote.Command("installDocker", {
-    connection: {
-      host: publicIp,
-      user: "codigo", // Use the non-root user "codigo"
-      privateKey: sshPrivateKey,
-    },
+    connection,
     create: `
       sudo apt-get update
       sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
@@ -38,11 +44,7 @@ export function configureServer(
   const initDockerSwarm = new command.remote.Command(
     "initDockerSwarm",
     {
-      connection: {
-        host: publicIp,
-        user: "codigo",
-        privateKey: sshPrivateKey,
-      },
+      connection,
       create: "docker swarm init",
     },
     { dependsOn: installDocker },
@@ -52,11 +54,7 @@ export function configureServer(
   const createNetworks = new command.remote.Command(
     "createNetworks",
     {
-      connection: {
-        host: publicIp,
-        user: "codigo",
-        privateKey: sshPrivateKey,
-      },
+      connection,
       create: `
         docker network create --driver overlay internal_net
         docker network create --driver overlay caddy_net
@@ -70,11 +68,7 @@ export function configureServer(
   const setupSecrets = new command.remote.Command(
     "setupSecrets",
     {
-      connection: {
-        host: publicIp,
-        user: "codigo",
-        privateKey: sshPrivateKey,
-      },
+      connection,
       create: `
         echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
         echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
