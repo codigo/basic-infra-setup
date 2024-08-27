@@ -14,7 +14,9 @@ export const copyToolingDataFilesToServer = (server: Server) => {
 
   const backupDataScript = config.require("backupDataScript");
   const uploadToS3Script = config.require("uploadToS3Script");
-  const restoreBackupScript = config.require("restoreBackupScript");
+  const scpBinRestoreAndCopyBackupScript = config.require(
+    "scpBinRestoreAndCopyBackupScript",
+  );
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
@@ -82,11 +84,11 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     { dependsOn: createToolingFolders },
   );
 
-  const scpBinRestoreBackups = new command.remote.Command(
+  const scpBinRestoreAndCopyBackup = new command.remote.Command(
     "copy restore backup script",
     {
       connection,
-      create: pulumi.interpolate`echo '${restoreBackupScript}' > ~/bin/restoreBackup.js`,
+      create: pulumi.interpolate`echo '${scpBinRestoreAndCopyBackupScript}' > ~/bin/restoreBackup.js`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -122,7 +124,13 @@ export const copyToolingDataFilesToServer = (server: Server) => {
       (crontab -u codigo -l 2>/dev/null; echo "30 */12 * * * /home/codigo/.nvm/versions/node/$(su - codigo -c 'nvm current')/bin/node /home/codigo/bin/uploadToS3.js") | crontab -u codigo -
     `,
     },
-    { dependsOn: [scpBinRestoreBackups, scpBinBackupData, scpBinUploadToS3] },
+    {
+      dependsOn: [
+        scpBinRestoreAndCopyBackup,
+        scpBinBackupData,
+        scpBinUploadToS3,
+      ],
+    },
   );
 
   return {
