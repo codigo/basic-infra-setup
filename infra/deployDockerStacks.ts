@@ -6,9 +6,11 @@ export const deployDockerStacks = (server: Server) => {
   const config = new pulumi.Config();
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+  const dockerUsername = config.requireSecret("dockerUsername");
+  const dockerPassword = config.requireSecret("dockerPassword");
 
-  const MAUAPPDOCKERCOMPOSE = "/home/codigo/docker-compose.mau-app.yaml";
-  const TOOLINGDOCKERCOMPOSE = "/home/codigo/docker-compose.tooling.yaml";
+  const MAUAPPDOCKERCOMPOSE = "docker-compose.mau-app.yaml";
+  const TOOLINGDOCKERCOMPOSE = "docker-compose.tooling.yaml";
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
@@ -23,8 +25,9 @@ export const deployDockerStacks = (server: Server) => {
     },
     create: `
       # Deploy Docker stacks
-      docker stack deploy -c ${MAUAPPDOCKERCOMPOSE} mau-app
-      docker stack deploy -c ${TOOLINGDOCKERCOMPOSE} tooling
+      docker login -u ${dockerUsername} -p ${dockerPassword}
+      docker stack deploy --with-registry-auth -d --compose-file ${MAUAPPDOCKERCOMPOSE} mau-app
+      docker stack deploy --with-registry-auth -d --compose-file ${TOOLINGDOCKERCOMPOSE} tooling
     `,
   });
 
