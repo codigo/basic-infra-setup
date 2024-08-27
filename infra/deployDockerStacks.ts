@@ -28,7 +28,7 @@ export const deployDockerStacks = (server: Server) => {
         echo "docker-compose.tooling.yaml not found"
         exit 1
       fi
-      docker stack deploy -c docker-compose.mau_app.yaml mau-app
+      docker stack deploy -c docker-compose.mau-app.yaml mau-app
       docker stack deploy -c docker-compose.tooling.yaml tooling
     `,
   });
