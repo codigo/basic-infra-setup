@@ -41,9 +41,7 @@ async function downloadBackup(projectName, backupFileName) {
   };
 
   const data = await s3.getObject(params).promise();
-  const tempDir = fs.mkdtempSync(
-    path.join(require("os").tmpdir(), "backup-"),
-  );
+  const tempDir = fs.mkdtempSync(path.join(require("os").tmpdir(), "backup-"));
   const tempFilePath = path.join(tempDir, backupFileName);
 
   fs.writeFileSync(tempFilePath, data.Body);
@@ -58,22 +56,27 @@ async function extractLocally(tempFilePath, projectName) {
     fs.mkdirSync(projectPath, { recursive: true });
   }
 
-  await execAsync(
-    `tar -xzf "${tempFilePath}" -C "${RESTORE_DIR}" --overwrite`,
-  );
+  await execAsync(`tar -xzf "${tempFilePath}" -C "${RESTORE_DIR}" --overwrite`);
   console.log(`Backup extracted to: ${projectPath}`);
 }
 
-async function copyToRemote(sourceFile, destinationFolder, remoteHost, sshKeyFile) {
+async function copyToRemote(
+  sourceFile,
+  destinationFolder,
+  remoteHost,
+  sshKeyFile,
+) {
   let scpCommand = `scp`;
-  
+
   if (sshKeyFile) {
     scpCommand += ` -i "${sshKeyFile}"`;
   }
-  
+
   scpCommand += ` "${sourceFile}" ${remoteHost}:"${destinationFolder}"`;
 
-  console.log(`Copying file: ${path.basename(sourceFile)} to ${remoteHost}:${destinationFolder}`);
+  console.log(
+    `Copying file: ${path.basename(sourceFile)} to ${remoteHost}:${destinationFolder}`,
+  );
 
   const { stdout, stderr } = await execAsync(scpCommand);
 
@@ -88,13 +91,18 @@ async function copyToRemote(sourceFile, destinationFolder, remoteHost, sshKeyFil
   }
 }
 
-async function extractRemotely(remoteHost, remoteFilePath, remoteDestination, sshKeyFile) {
+async function extractRemotely(
+  remoteHost,
+  remoteFilePath,
+  remoteDestination,
+  sshKeyFile,
+) {
   let sshCommand = `ssh`;
-  
+
   if (sshKeyFile) {
     sshCommand += ` -i "${sshKeyFile}"`;
   }
-  
+
   sshCommand += ` ${remoteHost} "mkdir -p ${remoteDestination} && tar -xzf ${remoteFilePath} -C ${remoteDestination} --overwrite"`;
 
   console.log(`Extracting backup on remote host: ${remoteHost}`);
@@ -134,21 +142,44 @@ async function restoreAndCopyBackup(projectName, backupFileName) {
       console.log(`Latest backup found: ${backupFileName}`);
     }
 
-    const { tempDir, tempFilePath } = await downloadBackup(projectName, backupFileName);
+    const { tempDir, tempFilePath } = await downloadBackup(
+      projectName,
+      backupFileName,
+    );
 
-    const destinationType = await getUserInput("Enter destination type (local/remote): ");
+    const destinationType = await getUserInput(
+      "Enter destination type (local/remote): ",
+    );
 
     if (destinationType.toLowerCase() === "local") {
       await extractLocally(tempFilePath, projectName);
     } else if (destinationType.toLowerCase() === "remote") {
-      const remoteHost = await getUserInput("Enter remote host (e.g., user@example.com): ");
-      const remoteDestination = await getUserInput("Enter remote destination folder: ");
-      const sshKeyFile = await getUserInput("Enter SSH key file path (optional, press Enter to skip): ");
+      const remoteHost = await getUserInput(
+        "Enter remote host (e.g., user@example.com): ",
+      );
+      const remoteDestination = await getUserInput(
+        "Enter remote destination folder: ",
+      );
+      const sshKeyFile = await getUserInput(
+        "Enter SSH key file path (optional, press Enter to skip): ",
+      );
 
-      await copyToRemote(tempFilePath, remoteDestination, remoteHost, sshKeyFile || null);
-      await extractRemotely(remoteHost, path.join(remoteDestination, backupFileName), remoteDestination, sshKeyFile || null);
+      await copyToRemote(
+        tempFilePath,
+        remoteDestination,
+        remoteHost,
+        sshKeyFile || null,
+      );
+      await extractRemotely(
+        remoteHost,
+        path.join(remoteDestination, backupFileName),
+        remoteDestination,
+        sshKeyFile || null,
+      );
     } else {
-      console.error("Invalid destination type. Please choose 'local' or 'remote'.");
+      console.error(
+        "Invalid destination type. Please choose 'local' or 'remote'.",
+      );
     }
 
     // Clean up the temporary directory
@@ -165,7 +196,9 @@ async function restoreAndCopyBackup(projectName, backupFileName) {
 const [, , projectName, backupFileName] = process.argv;
 
 if (!projectName) {
-  console.error("Usage: node restoreAndCopyBackup.js <projectName> [backupFileName]");
+  console.error(
+    "Usage: node restoreAndCopyBackup.js <projectName> [backupFileName]",
+  );
   process.exit(1);
 }
 

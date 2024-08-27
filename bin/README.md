@@ -139,6 +139,7 @@ node restoreAndCopyBackup.js project1
 ```
 
 This command will:
+
 1. Retrieve the latest backup for project1 from S3.
 2. Prompt the user to choose between local or remote destination.
 3. If local is chosen, extract the backup to the local restore directory.
@@ -150,6 +151,7 @@ node restoreAndCopyBackup.js project2 project2_2024-08-19-12-00-00.tar.gz
 ```
 
 This command will:
+
 1. Retrieve the specified backup for project2 from S3.
 2. Prompt the user to choose between local or remote destination.
 3. If remote is chosen:
@@ -166,6 +168,7 @@ node restoreAndCopyBackup.js project3
 ```
 
 This command will:
+
 1. Retrieve the latest backup for project3 from S3.
 2. Prompt the user to choose between local or remote destination.
 3. If remote is chosen, follow the same steps as in the previous example for remote restoration.
