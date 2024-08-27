@@ -4,6 +4,7 @@ const path = require("path");
 const { exec } = require("child_process");
 const util = require("util");
 const readline = require("readline");
+const os = require("os");
 
 const execAsync = util.promisify(exec);
 
@@ -15,7 +16,7 @@ const s3 = new AWS.S3();
 const S3_BUCKET = process.env.S3_BACKUPS_BUCKET;
 const RESTORE_DIR = process.env.RESTORE_DIR || process.env.HOME;
 
-async function getLatestBackup(projectName) {
+const getLatestBackup = async (projectName) => {
   const params = {
     Bucket: S3_BUCKET,
     Prefix: `backups/${projectName}/`,
@@ -26,31 +27,26 @@ async function getLatestBackup(projectName) {
     throw new Error(`No backups found for project: ${projectName}`);
   }
 
-  const sortedContents = data.Contents.sort(
-    (a, b) => b.LastModified - a.LastModified,
+  return path.basename(
+    data.Contents.sort((a, b) => b.LastModified - a.LastModified)[0].Key
   );
+};
 
-  return path.basename(sortedContents[0].Key);
-}
-
-async function downloadBackup(projectName, backupFileName) {
+const downloadBackup = async (projectName, backupFileName) => {
   const s3Key = `backups/${projectName}/${backupFileName}`;
-  const params = {
-    Bucket: S3_BUCKET,
-    Key: s3Key,
-  };
+  const params = { Bucket: S3_BUCKET, Key: s3Key };
 
   const data = await s3.getObject(params).promise();
-  const tempDir = fs.mkdtempSync(path.join(require("os").tmpdir(), "backup-"));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "backup-"));
   const tempFilePath = path.join(tempDir, backupFileName);
 
   fs.writeFileSync(tempFilePath, data.Body);
   console.log(`Backup downloaded to: ${tempFilePath}`);
 
   return { tempDir, tempFilePath };
-}
+};
 
-async function extractLocally(tempFilePath, projectName) {
+const extractLocally = async (tempFilePath, projectName) => {
   const projectPath = path.join(RESTORE_DIR, projectName);
   if (!fs.existsSync(projectPath)) {
     fs.mkdirSync(projectPath, { recursive: true });
@@ -58,25 +54,13 @@ async function extractLocally(tempFilePath, projectName) {
 
   await execAsync(`tar -xzf "${tempFilePath}" -C "${RESTORE_DIR}" --overwrite`);
   console.log(`Backup extracted to: ${projectPath}`);
-}
+};
 
-async function copyToRemote(
-  sourceFile,
-  destinationFolder,
-  remoteHost,
-  sshKeyFile,
-) {
-  let scpCommand = `scp`;
+const copyToRemote = async (sourceFile, destinationFolder, remoteHost, sshKeyFile) => {
+  const sshKeyOption = sshKeyFile ? `-i "${sshKeyFile}"` : "";
+  const scpCommand = `scp ${sshKeyOption} "${sourceFile}" ${remoteHost}:"${destinationFolder}"`;
 
-  if (sshKeyFile) {
-    scpCommand += ` -i "${sshKeyFile}"`;
-  }
-
-  scpCommand += ` "${sourceFile}" ${remoteHost}:"${destinationFolder}"`;
-
-  console.log(
-    `Copying file: ${path.basename(sourceFile)} to ${remoteHost}:${destinationFolder}`,
-  );
+  console.log(`Copying file: ${path.basename(sourceFile)} to ${remoteHost}:${destinationFolder}`);
 
   const { stdout, stderr } = await execAsync(scpCommand);
 
@@ -86,24 +70,12 @@ async function copyToRemote(
   }
 
   console.log("File copied successfully!");
-  if (stdout) {
-    console.log(stdout);
-  }
-}
+  if (stdout) console.log(stdout);
+};
 
-async function extractRemotely(
-  remoteHost,
-  remoteFilePath,
-  remoteDestination,
-  sshKeyFile,
-) {
-  let sshCommand = `ssh`;
-
-  if (sshKeyFile) {
-    sshCommand += ` -i "${sshKeyFile}"`;
-  }
-
-  sshCommand += ` ${remoteHost} "mkdir -p ${remoteDestination} && tar -xzf ${remoteFilePath} -C ${remoteDestination} --overwrite"`;
+const extractRemotely = async (remoteHost, remoteFilePath, remoteDestination, sshKeyFile) => {
+  const sshKeyOption = sshKeyFile ? `-i "${sshKeyFile}"` : "";
+  const sshCommand = `ssh ${sshKeyOption} ${remoteHost} "mkdir -p ${remoteDestination} && tar -xzf ${remoteFilePath} -C ${remoteDestination} --overwrite"`;
 
   console.log(`Extracting backup on remote host: ${remoteHost}`);
 
@@ -115,12 +87,10 @@ async function extractRemotely(
   }
 
   console.log("Backup extracted successfully on remote host!");
-  if (stdout) {
-    console.log(stdout);
-  }
-}
+  if (stdout) console.log(stdout);
+};
 
-async function getUserInput(question) {
+const getUserInput = (question) => {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -132,57 +102,32 @@ async function getUserInput(question) {
       resolve(answer);
     });
   });
-}
+};
 
-async function restoreAndCopyBackup(projectName, backupFileName) {
+const restoreAndCopyBackup = async (projectName, backupFileName) => {
   try {
+    const finalBackupFileName = backupFileName || await getLatestBackup(projectName);
     if (!backupFileName) {
-      console.log("No backup file specified. Retrieving the latest backup...");
-      backupFileName = await getLatestBackup(projectName);
-      console.log(`Latest backup found: ${backupFileName}`);
+      console.log(`Latest backup found: ${finalBackupFileName}`);
     }
 
-    const { tempDir, tempFilePath } = await downloadBackup(
-      projectName,
-      backupFileName,
-    );
+    const { tempDir, tempFilePath } = await downloadBackup(projectName, finalBackupFileName);
 
-    const destinationType = await getUserInput(
-      "Enter destination type (local/remote): ",
-    );
+    const destinationType = await getUserInput("Enter destination type (local/remote): ");
 
     if (destinationType.toLowerCase() === "local") {
       await extractLocally(tempFilePath, projectName);
     } else if (destinationType.toLowerCase() === "remote") {
-      const remoteHost = await getUserInput(
-        "Enter remote host (e.g., user@example.com): ",
-      );
-      const remoteDestination = await getUserInput(
-        "Enter remote destination folder: ",
-      );
-      const sshKeyFile = await getUserInput(
-        "Enter SSH key file path (optional, press Enter to skip): ",
-      );
+      const remoteHost = await getUserInput("Enter remote host (e.g., user@example.com): ");
+      const remoteDestination = await getUserInput("Enter remote destination folder: ");
+      const sshKeyFile = await getUserInput("Enter SSH key file path (optional, press Enter to skip): ");
 
-      await copyToRemote(
-        tempFilePath,
-        remoteDestination,
-        remoteHost,
-        sshKeyFile || null,
-      );
-      await extractRemotely(
-        remoteHost,
-        path.join(remoteDestination, backupFileName),
-        remoteDestination,
-        sshKeyFile || null,
-      );
+      await copyToRemote(tempFilePath, remoteDestination, remoteHost, sshKeyFile || null);
+      await extractRemotely(remoteHost, path.join(remoteDestination, finalBackupFileName), remoteDestination, sshKeyFile || null);
     } else {
-      console.error(
-        "Invalid destination type. Please choose 'local' or 'remote'.",
-      );
+      console.error("Invalid destination type. Please choose 'local' or 'remote'.");
     }
 
-    // Clean up the temporary directory
     fs.rmSync(tempDir, { recursive: true, force: true });
     console.log("Temporary files cleaned up");
 
@@ -190,15 +135,12 @@ async function restoreAndCopyBackup(projectName, backupFileName) {
   } catch (error) {
     console.error("Error during restore and copy process:", error);
   }
-}
+};
 
-// Check if projectName is provided as a command line argument
 const [, , projectName, backupFileName] = process.argv;
 
 if (!projectName) {
-  console.error(
-    "Usage: node restoreAndCopyBackup.js <projectName> [backupFileName]",
-  );
+  console.error("Usage: node restoreAndCopyBackup.js <projectName> [backupFileName]");
   process.exit(1);
 }
 

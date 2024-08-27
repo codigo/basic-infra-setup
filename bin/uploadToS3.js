@@ -10,51 +10,57 @@ const s3 = new AWS.S3();
 const S3_BUCKET = process.env.S3_BACKUPS_BUCKET;
 const BACKUP_DIR = process.env.BACKUP_DIR;
 
-async function uploadToS3() {
+const checkS3BucketExists = async (bucket) => {
   try {
-    // Check if the S3 bucket exists
-    try {
-      await s3.headBucket({ Bucket: S3_BUCKET }).promise();
-    } catch (error) {
-      if (error.code === "NotFound") {
-        console.error(`Error: The S3 bucket '${S3_BUCKET}' does not exist.`);
-        return;
-      } else {
-        throw error;
-      }
+    await s3.headBucket({ Bucket: bucket }).promise();
+    return true;
+  } catch (error) {
+    if (error.code === "NotFound") {
+      console.error(`Error: The S3 bucket '${bucket}' does not exist.`);
+      return false;
     }
+    throw error;
+  }
+};
 
-    const files = fs.readdirSync(BACKUP_DIR);
+const getBackupFiles = (dir) =>
+  fs.readdirSync(dir).filter((file) => file.endsWith(".tar.gz"));
 
-    for (const file of files) {
-      if (file.endsWith(".tar.gz")) {
-        const filePath = path.join(BACKUP_DIR, file);
-        const fileContent = fs.readFileSync(filePath);
+const readFileContent = (filePath) => fs.readFileSync(filePath);
 
-        // Extract folder name from the file name
-        const folderName = file.split("_")[0];
+const createS3UploadParams = (bucket, file, content) => ({
+  Bucket: bucket,
+  Key: `backups/${file.split("_")[0]}/${file}`,
+  Body: content,
+});
 
-        // Set up S3 upload parameters
-        const params = {
-          Bucket: S3_BUCKET,
-          Key: `backups/${folderName}/${file}`, // Use folder structure in S3
-          Body: fileContent,
-        };
+const uploadFileToS3 = async (params) => {
+  try {
+    const result = await s3.upload(params).promise();
+    console.log(`File uploaded successfully to ${result.Location}`);
+  } catch (uploadError) {
+    console.error(`Error uploading file ${params.Key}:`, uploadError);
+  }
+};
 
-        try {
-          // Upload to S3
-          const result = await s3.upload(params).promise();
-          console.log(`File uploaded successfully to ${result.Location}`);
-        } catch (uploadError) {
-          console.error(`Error uploading file ${file}:`, uploadError);
-        }
-      }
-    }
+const processFile = async (file) => {
+  const filePath = path.join(BACKUP_DIR, file);
+  const fileContent = readFileContent(filePath);
+  const params = createS3UploadParams(S3_BUCKET, file, fileContent);
+  await uploadFileToS3(params);
+};
+
+const uploadToS3 = async () => {
+  try {
+    if (!(await checkS3BucketExists(S3_BUCKET))) return;
+
+    const files = getBackupFiles(BACKUP_DIR);
+    await Promise.all(files.map(processFile));
 
     console.log("Upload process completed.");
   } catch (error) {
     console.error("Error during upload process:", error);
   }
-}
+};
 
 uploadToS3();
