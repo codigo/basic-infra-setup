@@ -2,10 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export function deployDockerStacks(
-  server: pulumi.Output<Server>,
-  publicIp: pulumi.Output<string>,
-) {
+export const deployDockerStacks = (server: Server) => {
   const config = new pulumi.Config();
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
@@ -17,7 +14,7 @@ export function deployDockerStacks(
   // SSH command to deploy docker stacks
   const deployDockerStacks = new command.remote.Command("deployDockerStacks", {
     connection: {
-      host: publicIp,
+      host: server.ipv4Address,
       user: "codigo",
       privateKey: sshPrivateKey,
     },
@@ -43,5 +40,7 @@ export function deployDockerStacks(
     if (stderr) console.error("deployDockerStacks stderr:", stderr);
   });
 
-  return deployDockerStacks;
-}
+  return {
+    deployDockerStacksResult: deployDockerStacks,
+  };
+};

@@ -1,7 +1,7 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
-export function createIAMResources() {
+export const createIAMResources = () => {
   const config = new pulumi.Config();
   const appName = config.require("appName");
 
@@ -54,5 +54,10 @@ export function createIAMResources() {
     { dependsOn: [iamUser, policy] },
   );
 
-  return { iamUser, accessKey };
-}
+  return {
+    iamUser,
+    accessKey,
+    policy,
+    userPolicy,
+  };
+};

@@ -2,10 +2,9 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export function configureServer(
-  server: pulumi.Output<Server>,
-  publicIp: pulumi.Output<string>,
-) {
+export const configureServer = (
+  server: Server
+) => {
   const config = new pulumi.Config();
   const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
@@ -16,15 +15,13 @@ export function configureServer(
     .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
-
   const connection = pulumi
-    .all([publicIp, sshPrivateKey])
+    .all([server.ipv4Address, sshPrivateKey])
     .apply(([ip, key]) => ({
       host: ip,
       user: "codigo",
       privateKey: key,
     }));
-
 
   // Install Docker
   const installDocker = new command.remote.Command("installDocker", {

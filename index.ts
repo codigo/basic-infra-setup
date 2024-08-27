@@ -9,61 +9,127 @@ import { configureServerEnv } from "./infra/setupEnvs";
 import { deployDockerStacks } from "./infra/deployDockerStacks";
 import { createCloudflareTunnels } from "./infra/cloudflare";
 
-// Create S3 buckets
-const { appBucket } = createS3Bucket();
+// Step 1-3: Create S3 bucket, IAM resources, and Hetzner server in parallel
+const s3Resources = createS3Bucket();
+const iamResources = createIAMResources();
+const hetznerResources = createHetznerServer();
 
-// Create IAM resources
-const { iamUser, accessKey } = createIAMResources();
+// Wait for all parallel operations to complete
+const initialSetup = pulumi
+  .all([s3Resources, iamResources, hetznerResources])
+  .apply(([s3, iam, hetzner]) => ({
+    appBucket: s3.appBucket,
+    bucketUrl: s3.bucketUrl,
+    iamUser: iam.iamUser,
+    accessKey: iam.accessKey,
+    server: hetzner.server,
+    sshKey: hetzner.sshKey,
+  }));
 
-// Create Hetzner server
-const { server, publicIp } = createHetznerServer();
+// Step 4: Configure server (depends on Hetzner server creation)
+const serverConfig = initialSetup.apply((resources) => {
+  const { createUser, installDocker, disableRootSSH } = configureServer(
+    resources.server,
+  );
+  return pulumi.all([createUser.id, installDocker.id, disableRootSSH.id]);
+});
 
-// Configure server
-const configuredServer = publicIp.apply((ip) =>
-  configureServer(server, pulumi.output(ip)),
-);
+// Step 5: Configure server environment (depends on server configuration)
+const serverEnv = pulumi
+  .all([initialSetup, serverConfig])
+  .apply(([resources, _]) => {
+    const { createEnvVars } = configureServerEnv(
+      resources.server,
+      resources.appBucket,
+    );
+    return createEnvVars.id;
+  });
 
-// Copy tooling data files to server
-const toolingFilesCopied = configuredServer.apply(() =>
-  copyToolingDataFilesToServer(server, publicIp),
-);
+// Step 6: Copy Mau App files and tooling files in parallel (depends on server environment setup)
+const filesCopied = pulumi
+  .all([initialSetup, serverEnv])
+  .apply(([resources, _]) => {
+    const server = resources.server;
+    const mauAppFiles = copyMauAppDataFilesToServer(server);
+    const toolingFiles = copyToolingDataFilesToServer(server);
 
-// Configure server environment variables
-const envConfigured = toolingFilesCopied.apply(() =>
-  configureServerEnv(server, publicIp, appBucket),
-);
+    return pulumi.all([
+      mauAppFiles.createMauAppFolders.id,
+      mauAppFiles.scpDockerComposeMauApp.id,
+      toolingFiles.scpDockerComposeTooling.id,
+      toolingFiles.scpToolingDataDozzle.id,
+      toolingFiles.scpToolingDataShepherd.id,
+      toolingFiles.scpCaddyFile.id,
+      toolingFiles.setPermissionsAndCronJob.id,
+    ]);
+  });
 
-// Copy Mau App data files to server
-const mauAppFilesCopied = envConfigured.apply(() =>
-  copyMauAppDataFilesToServer(server, publicIp),
-);
+// Step 7: Deploy Docker stacks (depends on file copying)
+const dockerStacksDeployed = pulumi
+  .all([initialSetup, filesCopied])
+  .apply(([resources, _]) => {
+    const server = resources.server;
+    const { deployDockerStacksResult } = deployDockerStacks(server);
+    return deployDockerStacksResult.id;
+  });
 
-// Deploy docker stacks
-const dockerStacksDeployed = mauAppFilesCopied.apply(() =>
-  deployDockerStacks(server, publicIp),
-);
+// Step 8: Set up DNS and Cloudflare tunnels (depends on Docker stacks deployment)
+const cloudflareSetup = pulumi
+  .all([initialSetup, dockerStacksDeployed])
+  .apply(([resources, _]) => {
+    const serverIp = resources.server.ipv4Address;
+    const {
+      maumercadoTunnel,
+      maumercadoDns,
+      wwwMaumercadoDns,
+      maumercadoPocketbaseDns,
+      maumercadoTypesenseDns,
+      codigoTunnel,
+      codigoDns,
+      wwwCodigoDns,
+      codigoPocketbaseDns,
+      codigoTypesenseDns,
+      dozzleDns,
+      maumercadoConfig,
+      codigoConfig,
+    } = createCloudflareTunnels(serverIp);
 
-// Create Cloudflare tunnels
-const cloudflareTunnels = dockerStacksDeployed.apply(() =>
-  createCloudflareTunnels(publicIp),
-);
+    return pulumi.all([
+      maumercadoTunnel.id,
+      maumercadoDns.id,
+      wwwMaumercadoDns.id,
+      maumercadoPocketbaseDns.id,
+      maumercadoTypesenseDns.id,
+      codigoTunnel.id,
+      codigoDns.id,
+      wwwCodigoDns.id,
+      codigoPocketbaseDns.id,
+      codigoTypesenseDns.id,
+      dozzleDns.id,
+      maumercadoConfig.id,
+      codigoConfig.id,
+    ]);
+  });
 
-// Export important values
-export const serverId = server.id;
-export const serverIp = publicIp;
-export const appBucketName = appBucket.id;
-export const iamUserName = iamUser.name;
-export const iamAccessKeyId = accessKey.id;
-export const iamSecretAccessKey = accessKey.secret;
-export const maumercadoTunnelId = cloudflareTunnels.apply(
-  (tunnels) => tunnels.maumercadoTunnel.id,
+// Exports
+export const serverIp = initialSetup.apply(
+  (resources) => resources.server.ipv4Address,
 );
-export const maumercadoDnsId = cloudflareTunnels.apply(
-  (tunnels) => tunnels.maumercadoDns.id,
+export const bucketName = initialSetup.apply(
+  (resources) => resources.appBucket.id,
 );
-export const codigoTunnelId = cloudflareTunnels.apply(
-  (tunnels) => tunnels.codigoTunnel.id,
+export const iamUserName = initialSetup.apply(
+  (resources) => resources.iamUser.name,
 );
-export const codigoDnsId = cloudflareTunnels.apply(
-  (tunnels) => tunnels.codigoDns.id,
+export const accessKeyId = initialSetup.apply(
+  (resources) => resources.accessKey.id,
 );
+export const sshKeyId = initialSetup.apply((resources) => resources.sshKey.id);
+export const initialSetupComplete = initialSetup.apply(
+  () => "Parallel setup completed",
+);
+export const serverConfigOutput = serverConfig;
+export const serverEnvOutput = serverEnv;
+export const filesCopiedOutput = filesCopied;
+export const dockerStacksDeployedOutput = dockerStacksDeployed;
+export const cloudflareSetupOutput = cloudflareSetup;

@@ -2,10 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export function copyMauAppDataFilesToServer(
-  server: pulumi.Output<Server>,
-  publicIp: pulumi.Output<string>,
-) {
+export const copyMauAppDataFilesToServer = (server: Server) => {
   // Define the server details and credentials
   const config = new pulumi.Config();
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
@@ -16,7 +13,7 @@ export function copyMauAppDataFilesToServer(
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   const commonSshOptions = pulumi
-    .all([publicIp, sshPrivateKey])
+    .all([server.ipv4Address, sshPrivateKey])
     .apply(([ip, key]) => ({
       host: ip,
       user: "codigo", // Corrected property
@@ -34,12 +31,17 @@ export function copyMauAppDataFilesToServer(
   );
 
   // SCP commands to copy docker compose tooling string to the server
-  const scpDockerComposeTooling = new command.remote.Command(
-    "scp docker compose tooling",
+  const scpDockerComposeMauApp = new command.remote.Command(
+    "scp docker compose mau app ",
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`echo '${docker_compose_mau_app}' > ~/docker-compose.mau-app.yaml`,
     },
     { dependsOn: createMauAppFolders },
   );
-}
+
+  return {
+    createMauAppFolders,
+    scpDockerComposeMauApp,
+  };
+};

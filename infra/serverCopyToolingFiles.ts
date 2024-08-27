@@ -2,10 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export function copyToolingDataFilesToServer(
-  server: pulumi.Output<Server>,
-  publicIp: pulumi.Output<string>,
-) {
+export const copyToolingDataFilesToServer = (server: Server) => {
   // Define the server details and credentials
   const config = new pulumi.Config();
 
@@ -26,7 +23,7 @@ export function copyToolingDataFilesToServer(
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
   const connection = {
-    host: publicIp,
+    host: server.ipv4Address,
     user: "codigo",
     privateKey: sshPrivateKey,
   };
@@ -127,4 +124,12 @@ export function copyToolingDataFilesToServer(
     },
     { dependsOn: [scpBinRestoreBackups, scpBinBackupData, scpBinUploadToS3] },
   );
-}
+
+  return {
+    scpDockerComposeTooling,
+    scpToolingDataDozzle,
+    scpToolingDataShepherd,
+    scpCaddyFile,
+    setPermissionsAndCronJob,
+  };
+};

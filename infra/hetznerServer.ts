@@ -1,7 +1,7 @@
 import * as hcloud from "@pulumi/hcloud";
 import * as pulumi from "@pulumi/pulumi";
 
-export function createHetznerServer() {
+export const createHetznerServer = () => {
   const config = new pulumi.Config();
   const appName = config.require("appName");
 
@@ -53,7 +53,7 @@ export function createHetznerServer() {
   );
 
   return {
-    server: pulumi.output(server as hcloud.Server),
-    publicIp: server.ipv4Address,
+    server,
+    sshKey,
   };
-}
+};

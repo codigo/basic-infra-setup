@@ -3,11 +3,7 @@ import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 import { Bucket } from "@pulumi/aws/s3";
 
-export function configureServerEnv(
-  server: pulumi.Output<Server>,
-  publicIp: pulumi.Output<string>,
-  appBucket: pulumi.Output<Bucket>,
-) {
+export const configureServerEnv = (server: Server, appBucket: Bucket) => {
   const config = new pulumi.Config();
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
@@ -16,11 +12,13 @@ export function configureServerEnv(
   );
 
   const createEnvVars = new command.remote.Command("createEnvVars", {
-    connection: pulumi.all([publicIp, sshPrivateKey]).apply(([ip, key]) => ({
-      host: ip,
-      user: "codigo",
-      privateKey: key,
-    })),
+    connection: pulumi
+      .all([server.ipv4Address, sshPrivateKey])
+      .apply(([ip, key]) => ({
+        host: ip,
+        user: "codigo",
+        privateKey: key,
+      })),
     create: pulumi
       .all([
         config.requireSecret("awsAccessKeyId"),
@@ -38,5 +36,7 @@ export function configureServerEnv(
       ),
   });
 
-  return createEnvVars;
-}
+  return {
+    createEnvVars,
+  };
+};
