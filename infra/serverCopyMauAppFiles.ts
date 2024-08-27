@@ -35,7 +35,7 @@ export const copyMauAppDataFilesToServer = (server: Server) => {
     "scp docker compose mau app ",
     {
       connection: commonSshOptions,
-      create: pulumi.interpolate`echo '${docker_compose_mau_app}' > ~/docker-compose.mau-app.yaml`,
+      create: pulumi.interpolate`echo '${docker_compose_mau_app}' > /home/codigo/docker-compose.mau-app.yaml`,
     },
     { dependsOn: createMauAppFolders },
   );

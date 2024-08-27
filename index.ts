@@ -3,6 +3,7 @@ import { createS3Bucket } from "./infra/s3";
 import { createIAMResources } from "./infra/iam";
 import { createHetznerServer } from "./infra/hetznerServer";
 import { configureServer } from "./infra/serverConfig";
+import { setupDockerInServer } from "./infra/setupDockerInServer";
 import { copyToolingDataFilesToServer } from "./infra/serverCopyToolingFiles";
 import { copyMauAppDataFilesToServer } from "./infra/serverCopyMauAppFiles";
 import { configureServerEnv } from "./infra/setupEnvs";
@@ -28,11 +29,23 @@ const initialSetup = pulumi
 
 // Step 4: Configure server (depends on Hetzner server creation)
 const serverConfig = initialSetup.apply((resources) => {
-  const { createUser, installDocker, disableRootSSH } = configureServer(
+  const { createUser, installNode, disableRootSSH } = configureServer(
     resources.server,
   );
-  return pulumi.all([createUser.id, installDocker.id, disableRootSSH.id]);
+  return pulumi.all([createUser.id, installNode.id, disableRootSSH.id]);
 });
+
+const setupDocker = pulumi
+  .all([initialSetup, serverConfig])
+  .apply(([resources, _]) => {
+    const { installDocker, initDockerSwarmAndNetworks, setupSecrets } =
+      setupDockerInServer(resources.server);
+    return pulumi.all([
+      installDocker.id,
+      initDockerSwarmAndNetworks.id,
+      setupSecrets.id,
+    ]);
+  });
 
 // Step 5: Configure server environment (depends on server configuration)
 const serverEnv = pulumi
@@ -47,8 +60,8 @@ const serverEnv = pulumi
 
 // Step 6: Copy Mau App files and tooling files in parallel (depends on server environment setup)
 const filesCopied = pulumi
-  .all([initialSetup, serverEnv])
-  .apply(([resources, _]) => {
+  .all([initialSetup, serverEnv, setupDocker])
+  .apply(([resources, _, __]) => {
     const server = resources.server;
     const mauAppFiles = copyMauAppDataFilesToServer(server);
     const toolingFiles = copyToolingDataFilesToServer(server);
@@ -66,7 +79,7 @@ const filesCopied = pulumi
 
 // Step 7: Deploy Docker stacks (depends on file copying)
 const dockerStacksDeployed = pulumi
-  .all([initialSetup, filesCopied])
+  .all([initialSetup, filesCopied, serverEnv])
   .apply(([resources, _]) => {
     const server = resources.server;
     const { deployDockerStacksResult } = deployDockerStacks(server);

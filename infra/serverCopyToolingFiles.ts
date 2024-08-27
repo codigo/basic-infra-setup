@@ -51,7 +51,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy docker compose tooling",
     {
       connection,
-      create: pulumi.interpolate`echo '${docker_compose_tooling}' > ~/docker-compose.tooling.yaml`,
+      create: pulumi.interpolate`echo '${docker_compose_tooling}' > /home/codigo/docker-compose.tooling.yaml`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -61,7 +61,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy dozzle users file",
     {
       connection,
-      create: pulumi.interpolate`echo '${dozzleUsers}' > ~/tooling/data/dozzle/users.yaml`,
+      create: pulumi.interpolate`echo '${dozzleUsers}' > /home/codigo/tooling/data/dozzle/users.yaml`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -70,7 +70,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy shepherd config",
     {
       connection,
-      create: pulumi.interpolate`echo '${shepherdConfig}' > ~/tooling/data/shepherd/shepherd-config.yaml`,
+      create: pulumi.interpolate`echo '${shepherdConfig}' > /home/codigo/tooling/data/shepherd/shepherd-config.yaml`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -79,7 +79,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy caddy file",
     {
       connection,
-      create: pulumi.interpolate`echo '${caddyFile}' > ~/tooling/data/caddy/Caddyfile`,
+      create: pulumi.interpolate`echo '${caddyFile}' > /home/codigo/tooling/data/caddy/Caddyfile`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -88,7 +88,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy restore backup script",
     {
       connection,
-      create: pulumi.interpolate`echo '${restoreAndCopyBackupScript}' > ~/bin/restoreBackup.js`,
+      create: pulumi.interpolate`echo '${restoreAndCopyBackupScript}' > /home/codigo/bin/restoreBackup.js`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -97,7 +97,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy backup data script",
     {
       connection,
-      create: pulumi.interpolate`echo '${backupDataScript}' > ~/bin/backupData.js`,
+      create: pulumi.interpolate`echo '${backupDataScript}' > /home/codigo/bin/backupData.js`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -106,7 +106,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy upload to S3 script",
     {
       connection,
-      create: pulumi.interpolate`echo '${uploadToS3Script}' > ~/bin/uploadToS3.js`,
+      create: pulumi.interpolate`echo '${uploadToS3Script}' > /home/codigo/bin/uploadToS3.js`,
     },
     { dependsOn: createToolingFolders },
   );
