@@ -23,7 +23,7 @@ export const deployDockerStacks = (server: Server) => {
       user: "codigo",
       privateKey: sshPrivateKey,
     },
-    create: `
+    create: pulumi.interpolate`
       # Deploy Docker stacks
       docker login -u ${dockerUsername} -p ${dockerPassword}
       docker stack deploy --with-registry-auth -d --compose-file ${MAUAPPDOCKERCOMPOSE} mau-app
