@@ -12,7 +12,7 @@ services:
       - caddy_net
 
   mau-app-maumercado:
-    image: "{{ vars,CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
     deploy:
       replicas: 1
       restart_policy:
@@ -37,10 +37,12 @@ services:
     volumes:
       - ./mau-app/data/pocketbase/pb_data:/pb_data
       - ./mau-app/data/pocketbase/pb_public:/pb_public
-      - .//mau-app/data/pocketbase/pb_migrations:/pb_migrations
+      - ./mau-app/data/pocketbase/pb_migrations:/pb_migrations
     networks:
       - internal_net
       - caddy_net
+    secrets:
+      - encryption_key
 
   typesense:
     image: typesense/typesense:26.0
@@ -60,14 +62,14 @@ services:
     networks:
       - internal_net
       - caddy_net
+    secrets:
+      - typesense_api_key
 
 secrets:
   encryption_key:
-    external:
-      name: mau-app_pb_encryption_key
+    name: mau-app_pb_encryption_key
   typesense_api_key:
-    external:
-      name: mau-app_typesense_api_key
+    name: mau-app_typesense_api_key
 
 networks:
   internal_net:

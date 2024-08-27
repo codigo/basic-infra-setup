@@ -29,6 +29,8 @@ services:
         condition: on-failure
     networks:
       - caddy_net
+    secrets:
+      - cloudflare_tunnel_token
 
   dozzle:
     image: amir20/dozzle:latest
@@ -84,5 +86,4 @@ secrets:
   users:
     file: ./tooling/data/dozzle/users.yaml
   cloudflare_tunnel_token:
-    external:
-      name: cloudflare_tunnel_token
+    name: cloudflare_tunnel_token
