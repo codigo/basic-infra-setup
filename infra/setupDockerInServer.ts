@@ -37,20 +37,40 @@ export const setupDockerInServer = (server: Server) => {
     `,
   });
 
-  // Initialize Docker Swarm and create networks
-  const initDockerSwarmAndNetworks = new command.remote.Command(
-    "initDockerSwarmAndNetworks",
+  // Initialize Docker Swarm
+  const initDockerSwarm = new command.remote.Command(
+    "initDockerSwarm",
     {
       connection,
       create: `
-        # Check if node is already part of a swarm
-        if ! docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
+        # Check if node is already part of a swarm and if it's a manager
+        SWARM_STATUS=$(docker info --format '{{.Swarm.LocalNodeState}}')
+        IS_MANAGER=$(docker info --format '{{.Swarm.ControlAvailable}}')
+
+        if [ "$SWARM_STATUS" != "active" ]; then
           echo "Initializing Docker Swarm..."
           docker swarm init
+        elif [ "$IS_MANAGER" != "true" ]; then
+          echo "Node is part of a swarm but not a manager. Leaving swarm and reinitializing..."
+          docker swarm leave -f
+          docker swarm init
         else
-          echo "Node is already part of a swarm."
+          echo "Node is already a swarm manager."
         fi
 
+        # Output join token for workers (can be used later if needed)
+        echo "Worker join token: $(docker swarm join-token -q worker)"
+      `,
+    },
+    { dependsOn: installDocker },
+  );
+
+  // Create Docker networks
+  const createDockerNetworks = new command.remote.Command(
+    "createDockerNetworks",
+    {
+      connection,
+      create: `
         # Create networks if they don't exist
         if ! docker network ls | grep -q "internal_net"; then
           docker network create --driver overlay internal_net
@@ -63,7 +83,7 @@ export const setupDockerInServer = (server: Server) => {
         fi
       `,
     },
-    { dependsOn: installDocker },
+    { dependsOn: initDockerSwarm },
   );
 
   // Set up Docker Swarm secrets
@@ -88,12 +108,13 @@ export const setupDockerInServer = (server: Server) => {
         fi
       `,
     },
-    { dependsOn: initDockerSwarmAndNetworks },
+    { dependsOn: createDockerNetworks },
   );
 
   return {
     installDocker,
-    initDockerSwarmAndNetworks,
+    initDockerSwarm,
+    createDockerNetworks,
     setupSecrets,
   };
 };

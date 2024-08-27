@@ -22,11 +22,6 @@ export const deployDockerStacks = (server: Server) => {
       privateKey: sshPrivateKey,
     },
     create: `
-      # Initialize Docker swarm if not already initialized
-      if ! docker info | grep -q "Swarm: active"; then
-        docker swarm init --advertise-addr $(hostname -i)
-      fi
-
       # Deploy Docker stacks
       docker stack deploy -c /home/codigo/${MAUAPPDOCKERCOMPOSE} mau-app
       docker stack deploy -c /home/codigo/${TOOLINGDOCKERCOMPOSE} tooling
