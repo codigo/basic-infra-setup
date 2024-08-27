@@ -23,8 +23,8 @@ export const deployDockerStacks = (server: Server) => {
     },
     create: `
       # Deploy Docker stacks
-      docker stack deploy -c /home/codigo/${MAUAPPDOCKERCOMPOSE} mau-app
-      docker stack deploy -c /home/codigo/${TOOLINGDOCKERCOMPOSE} tooling
+      docker stack deploy -c ${MAUAPPDOCKERCOMPOSE} mau-app
+      docker stack deploy -c ${TOOLINGDOCKERCOMPOSE} tooling
     `,
   });
 
