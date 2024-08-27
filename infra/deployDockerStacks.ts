@@ -7,6 +7,9 @@ export const deployDockerStacks = (server: Server) => {
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
+  const MAUAPPDOCKERCOMPOSE = 'docker-compose.mau-app.yaml';
+  const TOOLINGDOCKERCOMPOSE = 'docker-compose.tooling.yaml';
+
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
@@ -20,16 +23,16 @@ export const deployDockerStacks = (server: Server) => {
     },
     create: `
       set -e
-      if [ ! -f docker-compose.mau_app.yaml ]; then
-        echo "docker-compose.mau_app.yaml not found"
+      if [ ! -f ${MAUAPPDOCKERCOMPOSE} ]; then
+        echo "${MAUAPPDOCKERCOMPOSE} not found"
         exit 1
       fi
-      if [ ! -f docker-compose.tooling.yaml ]; then
-        echo "docker-compose.tooling.yaml not found"
+      if [ ! -f ${TOOLINGDOCKERCOMPOSE} ]; then
+        echo "${TOOLINGDOCKERCOMPOSE} not found"
         exit 1
       fi
-      docker stack deploy -c docker-compose.mau-app.yaml mau-app
-      docker stack deploy -c docker-compose.tooling.yaml tooling
+      docker stack deploy -c ${MAUAPPDOCKERCOMPOSE} mau-app
+      docker stack deploy -c ${TOOLINGDOCKERCOMPOSE} tooling
     `,
   });
 
