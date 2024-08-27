@@ -120,8 +120,8 @@ export const copyToolingDataFilesToServer = (server: Server) => {
       chmod +x /home/codigo/bin/*
 
       # Set up cron jobs
-      (crontab -l 2>/dev/null; echo "0 */12 * * * /home/codigo/.nvm/versions/node/\$(nvm current)/bin/node /home/codigo/bin/backupData.js") | crontab -
-      (crontab -l 2>/dev/null; echo "30 */12 * * * /home/codigo/.nvm/versions/node/\$(nvm current)/bin/node /home/codigo/bin/uploadToS3.js") | crontab -
+      (crontab -l 2>/dev/null; echo "0 */12 * * * \$(nvm run default) /home/codigo/bin/backupData.js") | crontab -
+      (crontab -l 2>/dev/null; echo "30 */12 * * * \$(nvm run default) /home/codigo/bin/uploadToS3.js") | crontab -
     `,
     },
     {
