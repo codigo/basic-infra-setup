@@ -32,31 +32,38 @@ export const configureServer = (server: Server) => {
       sudo apt-get update
       sudo apt-get install -y docker-ce
       sudo usermod -aG docker codigo
+      sudo systemctl enable docker
+      sudo systemctl start docker
     `,
   });
 
-  // Initialize Docker Swarm
-  const initDockerSwarm = new command.remote.Command(
-    "initDockerSwarm",
-    {
-      connection,
-      create: "docker swarm init",
-    },
-    { dependsOn: installDocker },
-  );
-
-  // Create Docker networks
-  const createNetworks = new command.remote.Command(
-    "createNetworks",
+  // Initialize Docker Swarm and create networks
+  const initDockerSwarmAndNetworks = new command.remote.Command(
+    "initDockerSwarmAndNetworks",
     {
       connection,
       create: `
-        docker network create --driver overlay internal_net
-        docker network create --driver overlay caddy_net
-        docker network create --driver overlay dozzle
-    `,
+        # Check if node is already part of a swarm
+        if ! docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
+          echo "Initializing Docker Swarm..."
+          docker swarm init
+        else
+          echo "Node is already part of a swarm."
+        fi
+
+        # Create networks if they don't exist
+        if ! docker network ls | grep -q "internal_net"; then
+          docker network create --driver overlay internal_net
+        fi
+        if ! docker network ls | grep -q "caddy_net"; then
+          docker network create --driver overlay caddy_net
+        fi
+        if ! docker network ls | grep -q "dozzle"; then
+          docker network create --driver overlay dozzle
+        fi
+      `,
     },
-    { dependsOn: initDockerSwarm },
+    { dependsOn: installDocker },
   );
 
   // Set up Docker Swarm secrets
@@ -65,10 +72,28 @@ export const configureServer = (server: Server) => {
     {
       connection,
       create: `
-        echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
-        echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
-    `,
+        # Ensure we're in a swarm before creating secrets
+        if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
+          # Remove existing secrets if they exist
+          docker secret rm mau-app_typesense_api_key 2>/dev/null || true
+          docker secret rm mau-app_pb_encryption_key 2>/dev/null || true
+
+          # Create new secrets
+          echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
+          echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
+          echo "Docker secrets created successfully."
+        else
+          echo "Error: Docker Swarm is not active. Cannot create secrets."
+          exit 1
+        fi
+      `,
     },
-    { dependsOn: createNetworks },
+    { dependsOn: initDockerSwarmAndNetworks },
   );
+
+  return {
+    installDocker,
+    initDockerSwarmAndNetworks,
+    setupSecrets,
+  };
 };

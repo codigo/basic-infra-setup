@@ -22,15 +22,6 @@ export const deployDockerStacks = (server: Server) => {
       privateKey: sshPrivateKey,
     },
     create: `
-      set -e
-      if [ ! -f ${MAUAPPDOCKERCOMPOSE} ]; then
-        echo "${MAUAPPDOCKERCOMPOSE} not found"
-        exit 1
-      fi
-      if [ ! -f ${TOOLINGDOCKERCOMPOSE} ]; then
-        echo "${TOOLINGDOCKERCOMPOSE} not found"
-        exit 1
-      fi
       docker stack deploy -c ${MAUAPPDOCKERCOMPOSE} mau-app
       docker stack deploy -c ${TOOLINGDOCKERCOMPOSE} tooling
     `,
