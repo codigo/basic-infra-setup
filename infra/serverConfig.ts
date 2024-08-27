@@ -2,10 +2,7 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export function configureServer(
-  server: pulumi.Output<Server>,
-  publicIp: pulumi.Output<string>,
-) {
+export const configureServer = (server: Server) => {
   const config = new pulumi.Config();
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
   const encodedSshPublicKey = config.requireSecret("sshPublicKey");
@@ -30,7 +27,7 @@ export function configureServer(
 
   // Common SSH connection options
   const commonSshOptions = pulumi
-    .all([publicIp, sshPrivateKey])
+    .all([server.ipv4Address, sshPrivateKey])
     .apply(([ip, key]) => ({
       host: ip,
       user: "root",
@@ -43,7 +40,7 @@ export function configureServer(
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`
-      sudo useradd -m -s /bin/bash codigo
+      sudo useradd -m -s /bin/bash codigo -G sudo -h /home/codigo
       echo "codigo ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers
       sudo mkdir -p /home/codigo/.ssh
       echo "${sshPublicKey}" | sudo tee -a /home/codigo/.ssh/authorized_keys
@@ -87,7 +84,7 @@ export function configureServer(
       sudo rm -f /root/.ssh/authorized_keys
     `,
     },
-    { dependsOn: createUser, additionalSecretOutputs: ["stdout", "stderr"] },
+    { dependsOn: [createUser], additionalSecretOutputs: ["stdout", "stderr"] },
   );
 
   disableRootSSH.stdout.apply((stdout) => {
@@ -101,9 +98,10 @@ export function configureServer(
   const installDocker = new command.remote.Command(
     "installDocker",
     {
-    connection: commonSshOptions.apply((options) => ({
-      ...options, user: "codigo",
-    })),
+      connection: commonSshOptions.apply((options) => ({
+        ...options,
+        user: "codigo",
+      })),
       create: `
         sudo apt-get update
         sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
@@ -117,7 +115,7 @@ export function configureServer(
       `,
     },
     {
-      dependsOn: disableRootSSH,
+      dependsOn: [disableRootSSH],
       additionalSecretOutputs: ["stdout", "stderr"],
     },
   );
@@ -147,7 +145,7 @@ export function configureServer(
       `,
     },
     {
-      dependsOn: installDocker,
+      dependsOn: [installDocker],
       additionalSecretOutputs: ["stdout", "stderr"],
     },
   );
@@ -159,5 +157,11 @@ export function configureServer(
     if (stderr) console.error("installNode stderr:", stderr);
   });
 
-  return { sshPrivateKey };
-}
+  return {
+    installNode,
+    installDocker,
+    disableRootSSH,
+    createUser,
+    server,
+  };
+};
