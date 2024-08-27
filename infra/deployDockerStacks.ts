@@ -8,6 +8,7 @@ export const deployDockerStacks = (server: Server) => {
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
   const dockerUsername = config.requireSecret("dockerUsername");
   const dockerPassword = config.requireSecret("dockerPassword");
+  const dockerRegistry = config.require("dockerRegistry");
 
   const MAUAPPDOCKERCOMPOSE = "docker-compose.mau-app.yaml";
   const TOOLINGDOCKERCOMPOSE = "docker-compose.tooling.yaml";
@@ -25,7 +26,7 @@ export const deployDockerStacks = (server: Server) => {
     },
     create: pulumi.interpolate`
       # Deploy Docker stacks
-      docker login -u ${dockerUsername} -p ${dockerPassword}
+      echo ${dockerPassword} | docker login https://${dockerRegistry} -u ${dockerUsername} --password-stdin
       docker stack deploy --with-registry-auth -d --compose-file ${MAUAPPDOCKERCOMPOSE} mau-app
       docker stack deploy --with-registry-auth -d --compose-file ${TOOLINGDOCKERCOMPOSE} tooling
     `,
