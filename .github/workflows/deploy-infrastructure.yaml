@@ -34,9 +34,9 @@ jobs:
               sed -i \
                 -e 's|\${DOZZLE_PASSWORD}|${{ secrets.DOZZLE_PASSWORD }}|g' \
                 -e 's|\${DISCORD_WEBHOOK}|${{ secrets.DISCORD_WEBHOOK }}|g' \
-                -e 's|\${CONTAINER_REGISTRY_URL}|${{ secrets.CONTAINER_REGISTRY_URL }}|g' \
-                -e 's|\${ORIGIN_CODIGO}|${{ secrets.ORIGIN_CODIGO }}|g' \
-                -e 's|\${ORIGIN_MAUMERCADO}|${{ secrets.ORIGIN_MAUMERCADO }}|g' \
+                -e 's|\${CONTAINER_REGISTRY_URL}|${{ vars.CONTAINER_REGISTRY_URL }}|g' \
+                -e 's|\${ORIGIN_CODIGO}|${{ vars.ORIGIN_CODIGO }}|g' \
+                -e 's|\${ORIGIN_MAUMERCADO}|${{ vars.ORIGIN_MAUMERCADO }}|g' \
                 "$file"
             fi
           done
@@ -63,7 +63,7 @@ jobs:
           pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
           pulumi config set appName ${{ github.event.client_payload.name }}
 
-          # Set configs from secrets
+          # Set configs from secrets and vars
           pulumi config set --secret awsAccessKeyId "${{ secrets.AWS_ACCESS_KEY_ID }}"
           pulumi config set --secret awsSecretAccessKey "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           pulumi config set --secret mauAppTypeSenseKey "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
@@ -71,6 +71,7 @@ jobs:
           pulumi config set --secret cloudflareApiToken "${{ secrets.CLOUDFLARE_TUNNEL_SECRET }}"
           pulumi config set --secret dockerUsername "${{ secrets.CONTAINER_REGISTRY_USERNAME }}"
           pulumi config set --secret dockerPassword "${{ secrets.CONTAINER_REGISTRY_PASSWORD }}"
+          pulumi config set dockerRegistry "${{ vars.CONTAINER_REGISTRY_URL }}"
 
           # Set SSH keys
           cat ~/.ssh/id_rsa.pub | openssl base64 | tr -d '\n' | pulumi config set sshPublicKey --secret
