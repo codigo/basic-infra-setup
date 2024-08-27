@@ -14,8 +14,8 @@ export const copyToolingDataFilesToServer = (server: Server) => {
 
   const backupDataScript = config.require("backupDataScript");
   const uploadToS3Script = config.require("uploadToS3Script");
-  const scpBinRestoreAndCopyBackupScript = config.require(
-    "scpBinRestoreAndCopyBackupScript",
+  const restoreAndCopyBackupScript = config.require(
+    "restoreAndCopyBackupScript",
   );
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
@@ -88,7 +88,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy restore backup script",
     {
       connection,
-      create: pulumi.interpolate`echo '${scpBinRestoreAndCopyBackupScript}' > ~/bin/restoreBackup.js`,
+      create: pulumi.interpolate`echo '${restoreAndCopyBackupScript}' > ~/bin/restoreBackup.js`,
     },
     { dependsOn: createToolingFolders },
   );
