@@ -80,7 +80,7 @@ jobs:
           done
 
           # Set configs from bin scripts
-          for script in backupData uploadToS3 restoreBackup; do
+          for script in backupData uploadToS3 restoreAndCopyBackup; do
             pulumi config set --secret ${script}Script "$(cat ./bin/${script}.js)"
           done
 

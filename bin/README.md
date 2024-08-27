@@ -22,7 +22,7 @@ This script handles the uploading of backup files to an S3 bucket. It:
 
 ### restoreAndCopyBackup.js
 
-This script combines the functionality of the previous `restoreBackup.js` and `copyFileToRemote.js` scripts. It allows for the restoration of backups from S3 to either a local directory or a remote host. It:
+This script allows for the restoration of backups from S3 to either a local directory or a remote host. It:
 
 - Retrieves a specific backup (or the latest backup) from S3 for a given project.
 - Allows the user to choose between restoring to a local directory or a remote host.
