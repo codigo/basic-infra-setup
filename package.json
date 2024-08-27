@@ -2,7 +2,6 @@
   "name": "mau-app",
   "description": "My portfolio and blog with an introduction of myself and a contact form",
   "main": "index.ts",
-  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "format": "npx prettier --write ."
