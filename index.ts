@@ -38,11 +38,16 @@ const serverConfig = initialSetup.apply((resources) => {
 const setupDocker = pulumi
   .all([initialSetup, serverConfig])
   .apply(([resources, _]) => {
-    const { installDocker, initDockerSwarmAndNetworks, setupSecrets } =
-      setupDockerInServer(resources.server);
+    const {
+      installDocker,
+      initDockerSwarm,
+      createDockerNetworks,
+      setupSecrets,
+    } = setupDockerInServer(resources.server);
     return pulumi.all([
       installDocker.id,
-      initDockerSwarmAndNetworks.id,
+      initDockerSwarm.id,
+      createDockerNetworks.id,
       setupSecrets.id,
     ]);
   });
