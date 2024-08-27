@@ -40,10 +40,15 @@ export const configureServer = (server: Server) => {
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`
-      sudo useradd -m -s /bin/bash codigo -G sudo -h /home/codigo
-      echo "codigo ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers
+      if id "codigo" &>/dev/null; then
+        echo "User 'codigo' already exists. Skipping user creation."
+      else
+        sudo useradd -m -s /bin/bash codigo
+      fi
+      sudo usermod -aG sudo codigo
+      echo "codigo ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/codigo
       sudo mkdir -p /home/codigo/.ssh
-      echo "${sshPublicKey}" | sudo tee -a /home/codigo/.ssh/authorized_keys
+      echo "${sshPublicKey}" | sudo tee /home/codigo/.ssh/authorized_keys
       sudo chown -R codigo:codigo /home/codigo
       sudo chmod 700 /home/codigo/.ssh
       sudo chmod 600 /home/codigo/.ssh/authorized_keys
@@ -76,10 +81,12 @@ export const configureServer = (server: Server) => {
       sudo sed -i 's/^PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
       sudo sed -i 's/^#PasswordAuthentication/PasswordAuthentication/' /etc/ssh/sshd_config
       echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config
-      if command -v systemctl &> /dev/null; then
+      if systemctl is-active --quiet ssh; then
+        sudo systemctl restart ssh
+      elif systemctl is-active --quiet sshd; then
         sudo systemctl restart sshd
       else
-        sudo service sshd restart || sudo service ssh restart
+        echo "SSH service not found. Please check the SSH service name and status."
       fi
       sudo rm -f /root/.ssh/authorized_keys
     `,
