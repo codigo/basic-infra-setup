@@ -7,14 +7,14 @@ export const deployDockerStacks = (server: Server) => {
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
-  const MAUAPPDOCKERCOMPOSE = 'docker-compose.mau-app.yaml';
-  const TOOLINGDOCKERCOMPOSE = 'docker-compose.tooling.yaml';
+  const MAUAPPDOCKERCOMPOSE = "/home/codigo/docker-compose.mau-app.yaml";
+  const TOOLINGDOCKERCOMPOSE = "/home/codigo/docker-compose.tooling.yaml";
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
-  // SSH command to deploy docker stacks
+  // SSH command to initialize Docker swarm and deploy docker stacks
   const deployDockerStacks = new command.remote.Command("deployDockerStacks", {
     connection: {
       host: server.ipv4Address,
@@ -22,8 +22,14 @@ export const deployDockerStacks = (server: Server) => {
       privateKey: sshPrivateKey,
     },
     create: `
-      docker stack deploy -c ${MAUAPPDOCKERCOMPOSE} mau-app
-      docker stack deploy -c ${TOOLINGDOCKERCOMPOSE} tooling
+      # Initialize Docker swarm if not already initialized
+      if ! docker info | grep -q "Swarm: active"; then
+        docker swarm init --advertise-addr $(hostname -i)
+      fi
+
+      # Deploy Docker stacks
+      docker stack deploy -c /home/codigo/${MAUAPPDOCKERCOMPOSE} mau-app
+      docker stack deploy -c /home/codigo/${TOOLINGDOCKERCOMPOSE} tooling
     `,
   });
 

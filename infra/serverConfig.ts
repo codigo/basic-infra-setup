@@ -112,39 +112,6 @@ export const configureServer = (server: Server) => {
     if (stderr) console.error("disableRootSSH stderr:", stderr);
   });
 
-  // Install Docker
-  const installDocker = new command.remote.Command(
-    "installDocker",
-    {
-      connection: commonSshOptions.apply((options) => ({
-        ...options,
-        user: "codigo",
-      })),
-      create: `
-        sudo apt-get update
-        sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-        sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-        sudo apt-get update
-        sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-        sudo usermod -aG docker codigo
-        sudo systemctl enable docker
-        sudo systemctl start docker
-      `,
-    },
-    {
-      dependsOn: [disableRootSSH],
-      additionalSecretOutputs: ["stdout", "stderr"],
-    },
-  );
-
-  installDocker.stdout.apply((stdout) => {
-    if (stdout) console.log("installDocker stdout:", stdout);
-  });
-  installDocker.stderr.apply((stderr) => {
-    if (stderr) console.error("installDocker stderr:", stderr);
-  });
-
   // Install NVM and Node.js
   const installNode = new command.remote.Command(
     "install Node",
@@ -157,13 +124,26 @@ export const configureServer = (server: Server) => {
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
         export NVM_DIR="$HOME/.nvm"
         [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-        nvm install 22 && \
-        nvm alias default 22 && \
+        nvm install 22
+        nvm alias default 22
         npm install -g aws-sdk
+
+        # Add NVM initialization to .bashrc and .profile
+        echo 'export NVM_DIR="$HOME/.nvm"' >> $HOME/.bashrc
+        echo '[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"' >> $HOME/.bashrc
+        echo '[ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"' >> $HOME/.bashrc
+
+        echo 'export NVM_DIR="$HOME/.nvm"' >> $HOME/.profile
+        echo '[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"' >> $HOME/.profile
+        echo '[ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"' >> $HOME/.profile
+
+        # Ensure Node.js is available in PATH for all users
+        sudo ln -s "$NVM_DIR/versions/node/$(nvm version)/bin/node" /usr/local/bin/node
+        sudo ln -s "$NVM_DIR/versions/node/$(nvm version)/bin/npm" /usr/local/bin/npm
       `,
     },
     {
-      dependsOn: [installDocker],
+      dependsOn: [disableRootSSH],
       additionalSecretOutputs: ["stdout", "stderr"],
     },
   );
@@ -177,7 +157,6 @@ export const configureServer = (server: Server) => {
 
   return {
     installNode,
-    installDocker,
     disableRootSSH,
     createUser,
     server,
