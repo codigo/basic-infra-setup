@@ -69,6 +69,8 @@ jobs:
           pulumi config set --secret mauAppTypeSenseKey "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
           pulumi config set --secret mauAppPBEncryptionKey "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
           pulumi config set --secret cloudflareApiToken "${{ secrets.CLOUDFLARE_TUNNEL_SECRET }}"
+          pulumi config set --secret dockerUsername "${{ secrets.CONTAINER_REGISTRY_USERNAME }}"
+          pulumi config set --secret dockerPassword "${{ secrets.CONTAINER_REGISTRY_PASSWORD }}"
 
           # Set SSH keys
           cat ~/.ssh/id_rsa.pub | openssl base64 | tr -d '\n' | pulumi config set sshPublicKey --secret
