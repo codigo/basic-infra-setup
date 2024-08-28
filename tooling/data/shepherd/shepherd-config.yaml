@@ -4,7 +4,7 @@ docker:
 
 notifications:
   discord:
-    webhook: { { env.DISCORD_WEBHOOK } }
+    webhook: {{ DISCORD_WEBHOOK }}
     # Optional: Customize the username that appears in Discord
     # Optional: Customize the notification content
     template: |
@@ -15,9 +15,9 @@ notifications:
 
 services:
   - name: mau-app-codigo
-    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
   - name: mau-app-maumercado
-    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
   - name: mau-app_pocketbase
     image: ghcr.io/muchobien/pocketbase:latest
   - name: mau-app_typesense
