@@ -4,7 +4,7 @@ docker:
 
 notifications:
   discord:
-    webhook: {{ DISCORD_WEBHOOK }}
+    webhook: "{{ DISCORD_WEBHOOK }}"
     # Optional: Customize the username that appears in Discord
     # Optional: Customize the notification content
     template: |
