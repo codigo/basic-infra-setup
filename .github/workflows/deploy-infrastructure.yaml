@@ -83,8 +83,8 @@ jobs:
           done
 
           # Set configs from files
-          pulumi config set docker_compose_mau_app_yaml "$(cat ./docker-compose.mau-app.yaml)"
-          pulumi config set docker_compose_tooling_yaml "$(cat ./docker-compose.tooling.yaml)"
+          pulumi config set docker_compose_mau_app "$(cat ./docker-compose.mau-app.yaml)"
+          pulumi config set docker_compose_tooling "$(cat ./docker-compose.tooling.yaml)"
 
           # Set configs from bin scripts
           for script in backupData uploadToS3 restoreAndCopyBackup; do
