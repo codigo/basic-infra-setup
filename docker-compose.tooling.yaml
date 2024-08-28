@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   caddy:
     image: caddy:2
@@ -87,3 +85,4 @@ secrets:
     file: ./tooling/data/dozzle/users.yaml
   cloudflare_tunnel_token:
     name: cloudflare_tunnel_token
+    external: true

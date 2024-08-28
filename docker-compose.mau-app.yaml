@@ -68,8 +68,10 @@ services:
 secrets:
   encryption_key:
     name: mau-app_pb_encryption_key
+    external: true
   typesense_api_key:
     name: mau-app_typesense_api_key
+    external: true
 
 networks:
   internal_net:
