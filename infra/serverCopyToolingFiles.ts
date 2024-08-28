@@ -8,9 +8,9 @@ export const copyToolingDataFilesToServer = (server: Server) => {
 
   const docker_compose_tooling = config.require("docker_compose_tooling");
 
-  const dozzleUsers = config.require("users");
-  const shepherdConfig = config.require("shepherd_config");
-  const caddyFile = config.require("Caddyfile");
+  const dozzleUsers = config.requireSecret("users");
+  const shepherdConfig = config.requireSecret("shepherd_config");
+  const caddyFile = config.requireSecret("Caddyfile");
 
   const backupDataScript = config.require("backupDataScript");
   const uploadToS3Script = config.require("uploadToS3Script");

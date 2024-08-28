@@ -26,6 +26,7 @@ export const deployDockerStacks = (server: Server) => {
     },
     create: pulumi.interpolate`
       # Deploy Docker stacks
+      cd /home/codigo
       echo ${dockerPassword} | docker login https://${dockerRegistry} -u ${dockerUsername} --password-stdin
       docker stack deploy --with-registry-auth -d --compose-file ${MAUAPPDOCKERCOMPOSE} mau-app
       docker stack deploy --with-registry-auth -d --compose-file ${TOOLINGDOCKERCOMPOSE} tooling
