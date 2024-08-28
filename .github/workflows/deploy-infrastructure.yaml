@@ -28,16 +28,41 @@ jobs:
         run: npm ci
 
       - name: Process configuration files
+        env:
+          DOZZLE_PASSWORD: ${{ secrets.DOZZLE_PASSWORD }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          CONTAINER_REGISTRY_URL: ${{ vars.CONTAINER_REGISTRY_URL }}
+          ORIGIN_CODIGO: ${{ vars.ORIGIN_CODIGO }}
+          ORIGIN_MAUMERCADO: ${{ vars.ORIGIN_MAUMERCADO }}
+          TYPESENSE_API_KEY: ${{ secrets.MAU_APP_TYPESENSE_API_KEY }}
+          ENCRYPTION_KEY: ${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}
         run: |
-          for file in ./tooling/data/dozzle/users.yaml ./tooling/data/shepherd/shepherd-config.yaml docker-compose.*.yaml; do
-            if [ -f "$file" ] && grep -q '\${.*}' "$file"; then
-              sed -i \
-                -e 's|\${DOZZLE_PASSWORD}|${{ secrets.DOZZLE_PASSWORD }}|g' \
-                -e 's|\${DISCORD_WEBHOOK}|${{ secrets.DISCORD_WEBHOOK }}|g' \
-                -e 's|\${CONTAINER_REGISTRY_URL}|${{ vars.CONTAINER_REGISTRY_URL }}|g' \
-                -e 's|\${ORIGIN_CODIGO}|${{ vars.ORIGIN_CODIGO }}|g' \
-                -e 's|\${ORIGIN_MAUMERCADO}|${{ vars.ORIGIN_MAUMERCADO }}|g' \
-                "$file"
+          files=(
+            "./tooling/data/dozzle/users.yaml"
+            "./tooling/data/shepherd/shepherd-config.yaml"
+            "./docker-compose.mau-app.yaml"
+            "./docker-compose.tooling.yaml"
+          )
+
+          for file in "${files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "Processing $file"
+
+              # Use sed to replace variables
+              sed -i.bak -e '
+                s|{{ DOZZLE_PASSWORD }}|'"$DOZZLE_PASSWORD"'|g
+                s|{{ DISCORD_WEBHOOK }}|'"$DISCORD_WEBHOOK"'|g
+                s|{{ CONTAINER_REGISTRY_URL }}|'"$CONTAINER_REGISTRY_URL"'|g
+                s|{{ ORIGIN_CODIGO }}|'"$ORIGIN_CODIGO"'|g
+                s|{{ ORIGIN_MAUMERCADO }}|'"$ORIGIN_MAUMERCADO"'|g
+                s|{{ TYPESENSE_API_KEY }}|'"$TYPESENSE_API_KEY"'|g
+                s|{{ ENCRYPTION_KEY }}|'"$ENCRYPTION_KEY"'|g
+              ' "$file"
+
+              echo "Processed $file:"
+              cat "$file"
+            else
+              echo "File not found: $file"
             fi
           done
 

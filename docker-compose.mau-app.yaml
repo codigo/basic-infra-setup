@@ -1,24 +1,24 @@
 services:
   mau-app-codigo:
-    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
     environment:
-      ORIGIN: "{{ vars.ORIGIN_CODIGO }}"
+      ORIGIN: "{{ ORIGIN_CODIGO }}"
     networks:
       - internal_net
       - caddy_net
 
   mau-app-maumercado:
-    image: "{{ vars.CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
     environment:
-      ORIGIN: "{{ vars.ORIGIN_MAUMERCADO }}"
+      ORIGIN: "{{ ORIGIN_MAUMERCADO }}"
     networks:
       - internal_net
       - caddy_net
