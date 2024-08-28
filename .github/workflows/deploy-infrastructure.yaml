@@ -59,8 +59,7 @@ jobs:
                 s|{{ ENCRYPTION_KEY }}|'"$ENCRYPTION_KEY"'|g
               ' "$file"
 
-              echo "Processed $file:"
-              cat "$file"
+              echo "Processed $file"
             else
               echo "File not found: $file"
             fi
