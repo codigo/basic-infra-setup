@@ -35,11 +35,9 @@ export const configureServer = (server: Server) => {
     }));
 
   // Create 'codigo' user and set up SSH
-  const createUser = new command.remote.Command(
-    "createUser",
-    {
-      connection: commonSshOptions,
-      create: pulumi.interpolate`
+  const createUser = new command.remote.Command("createUser", {
+    connection: commonSshOptions,
+    create: pulumi.interpolate`
       set -e
       echo "Starting user creation process..."
       if id "codigo" &>/dev/null; then
@@ -68,16 +66,6 @@ export const configureServer = (server: Server) => {
       echo "StrictHostKeyChecking no" | sudo tee /home/codigo/.ssh/config || { echo "Failed to set up SSH config"; exit 1; }
       echo "User creation and setup process completed successfully."
     `,
-    },
-    { additionalSecretOutputs: ["stdout", "stderr"] },
-  );
-
-  // Log output and errors
-  createUser.stdout.apply((stdout) => {
-    if (stdout) console.log("createUser stdout:", stdout);
-  });
-  createUser.stderr.apply((stderr) => {
-    if (stderr) console.error("createUser stderr:", stderr);
   });
 
   // Disable root SSH access
@@ -102,15 +90,8 @@ export const configureServer = (server: Server) => {
       sudo rm -f /root/.ssh/authorized_keys
     `,
     },
-    { dependsOn: [createUser], additionalSecretOutputs: ["stdout", "stderr"] },
+    { dependsOn: [createUser] },
   );
-
-  disableRootSSH.stdout.apply((stdout) => {
-    if (stdout) console.log("disableRootSSH stdout:", stdout);
-  });
-  disableRootSSH.stderr.apply((stderr) => {
-    if (stderr) console.error("disableRootSSH stderr:", stderr);
-  });
 
   // Install NVM and Node.js
   const installNode = new command.remote.Command(
@@ -144,16 +125,8 @@ export const configureServer = (server: Server) => {
     },
     {
       dependsOn: [disableRootSSH],
-      additionalSecretOutputs: ["stdout", "stderr"],
     },
   );
-
-  installNode.stdout.apply((stdout) => {
-    if (stdout) console.log("installNode stdout:", stdout);
-  });
-  installNode.stderr.apply((stderr) => {
-    if (stderr) console.error("installNode stderr:", stderr);
-  });
 
   return {
     installNode,

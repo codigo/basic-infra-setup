@@ -58,8 +58,8 @@ export const setupDockerInServer = (server: Server) => {
           echo "Node is already a swarm manager."
         fi
 
-        # Output join token for workers (can be used later if needed)
-        echo "Worker join token: $(docker swarm join-token -q worker)"
+        # Capture join token for workers without echoing
+        docker swarm join-token -q worker
       `,
     },
     { dependsOn: installDocker },
@@ -118,5 +118,8 @@ export const setupDockerInServer = (server: Server) => {
     initDockerSwarm,
     createDockerNetworks,
     setupSecrets,
+    workerJoinToken: pulumi.secret(
+      initDockerSwarm.stdout.apply((token) => token.trim()),
+    ),
   };
 };

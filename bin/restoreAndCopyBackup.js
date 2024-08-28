@@ -28,7 +28,7 @@ const getLatestBackup = async (projectName) => {
   }
 
   return path.basename(
-    data.Contents.sort((a, b) => b.LastModified - a.LastModified)[0].Key
+    data.Contents.sort((a, b) => b.LastModified - a.LastModified)[0].Key,
   );
 };
 
@@ -56,11 +56,18 @@ const extractLocally = async (tempFilePath, projectName) => {
   console.log(`Backup extracted to: ${projectPath}`);
 };
 
-const copyToRemote = async (sourceFile, destinationFolder, remoteHost, sshKeyFile) => {
+const copyToRemote = async (
+  sourceFile,
+  destinationFolder,
+  remoteHost,
+  sshKeyFile,
+) => {
   const sshKeyOption = sshKeyFile ? `-i "${sshKeyFile}"` : "";
   const scpCommand = `scp ${sshKeyOption} "${sourceFile}" ${remoteHost}:"${destinationFolder}"`;
 
-  console.log(`Copying file: ${path.basename(sourceFile)} to ${remoteHost}:${destinationFolder}`);
+  console.log(
+    `Copying file: ${path.basename(sourceFile)} to ${remoteHost}:${destinationFolder}`,
+  );
 
   const { stdout, stderr } = await execAsync(scpCommand);
 
@@ -73,7 +80,12 @@ const copyToRemote = async (sourceFile, destinationFolder, remoteHost, sshKeyFil
   if (stdout) console.log(stdout);
 };
 
-const extractRemotely = async (remoteHost, remoteFilePath, remoteDestination, sshKeyFile) => {
+const extractRemotely = async (
+  remoteHost,
+  remoteFilePath,
+  remoteDestination,
+  sshKeyFile,
+) => {
   const sshKeyOption = sshKeyFile ? `-i "${sshKeyFile}"` : "";
   const sshCommand = `ssh ${sshKeyOption} ${remoteHost} "mkdir -p ${remoteDestination} && tar -xzf ${remoteFilePath} -C ${remoteDestination} --overwrite"`;
 
@@ -106,26 +118,50 @@ const getUserInput = (question) => {
 
 const restoreAndCopyBackup = async (projectName, backupFileName) => {
   try {
-    const finalBackupFileName = backupFileName || await getLatestBackup(projectName);
+    const finalBackupFileName =
+      backupFileName || (await getLatestBackup(projectName));
     if (!backupFileName) {
       console.log(`Latest backup found: ${finalBackupFileName}`);
     }
 
-    const { tempDir, tempFilePath } = await downloadBackup(projectName, finalBackupFileName);
+    const { tempDir, tempFilePath } = await downloadBackup(
+      projectName,
+      finalBackupFileName,
+    );
 
-    const destinationType = await getUserInput("Enter destination type (local/remote): ");
+    const destinationType = await getUserInput(
+      "Enter destination type (local/remote): ",
+    );
 
     if (destinationType.toLowerCase() === "local") {
       await extractLocally(tempFilePath, projectName);
     } else if (destinationType.toLowerCase() === "remote") {
-      const remoteHost = await getUserInput("Enter remote host (e.g., user@example.com): ");
-      const remoteDestination = await getUserInput("Enter remote destination folder: ");
-      const sshKeyFile = await getUserInput("Enter SSH key file path (optional, press Enter to skip): ");
+      const remoteHost = await getUserInput(
+        "Enter remote host (e.g., user@example.com): ",
+      );
+      const remoteDestination = await getUserInput(
+        "Enter remote destination folder: ",
+      );
+      const sshKeyFile = await getUserInput(
+        "Enter SSH key file path (optional, press Enter to skip): ",
+      );
 
-      await copyToRemote(tempFilePath, remoteDestination, remoteHost, sshKeyFile || null);
-      await extractRemotely(remoteHost, path.join(remoteDestination, finalBackupFileName), remoteDestination, sshKeyFile || null);
+      await copyToRemote(
+        tempFilePath,
+        remoteDestination,
+        remoteHost,
+        sshKeyFile || null,
+      );
+      await extractRemotely(
+        remoteHost,
+        path.join(remoteDestination, finalBackupFileName),
+        remoteDestination,
+        sshKeyFile || null,
+      );
     } else {
-      console.error("Invalid destination type. Please choose 'local' or 'remote'.");
+      console.error(
+        "Invalid destination type. Please choose 'local' or 'remote'.",
+      );
     }
 
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -140,7 +176,9 @@ const restoreAndCopyBackup = async (projectName, backupFileName) => {
 const [, , projectName, backupFileName] = process.argv;
 
 if (!projectName) {
-  console.error("Usage: node restoreAndCopyBackup.js <projectName> [backupFileName]");
+  console.error(
+    "Usage: node restoreAndCopyBackup.js <projectName> [backupFileName]",
+  );
   process.exit(1);
 }
 

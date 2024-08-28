@@ -34,7 +34,6 @@ services:
     image: amir20/dozzle:latest
     deploy:
       mode: global
-      replicas: 1
       restart_policy:
         condition: on-failure
     ports:
