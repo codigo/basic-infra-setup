@@ -60,12 +60,23 @@ export const setupDockerInServer = (
         else
           echo "Node is already a swarm manager."
         fi
-
-        # Capture join token for workers without echoing
-        docker swarm join-token -q worker
       `,
     },
     { dependsOn: installDocker },
+  );
+
+  const getWorkerToken = new command.remote.Command(
+    "getWorkerToken",
+    {
+      connection,
+      create: `
+        # Capture join token for workers without echoing
+        docker swarm join-token -q worker > /tmp/worker_token
+        cat /tmp/worker_token
+        rm /tmp/worker_token
+      `,
+    },
+    { dependsOn: initDockerSwarm }
   );
 
   // Create Docker networks
@@ -83,7 +94,7 @@ export const setupDockerInServer = (
         fi
       `,
     },
-    { dependsOn: initDockerSwarm },
+    { dependsOn: getWorkerToken },
   );
 
   // Set up Docker Swarm secrets
@@ -115,13 +126,12 @@ export const setupDockerInServer = (
     { dependsOn: createDockerNetworks },
   );
 
+
   return {
     installDocker,
     initDockerSwarm,
     createDockerNetworks,
     setupSecrets,
-    workerJoinToken: pulumi.secret(
-      initDockerSwarm.stdout.apply((token) => token.trim()),
-    ),
+    workerJoinToken: pulumi.secret(getWorkerToken.stdout),
   };
 };
