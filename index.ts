@@ -46,8 +46,8 @@ const serverEnv = pulumi
 
 // Step 6: Set up Docker in server (depends on server configuration and Cloudflare setup)
 const setupDocker = pulumi
-  .all([initialSetup, serverConfig, serverEnv])
-  .apply(([resources, _, __]) => {
+  .all([initialSetup, serverConfig, serverEnv, cloudflareResources])
+  .apply(([resources, _, __, cloudflare]) => {
     const {
       installDocker,
       initDockerSwarm,
@@ -55,8 +55,8 @@ const setupDocker = pulumi
       setupSecrets,
     } = setupDockerInServer(
       resources.server,
-      resources.cloudflare.maumercadoTunnelSecret.result,
-      resources.cloudflare.codigoTunnelSecret.result,
+      cloudflare.maumercadoTunnelTokenValue,
+      cloudflare.codigoTunnelTokenValue,
     );
     return pulumi.all([
       installDocker.id,

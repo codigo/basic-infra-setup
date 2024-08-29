@@ -4,8 +4,8 @@ import { Server } from "@pulumi/hcloud";
 
 export const setupDockerInServer = (
   server: Server,
-  maumercadoTunnelToken: pulumi.Output<string>,
-  codigoTunnelToken: pulumi.Output<string>,
+  maumercadoTunnelToken: string,
+  codigoTunnelToken: string,
 ) => {
   const config = new pulumi.Config();
   const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
@@ -91,7 +91,7 @@ export const setupDockerInServer = (
     "setupSecrets",
     {
       connection,
-      create: `
+      create: pulumi.interpolate`
         # Ensure we're in a swarm before creating secrets
         if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
           # Remove existing secrets if they exist

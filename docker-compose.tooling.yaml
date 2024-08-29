@@ -11,9 +11,7 @@ services:
     volumes:
       - /home/codigo/tooling/data/caddy/data:/data
       - /home/codigo/tooling/data/caddy/config:/config
-    configs:
-      - source: caddyfile
-        target: /etc/caddy/Caddyfile
+      - /home/codigo/tooling/data/caddy/Caddyfile:/etc/caddy/Caddyfile
     networks:
       - caddy_net
     healthcheck:
@@ -67,11 +65,9 @@ services:
 
   cloudflared-maumercado:
     image: cloudflare/cloudflared:latest
-    command: tunnel run maumercado-tunnel
+    command: tunnel --no-autoupdate run --token $(cat /run/secrets/maumercado_tunnel_token)
     secrets:
       - maumercado_tunnel_token
-    environment:
-      - TUNNEL_TOKEN_FILE=/run/secrets/maumercado_tunnel_token
     networks:
       - caddy_net
     deploy:
@@ -81,11 +77,9 @@ services:
 
   cloudflared-codigo:
     image: cloudflare/cloudflared:latest
-    command: tunnel run codigo-tunnel
+    command: tunnel --no-autoupdate run --token $(cat /run/secrets/codigo_tunnel_token)
     secrets:
       - codigo_tunnel_token
-    environment:
-      - TUNNEL_TOKEN_FILE=/run/secrets/codigo_tunnel_token
     networks:
       - caddy_net
     deploy:

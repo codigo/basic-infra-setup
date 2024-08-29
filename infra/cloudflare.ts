@@ -15,28 +15,6 @@ interface DnsRecordArgs {
   proxied?: boolean;
 }
 
-function createDnsRecord(
-  resourceName: string,
-  args: DnsRecordArgs,
-): cloudflare.Record {
-  const { name, zoneId, type, content, proxied = true } = args;
-
-  return new cloudflare.Record(
-    resourceName,
-    {
-      zoneId,
-      name,
-      type,
-      value: content,
-      proxied,
-    },
-    {
-      deleteBeforeReplace: true,
-      replaceOnChanges: ["name", "type", "value", "proxied"],
-    },
-  );
-}
-
 export const createCloudflareTunnels = () => {
   // Create Cloudflare tunnel for maumercado.com
   const maumercadoTunnelSecret = new random.RandomPassword(
@@ -47,14 +25,11 @@ export const createCloudflareTunnels = () => {
     },
   );
 
-  const maumercadoTunnel = new cloudflare.ZeroTrustTunnelCloudflared(
-    "maumercado-tunnel",
-    {
-      accountId: accountId,
-      name: "maumercado-tunnel",
-      secret: maumercadoTunnelSecret.result,
-    },
-  );
+  const maumercadoTunnel = new cloudflare.Tunnel("maumercado-tunnel", {
+    accountId: accountId,
+    name: "maumercado-tunnel",
+    secret: maumercadoTunnelSecret.result,
+  });
 
   // Create Cloudflare tunnel for codigo.sh
   const codigoTunnelSecret = new random.RandomPassword("codigo-tunnel-secret", {
@@ -62,14 +37,15 @@ export const createCloudflareTunnels = () => {
     special: false,
   });
 
-  const codigoTunnel = new cloudflare.ZeroTrustTunnelCloudflared(
-    "codigo-tunnel",
-    {
-      accountId: accountId,
-      name: "codigo-tunnel",
-      secret: codigoTunnelSecret.result,
-    },
-  );
+  const codigoTunnel = new cloudflare.Tunnel("codigo-tunnel", {
+    accountId: accountId,
+    name: "codigo-tunnel",
+    secret: codigoTunnelSecret.result,
+  });
+
+  // Generate the actual tunnel tokens
+  const maumercadoTunnelTokenValue = maumercadoTunnel.tunnelToken;
+  const codigoTunnelTokenValue = codigoTunnel.tunnelToken;
 
   const dnsRecords = [
     {
@@ -238,8 +214,8 @@ export const createCloudflareTunnels = () => {
   return {
     maumercadoTunnel,
     codigoTunnel,
-    maumercadoTunnelSecret,
-    codigoTunnelSecret,
+    maumercadoTunnelTokenValue,
+    codigoTunnelTokenValue,
     dnsRecords: createdRecords,
     maumercadoConfig,
     codigoConfig,
