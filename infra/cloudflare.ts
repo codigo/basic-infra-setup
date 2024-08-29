@@ -202,7 +202,7 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     },
   );
 
-  // Create a rule to always use HTTPS for maumercado.com
+  // Create a rule to always use HTTPS for maumercado
   const maumercadoHttpsRule = new cloudflare.Ruleset("maumercado-https-rule", {
     zoneId: maumercadoZoneId,
     name: "maumercado-https-rule",
@@ -210,8 +210,20 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     phase: "http_request_redirect",
     rules: [
       {
-        action: "always_use_https",
+        action: "redirect",
         expression: "true",  // This will apply to all requests
+        actionParameters: {
+          statusCode: 301,
+          uri: {
+            origin: true,
+            path: {
+              value: "{uri.path}",
+            },
+            query: {
+              value: "{uri.query}",
+            },
+          },
+        },
       },
     ],
   });
@@ -224,8 +236,20 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     phase: "http_request_redirect",
     rules: [
       {
-        action: "always_use_https",
+        action: "redirect",
         expression: "true",  // This will apply to all requests
+        actionParameters: {
+          statusCode: 301,
+          uri: {
+            origin: true,
+            path: {
+              value: "{uri.path}",
+            },
+            query: {
+              value: "{uri.query}",
+            },
+          },
+        },
       },
     ],
   });
