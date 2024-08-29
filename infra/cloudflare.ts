@@ -207,7 +207,7 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     zoneId: maumercadoZoneId,
     name: "maumercado-https-rule",
     kind: "zone",
-    phase: "http_request_firewall_rules",
+    phase: "http_request_redirect",
     rules: [
       {
         action: "always_use_https",
@@ -221,7 +221,7 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     zoneId: codigoZoneId,
     name: "codigo-https-rule",
     kind: "zone",
-    phase: "http_request_firewall_rules",
+    phase: "http_request_redirect",
     rules: [
       {
         action: "always_use_https",
