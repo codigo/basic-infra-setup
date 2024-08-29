@@ -25,7 +25,8 @@ This repository contains the infrastructure-as-code and deployment configuration
 
 Our infrastructure deployment process follows a specific flow to ensure all components are set up correctly:
 
-mermaid
+```mermaid
+
 graph TD
 A[Create S3 Bucket] --> D[Initial Setup]
 B[Create IAM Resources] --> D
@@ -60,6 +61,8 @@ end
 subgraph "Final Deployment"
 J
 end
+
+```
 
 ## Project Structure
 
