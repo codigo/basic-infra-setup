@@ -15,15 +15,7 @@ services:
     networks:
       - caddy_net
     healthcheck:
-      test:
-        [
-          "CMD",
-          "caddy",
-          "run",
-          "--config",
-          "/etc/caddy/Caddyfile",
-          "--validate",
-        ]
+      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
       interval: 30s
       timeout: 10s
       retries: 3
