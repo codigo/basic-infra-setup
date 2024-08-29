@@ -211,9 +211,11 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     rules: [
       {
         action: "redirect",
-        expression: "true",  // This will apply to all requests
+        expression: "(not ssl)",
         actionParameters: {
-          statusCode: 301,
+          fromValue: {
+            statusCode: 301
+          },
           uri: {
             origin: true,
             path: {
@@ -222,9 +224,9 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
             query: {
               value: "{uri.query}",
             },
-          },
-        },
-      },
+          }
+        }
+      }
     ],
   });
 
@@ -237,9 +239,11 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     rules: [
       {
         action: "redirect",
-        expression: "true",  // This will apply to all requests
+        expression: "(not ssl)",
         actionParameters: {
-          statusCode: 301,
+          fromValue: {
+            statusCode: 301
+          },
           uri: {
             origin: true,
             path: {
@@ -248,9 +252,9 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
             query: {
               value: "{uri.query}",
             },
-          },
-        },
-      },
+          }
+        }
+      }
     ],
   });
 
