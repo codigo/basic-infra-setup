@@ -10,24 +10,26 @@ import { configureServerEnv } from "./infra/setupEnvs";
 import { deployDockerStacks } from "./infra/deployDockerStacks";
 import { createCloudflareTunnels } from "./infra/cloudflare";
 
-// Step 1-3: Create S3 bucket, IAM resources, and Hetzner server in parallel
+// Step 1-4: Create S3 bucket, IAM resources, Hetzner server, and Cloudflare tunnels in parallel
 const s3Resources = createS3Bucket();
 const iamResources = createIAMResources();
 const hetznerResources = createHetznerServer();
+const cloudflareResources = createCloudflareTunnels();
 
 // Wait for all parallel operations to complete
 const initialSetup = pulumi
-  .all([s3Resources, iamResources, hetznerResources])
-  .apply(([s3, iam, hetzner]) => ({
+  .all([s3Resources, iamResources, hetznerResources, cloudflareResources])
+  .apply(([s3, iam, hetzner, cloudflare]) => ({
     appBucket: s3.appBucket,
     bucketUrl: s3.bucketUrl,
     iamUser: iam.iamUser,
     accessKey: iam.accessKey,
     server: hetzner.server,
     sshKey: hetzner.sshKey,
+    cloudflare: cloudflare,
   }));
 
-// Step 4: Configure server (depends on Hetzner server creation)
+// Step 5: Configure server (depends on Hetzner server creation)
 const serverConfig = initialSetup.apply((resources) => {
   const { createUser, installNode, disableRootSSH } = configureServer(
     resources.server,
@@ -35,35 +37,17 @@ const serverConfig = initialSetup.apply((resources) => {
   return pulumi.all([createUser.id, installNode.id, disableRootSSH.id]);
 });
 
-// Step 5: Set up DNS and Cloudflare tunnels (depends on Docker stacks deployment)
-const cloudflareSetup = pulumi.all([initialSetup]).apply(([resources, _]) => {
-  const serverIp = resources.server.ipv4Address;
-  const {
-    maumercadoTunnel,
-    codigoTunnel,
-    maumercadoTunnelSecret,
-    codigoTunnelSecret,
-    maumercadoConfig,
-    codigoConfig,
-    maumercadoHttpsRedirect,
-    codigoHttpsRedirect,
-  } = createCloudflareTunnels();
+// Add this step to configure server environment
+const serverEnv = pulumi
+  .all([initialSetup, serverConfig])
+  .apply(([resources, _]) => {
+    return configureServerEnv(resources.server, resources.appBucket);
+  });
 
-  return {
-    maumercadoTunnelId: maumercadoTunnel.id,
-    codigoTunnelId: codigoTunnel.id,
-    maumercadoConfigId: maumercadoConfig.id,
-    codigoConfigId: codigoConfig.id,
-    maumercadoHttpsRedirectId: maumercadoHttpsRedirect.id,
-    codigoHttpsRedirectId: codigoHttpsRedirect.id,
-    maumercadoTunnelSecret,
-    codigoTunnelSecret,
-  };
-});
-
+// Step 6: Set up Docker in server (depends on server configuration and Cloudflare setup)
 const setupDocker = pulumi
-  .all([initialSetup, serverConfig, cloudflareSetup])
-  .apply(([resources, _, cloudflare]) => {
+  .all([initialSetup, serverConfig, serverEnv])
+  .apply(([resources, _, __]) => {
     const {
       installDocker,
       initDockerSwarm,
@@ -71,8 +55,8 @@ const setupDocker = pulumi
       setupSecrets,
     } = setupDockerInServer(
       resources.server,
-      cloudflare.maumercadoTunnelSecret.result,
-      cloudflare.codigoTunnelSecret.result,
+      resources.cloudflare.maumercadoTunnelSecret.result,
+      resources.cloudflare.codigoTunnelSecret.result,
     );
     return pulumi.all([
       installDocker.id,
@@ -80,17 +64,6 @@ const setupDocker = pulumi
       createDockerNetworks.id,
       setupSecrets.id,
     ]);
-  });
-
-// Step 6: Configure server environment (depends on server configuration)
-const serverEnv = pulumi
-  .all([initialSetup, serverConfig])
-  .apply(([resources, _]) => {
-    const { createEnvVars } = configureServerEnv(
-      resources.server,
-      resources.appBucket,
-    );
-    return createEnvVars.id;
   });
 
 // Step 7: Copy Mau App files and tooling files in parallel (depends on server environment setup)
@@ -142,4 +115,4 @@ export const serverConfigOutput = serverConfig;
 export const serverEnvOutput = serverEnv;
 export const filesCopiedOutput = filesCopied;
 export const dockerStacksDeployedOutput = dockerStacksDeployed;
-export const cloudflareSetupOutput = cloudflareSetup;
+export const cloudflareSetupOutput = cloudflareResources;
