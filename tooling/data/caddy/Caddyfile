@@ -27,6 +27,6 @@
 
 	@dozzle host dozzle.codigo.sh dozzle.maumercado.com
 	handle @dozzle {
-		reverse_proxy dozzle:8080
+		reverse_proxy dozzle:8888
 	}
 }

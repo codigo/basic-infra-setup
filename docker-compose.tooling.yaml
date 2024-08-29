@@ -22,8 +22,6 @@ services:
       mode: global
       restart_policy:
         condition: on-failure
-    ports:
-      - 8888:8080
     environment:
       - DOZZLE_LEVEL=debug
       - DOZZLE_MODE=swarm
@@ -52,6 +50,34 @@ services:
     networks:
       - caddy_net
 
+  cloudflared-maumercado:
+    image: cloudflare/cloudflared:latest
+    command: tunnel run
+    secrets:
+      - maumercado_tunnel_token
+    environment:
+      - TUNNEL_TOKEN_FILE=/run/secrets/maumercado_tunnel_token
+    networks:
+      - caddy_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  cloudflared-codigo:
+    image: cloudflare/cloudflared:latest
+    command: tunnel run
+    secrets:
+      - codigo_tunnel_token
+    environment:
+      - TUNNEL_TOKEN_FILE=/run/secrets/codigo_tunnel_token
+    networks:
+      - caddy_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
 networks:
   caddy_net:
     external: true
@@ -65,3 +91,7 @@ configs:
 secrets:
   users:
     file: ./tooling/data/dozzle/users.yaml
+  maumercado_tunnel_token:
+    external: true
+  codigo_tunnel_token:
+    external: true

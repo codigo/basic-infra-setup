@@ -55,7 +55,7 @@ services:
     command:
       - --data-dir
       - /data
-      - --api-key
+      - --api-keydoes
       - TYPESENSE_API_KEY
     environment:
       TYPESENSE_API_KEY: /run/secrets/typesense_api_key
