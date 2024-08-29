@@ -101,10 +101,10 @@ export const setupDockerInServer = (
           docker secret ls --format '{{.Name}}' | grep -q "^codigo_tunnel_token$" && docker secret rm codigo_tunnel_token
 
           # Create new secrets
-          echo "${maumercadoTunnelToken}" | docker secret create maumercado_tunnel_token -
-          echo "${codigoTunnelToken}" | docker secret create codigo_tunnel_token -
           echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
           echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
+          echo "${maumercadoTunnelToken}" | docker secret create maumercado_tunnel_token -
+          echo "${codigoTunnelToken}" | docker secret create codigo_tunnel_token -
           echo "Docker secrets created successfully."
         else
           echo "Error: Docker Swarm is not active. Cannot create secrets."

@@ -53,17 +53,15 @@ services:
     volumes:
       - /home/codigo/mau-app/data/typesense:/data
     command:
-      - --data-dir
-      - /data
-      - --api-key
-      - ${TYPESENSE_API_KEY}
+      - --data-dir=/data
+      - --api-key=${TYPESENSE_API_KEY}
     environment:
-      TYPESENSE_API_KEY: /run/secrets/typesense_api_key
+      TYPESENSE_API_KEY: /run/secrets/mau-app_typesense_api_key
     networks:
       - internal_net
       - caddy_net
     secrets:
-      - typesense_api_key
+      - mau-app_typesense_api_key
 
 secrets:
   encryption_key:

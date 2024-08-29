@@ -112,7 +112,7 @@ export const createCloudflareTunnels = () => {
           name: record.name,
           zoneId: record.zoneId,
           type: "CNAME",
-          value: record.tunnel.id.apply((id) => `${id}.cfargotunnel.com`),
+          content: record.tunnel.id.apply((id) => `${id}.cfargotunnel.com`),
           proxied: true,
         },
         {
