@@ -203,20 +203,26 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
   );
 
   // For maumercado.com
-  const maumercadoHttpsRedirect = new cloudflare.ZoneSettingsOverride("maumercado-https-redirect", {
-    zoneId: maumercadoZoneId,
-    settings: {
-      alwaysUseHttps: "on",
+  const maumercadoHttpsRedirect = new cloudflare.ZoneSettingsOverride(
+    "maumercado-https-redirect",
+    {
+      zoneId: maumercadoZoneId,
+      settings: {
+        alwaysUseHttps: "on",
+      },
     },
-  });
+  );
 
   // For codigo.sh
-  const codigoHttpsRedirect = new cloudflare.ZoneSettingsOverride("codigo-https-redirect", {
-    zoneId: codigoZoneId,
-    settings: {
-      alwaysUseHttps: "on",
+  const codigoHttpsRedirect = new cloudflare.ZoneSettingsOverride(
+    "codigo-https-redirect",
+    {
+      zoneId: codigoZoneId,
+      settings: {
+        alwaysUseHttps: "on",
+      },
     },
-  });
+  );
 
   return {
     maumercadoTunnel,
