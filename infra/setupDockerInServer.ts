@@ -4,13 +4,16 @@ import { Server } from "@pulumi/hcloud";
 
 export const setupDockerInServer = (
   server: Server,
-  maumercadoTunnelToken: string,
-  codigoTunnelToken: string,
+  maumercadoTunnelToken: pulumi.Output<string>,
+  codigoTunnelToken: pulumi.Output<string>,
 ) => {
   const config = new pulumi.Config();
   const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+
+  console.log("maumercadoTunnelToken", maumercadoTunnelToken);
+  console.log("codigoTunnelToken", codigoTunnelToken);
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])

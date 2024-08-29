@@ -55,8 +55,8 @@ const setupDocker = pulumi
       setupSecrets,
     } = setupDockerInServer(
       resources.server,
-      cloudflare.maumercadoTunnelTokenValue,
-      cloudflare.codigoTunnelTokenValue,
+      cloudflare.maumercadoTunnel.tunnelToken,
+      cloudflare.codigoTunnel.tunnelToken,
     );
     return pulumi.all([
       installDocker.id,
