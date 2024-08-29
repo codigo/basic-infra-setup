@@ -57,27 +57,31 @@ services:
 
   cloudflared-maumercado:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run --token $(cat /run/secrets/maumercado_tunnel_token)
-    secrets:
-      - maumercado_tunnel_token
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN=/run/secrets/maumercado_tunnel_token
     networks:
       - caddy_net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+    secrets:
+      - maumercado_tunnel_token
 
   cloudflared-codigo:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run --token $(cat /run/secrets/codigo_tunnel_token)
-    secrets:
-      - codigo_tunnel_token
+    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN=/run/secrets/codigo_tunnel_token
     networks:
       - caddy_net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+    secrets:
+      - codigo_tunnel_token
 
 networks:
   caddy_net:
