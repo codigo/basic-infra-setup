@@ -35,9 +35,9 @@ services:
     environment:
       ENCRYPTION: /run/secrets/encryption_key
     volumes:
-      - ./mau-app/data/pocketbase/pb_data:/pb_data
-      - ./mau-app/data/pocketbase/pb_public:/pb_public
-      - ./mau-app/data/pocketbase/pb_migrations:/pb_migrations
+      - /home/codigo/mau-app/data/pocketbase/pb_data:/pb_data
+      - /home/codigo/mau-app/data/pocketbase/pb_public:/pb_public
+      - /home/codigo/mau-app/data/pocketbase/pb_migrations:/pb_migrations
     networks:
       - internal_net
       - caddy_net
@@ -51,12 +51,12 @@ services:
       restart_policy:
         condition: on-failure
     volumes:
-      - ./mau-app/data/typesense:/data
+      - /home/codigo/mau-app/data/typesense:/data
     command:
       - --data-dir
       - /data
-      - --api-keydoes
-      - TYPESENSE_API_KEY
+      - --api-key
+      - ${TYPESENSE_API_KEY}
     environment:
       TYPESENSE_API_KEY: /run/secrets/typesense_api_key
     networks:
@@ -78,9 +78,3 @@ networks:
     driver: overlay
   caddy_net:
     external: true
-
-volumes:
-  pb_data:
-  pb_public:
-  pb_migrations:
-  typesense-data:

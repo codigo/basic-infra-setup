@@ -28,18 +28,11 @@ export const deployDockerStacks = (server: Server) => {
       # Deploy Docker stacks
       cd /home/codigo
       echo ${dockerPassword} | docker login https://${dockerRegistry} -u ${dockerUsername} --password-stdin
-      docker stack deploy --with-registry-auth -d --compose-file ${MAUAPPDOCKERCOMPOSE} mau-app
       docker stack deploy --with-registry-auth -d --compose-file ${TOOLINGDOCKERCOMPOSE} tooling
+      sleep 10  # Add a 10-second delay
+      docker stack deploy --with-registry-auth -d --compose-file ${MAUAPPDOCKERCOMPOSE} mau-app
     `,
   });
-
-  deployDockerStacks.stdout.apply((stdout) => {
-    if (stdout) console.log("deployDockerStacks stdout:", stdout);
-  });
-  deployDockerStacks.stderr.apply((stderr) => {
-    if (stderr) console.error("deployDockerStacks stderr:", stderr);
-  });
-
   return {
     deployDockerStacksResult: deployDockerStacks,
   };

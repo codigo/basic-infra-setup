@@ -95,10 +95,10 @@ export const setupDockerInServer = (
         # Ensure we're in a swarm before creating secrets
         if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
           # Remove existing secrets if they exist
-          docker secret rm mau-app_typesense_api_key 2>/dev/null || true
-          docker secret rm mau-app_pb_encryption_key 2>/dev/null || true
-          docker secret rm maumercado_tunnel_token 2>/dev/null || true
-          docker secret rm codigo_tunnel_token 2>/dev/null || true
+          docker secret ls --format '{{.Name}}' | grep -q "^mau-app_typesense_api_key$" && docker secret rm mau-app_typesense_api_key
+          docker secret ls --format '{{.Name}}' | grep -q "^mau-app_pb_encryption_key$" && docker secret rm mau-app_pb_encryption_key
+          docker secret ls --format '{{.Name}}' | grep -q "^maumercado_tunnel_token$" && docker secret rm maumercado_tunnel_token
+          docker secret ls --format '{{.Name}}' | grep -q "^codigo_tunnel_token$" && docker secret rm codigo_tunnel_token
 
           # Create new secrets
           echo "${maumercadoTunnelToken}" | docker secret create maumercado_tunnel_token -
