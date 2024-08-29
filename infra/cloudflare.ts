@@ -43,10 +43,6 @@ export const createCloudflareTunnels = () => {
     secret: codigoTunnelSecret.result,
   });
 
-  // Generate the actual tunnel tokens
-  const maumercadoTunnelTokenValue = maumercadoTunnel.tunnelToken;
-  const codigoTunnelTokenValue = codigoTunnel.tunnelToken;
-
   const dnsRecords = [
     {
       name: "dozzle",
@@ -214,8 +210,6 @@ export const createCloudflareTunnels = () => {
   return {
     maumercadoTunnel,
     codigoTunnel,
-    maumercadoTunnelTokenValue,
-    codigoTunnelTokenValue,
     dnsRecords: createdRecords,
     maumercadoConfig,
     codigoConfig,
