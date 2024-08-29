@@ -155,19 +155,19 @@ export const createCloudflareTunnels = () => {
         ingressRules: [
           {
             hostname: "maumercado.com",
-            service: "http://mau-app-maumercado:8081",
+            service: "http://caddy:80",
           },
           {
             hostname: "www.maumercado.com",
-            service: "http://mau-app-maumercado:8081",
+            service: "http://caddy:80",
           },
           {
             hostname: "pocketbase.maumercado.com",
-            service: "http://pocketbase:8090",
+            service: "http://caddy:80",
           },
           {
             hostname: "typesense.maumercado.com",
-            service: "http://typesense:8108",
+            service: "http://caddy:80",
           },
           {
             service: "http_status:404",
@@ -187,23 +187,23 @@ export const createCloudflareTunnels = () => {
         ingressRules: [
           {
             hostname: "codigo.sh",
-            service: "http://mau-app-codigo:8079",
+            service: "http://caddy:80",
           },
           {
             hostname: "www.codigo.sh",
-            service: "http://mau-app-codigo:8079",
+            service: "http://caddy:80",
           },
           {
             hostname: "pocketbase.codigo.sh",
-            service: "http://pocketbase:8090",
+            service: "http://caddy:80",
           },
           {
             hostname: "typesense.codigo.sh",
-            service: "http://typesense:8108",
+            service: "http://caddy:80",
           },
           {
             hostname: "dozzle.codigo.sh",
-            service: "http://dozzle:8080",
+            service: "http://caddy:80",
           },
           {
             service: "http_status:404",

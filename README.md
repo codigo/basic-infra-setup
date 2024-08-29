@@ -4,7 +4,7 @@ This repository contains the infrastructure-as-code and deployment configuration
 
 ## Overview
 
-- **Infrastructure**: AWS (S3, IAM) and Hetzner Cloud
+- **Infrastructure**: AWS (S3, IAM), Hetzner Cloud, and Cloudflare
 - **Deployment**: Docker Swarm
 - **CI/CD**: GitHub Actions
 - **IaC Tool**: Pulumi (TypeScript)
@@ -12,12 +12,54 @@ This repository contains the infrastructure-as-code and deployment configuration
 ## Key Components
 
 - S3 buckets for application data and tooling
-- IAM resources for S3 access
-- Hetzner Cloud server
+- IAM resources for AWS access management
+- Hetzner Cloud server for hosting the application
+- Cloudflare Tunnels for secure access
 - Docker Swarm setup
 - Automated backups to S3
-- Monitoring and logging tools (Dozzle, Shepherd)
-- Reverse proxy (Caddy)
+- Reverse proxy and SSL termination (Caddy)
+- Monitoring and logging (Dozzle)
+- Automatic Docker image updates (Shepherd)
+
+## Infrastructure Deployment Flow
+
+Our infrastructure deployment process follows a specific flow to ensure all components are set up correctly:
+
+mermaid
+graph TD
+A[Create S3 Bucket] --> D[Initial Setup]
+B[Create IAM Resources] --> D
+C[Create Hetzner Server] --> D
+CF[Create Cloudflare Tunnels] --> D
+D --> E[Configure Server]
+E --> G[Setup Docker in Server]
+D --> G
+G --> H[Configure Server Environment]
+H --> I[Copy Files to Server]
+G --> I
+I --> J[Deploy Docker Stacks]
+H --> J
+subgraph "Parallel Initial Setup"
+A
+B
+C
+CF
+end
+subgraph "Server Configuration"
+E
+end
+subgraph "Docker Setup"
+G
+end
+subgraph "Environment Setup"
+H
+end
+subgraph "File Transfer"
+I
+end
+subgraph "Final Deployment"
+J
+end
 
 ## Project Structure
 
@@ -31,16 +73,25 @@ This repository contains the infrastructure-as-code and deployment configuration
 - `index.ts`: Main entry point for Pulumi infrastructure code
 - `Pulumi.yaml`: Pulumi project configuration
 
-## Setup
+## Setup and Deployment
 
 1. Fork this repository
 2. Set up required secrets in GitHub repository settings
-3. Push to main branch or manually trigger GitHub Actions workflow
+3. Push to main branch or manually trigger the GitHub Actions workflow
 
-## Usage
+The deployment is fully automated and includes:
 
-- Push to `main` branch to trigger deployment
-- Infrastructure and application deployment are fully automated
+- Processing configuration files
+- Setting up SSH keys
+- Configuring Pulumi with required settings and secrets
+- Executing the Pulumi deployment
+
+## Key Services
+
+- **Caddy**: Reverse proxy and SSL termination
+- **Dozzle**: Docker container log viewer
+- **Shepherd**: Automatic Docker image updater
+- **Cloudflared**: Cloudflare tunnel client for secure access
 
 ## Customization
 
@@ -49,14 +100,15 @@ This repository contains the infrastructure-as-code and deployment configuration
 
 ## Maintenance
 
-- Automated backups run every 12 hours
+- Automated backups run periodically (configured in Shepherd)
 - Docker images are automatically updated (managed by Shepherd)
 
 ## Security
 
 - Root SSH access is disabled
-- Only `codigo` user can SSH into the server
+- Only the `codigo` user can SSH into the server
 - Sensitive data stored in GitHub secrets and Pulumi config
+- Cloudflare Tunnels provide secure access without exposing ports
 
 ## Development
 
