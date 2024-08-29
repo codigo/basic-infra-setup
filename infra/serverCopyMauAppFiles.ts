@@ -26,7 +26,11 @@ export const copyMauAppDataFilesToServer = (server: Server) => {
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`
-      mkdir -p /home/codigo/mau-app/data/pocketbase`,
+      mkdir -p /home/codigo/mau-app/data/pocketbase/pb_data &&
+      mkdir -p /home/codigo/mau-app/data/pocketbase/pb_public &&
+      mkdir -p /home/codigo/mau-app/data/pocketbase/pb_migrations &&
+      mkdir -p /home/codigo/mau-app/data/typesense
+      `,
     },
   );
 

@@ -4,17 +4,32 @@ services:
     deploy:
       replicas: 1
       restart_policy:
-        condition: on-failure
+        condition: any
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./tooling/data/caddy/data:/data
-      - ./tooling/data/caddy/config:/config
+      - /home/codigo/tooling/data/caddy/data:/data
+      - /home/codigo/tooling/data/caddy/config:/config
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
     networks:
       - caddy_net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "caddy",
+          "run",
+          "--config",
+          "/etc/caddy/Caddyfile",
+          "--validate",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   dozzle:
     image: amir20/dozzle:latest
@@ -52,7 +67,7 @@ services:
 
   cloudflared-maumercado:
     image: cloudflare/cloudflared:latest
-    command: tunnel run
+    command: tunnel run maumercado-tunnel
     secrets:
       - maumercado_tunnel_token
     environment:
@@ -66,7 +81,7 @@ services:
 
   cloudflared-codigo:
     image: cloudflare/cloudflared:latest
-    command: tunnel run
+    command: tunnel run codigo-tunnel
     secrets:
       - codigo_tunnel_token
     environment:
@@ -84,13 +99,13 @@ networks:
 
 configs:
   caddyfile:
-    file: ./tooling/data/caddy/Caddyfile
+    file: /home/codigo/tooling/data/caddy/Caddyfile
   shepherd_config:
-    file: ./tooling/data/shepherd/shepherd-config.yaml
+    file: /home/codigo/tooling/data/shepherd/shepherd-config.yaml
 
 secrets:
   users:
-    file: ./tooling/data/dozzle/users.yaml
+    file: /home/codigo/tooling/data/dozzle/users.yaml
   maumercado_tunnel_token:
     external: true
   codigo_tunnel_token:

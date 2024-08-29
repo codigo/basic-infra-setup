@@ -37,7 +37,8 @@ export const copyToolingDataFilesToServer = (server: Server) => {
       connection,
       create: pulumi.interpolate`
       mkdir -p /home/codigo/bin &&
-      mkdir -p /home/codigo/tooling/data/caddy &&
+      mkdir -p /home/codigo/tooling/data/caddy/config &&
+      mkdir -p /home/codigo/tooling/data/caddy/data &&
       mkdir -p /home/codigo/tooling/data/dozzle &&
       mkdir -p /home/codigo/tooling/data/shepherd &&
       mkdir -p /home/codigo/tooling/data/typesense
