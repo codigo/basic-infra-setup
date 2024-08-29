@@ -2,7 +2,11 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export const setupDockerInServer = (server: Server) => {
+export const setupDockerInServer = (
+  server: Server,
+  maumercadoTunnelToken: pulumi.Output<string>,
+  codigoTunnelToken: pulumi.Output<string>,
+) => {
   const config = new pulumi.Config();
   const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
@@ -93,9 +97,12 @@ export const setupDockerInServer = (server: Server) => {
           # Remove existing secrets if they exist
           docker secret rm mau-app_typesense_api_key 2>/dev/null || true
           docker secret rm mau-app_pb_encryption_key 2>/dev/null || true
-          docker secret rm cloudflare_tunnel_token 2>/dev/null || true
+          docker secret rm maumercado_tunnel_token 2>/dev/null || true
+          docker secret rm codigo_tunnel_token 2>/dev/null || true
 
           # Create new secrets
+          echo "${maumercadoTunnelToken}" | docker secret create maumercado_tunnel_token -
+          echo "${codigoTunnelToken}" | docker secret create codigo_tunnel_token -
           echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
           echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
           echo "Docker secrets created successfully."

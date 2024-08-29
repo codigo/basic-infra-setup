@@ -35,15 +35,45 @@ const serverConfig = initialSetup.apply((resources) => {
   return pulumi.all([createUser.id, installNode.id, disableRootSSH.id]);
 });
 
+// Step 5: Set up DNS and Cloudflare tunnels (depends on Docker stacks deployment)
+const cloudflareSetup = pulumi.all([initialSetup]).apply(([resources, _]) => {
+  const serverIp = resources.server.ipv4Address;
+  const {
+    maumercadoTunnel,
+    codigoTunnel,
+    maumercadoTunnelSecret,
+    codigoTunnelSecret,
+    maumercadoConfig,
+    codigoConfig,
+    maumercadoHttpsRedirect,
+    codigoHttpsRedirect,
+  } = createCloudflareTunnels();
+
+  return {
+    maumercadoTunnelId: maumercadoTunnel.id,
+    codigoTunnelId: codigoTunnel.id,
+    maumercadoConfigId: maumercadoConfig.id,
+    codigoConfigId: codigoConfig.id,
+    maumercadoHttpsRedirectId: maumercadoHttpsRedirect.id,
+    codigoHttpsRedirectId: codigoHttpsRedirect.id,
+    maumercadoTunnelSecret,
+    codigoTunnelSecret,
+  };
+});
+
 const setupDocker = pulumi
-  .all([initialSetup, serverConfig])
-  .apply(([resources, _]) => {
+  .all([initialSetup, serverConfig, cloudflareSetup])
+  .apply(([resources, _, cloudflare]) => {
     const {
       installDocker,
       initDockerSwarm,
       createDockerNetworks,
       setupSecrets,
-    } = setupDockerInServer(resources.server);
+    } = setupDockerInServer(
+      resources.server,
+      cloudflare.maumercadoTunnelSecret.result,
+      cloudflare.codigoTunnelSecret.result,
+    );
     return pulumi.all([
       installDocker.id,
       initDockerSwarm.id,
@@ -52,7 +82,7 @@ const setupDocker = pulumi
     ]);
   });
 
-// Step 5: Configure server environment (depends on server configuration)
+// Step 6: Configure server environment (depends on server configuration)
 const serverEnv = pulumi
   .all([initialSetup, serverConfig])
   .apply(([resources, _]) => {
@@ -63,7 +93,7 @@ const serverEnv = pulumi
     return createEnvVars.id;
   });
 
-// Step 6: Copy Mau App files and tooling files in parallel (depends on server environment setup)
+// Step 7: Copy Mau App files and tooling files in parallel (depends on server environment setup)
 const filesCopied = pulumi
   .all([initialSetup, serverEnv, setupDocker])
   .apply(([resources, _, __]) => {
@@ -82,51 +112,13 @@ const filesCopied = pulumi
     ]);
   });
 
-// Step 7: Deploy Docker stacks (depends on file copying)
+// Step 8: Deploy Docker stacks (depends on file copying)
 const dockerStacksDeployed = pulumi
   .all([initialSetup, filesCopied, serverEnv])
   .apply(([resources, _]) => {
     const server = resources.server;
     const { deployDockerStacksResult } = deployDockerStacks(server);
     return deployDockerStacksResult.id;
-  });
-
-// Step 8: Set up DNS and Cloudflare tunnels (depends on Docker stacks deployment)
-const cloudflareSetup = pulumi
-  .all([initialSetup, dockerStacksDeployed])
-  .apply(([resources, _]) => {
-    const serverIp = resources.server.ipv4Address;
-    const {
-      maumercadoTunnel,
-      maumercadoDns,
-      wwwMaumercadoDns,
-      maumercadoPocketbaseDns,
-      maumercadoTypesenseDns,
-      codigoTunnel,
-      codigoDns,
-      wwwCodigoDns,
-      codigoPocketbaseDns,
-      codigoTypesenseDns,
-      dozzleDns,
-      maumercadoConfig,
-      codigoConfig,
-    } = createCloudflareTunnels(serverIp);
-
-    return pulumi.all([
-      maumercadoTunnel.id,
-      maumercadoDns.id,
-      wwwMaumercadoDns.id,
-      maumercadoPocketbaseDns.id,
-      maumercadoTypesenseDns.id,
-      codigoTunnel.id,
-      codigoDns.id,
-      wwwCodigoDns.id,
-      codigoPocketbaseDns.id,
-      codigoTypesenseDns.id,
-      dozzleDns.id,
-      maumercadoConfig.id,
-      codigoConfig.id,
-    ]);
   });
 
 // Exports
