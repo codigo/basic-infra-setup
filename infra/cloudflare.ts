@@ -144,19 +144,19 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
         ingressRules: [
           {
             hostname: "maumercado.com",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             hostname: "www.maumercado.com",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             hostname: "pocketbase.maumercado.com",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             hostname: "typesense.maumercado.com",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             service: "http_status:404",
@@ -176,23 +176,23 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
         ingressRules: [
           {
             hostname: "codigo.sh",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             hostname: "www.codigo.sh",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             hostname: "pocketbase.codigo.sh",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             hostname: "typesense.codigo.sh",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             hostname: "dozzle.codigo.sh",
-            service: `http://${ip}`,
+            service: `http://${ip}:80`,
           },
           {
             service: "http_status:404",
