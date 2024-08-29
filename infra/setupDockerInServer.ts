@@ -6,7 +6,6 @@ export const setupDockerInServer = (server: Server) => {
   const config = new pulumi.Config();
   const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
-  const cloudflareTunnelSecret = config.requireSecret("cloudflareTunnelSecret");
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
   const sshPrivateKey = pulumi
@@ -78,9 +77,6 @@ export const setupDockerInServer = (server: Server) => {
         if ! docker network ls | grep -q "caddy_net"; then
           docker network create --driver overlay caddy_net
         fi
-        if ! docker network ls | grep -q "dozzle"; then
-          docker network create --driver overlay dozzle
-        fi
       `,
     },
     { dependsOn: initDockerSwarm },
@@ -102,7 +98,6 @@ export const setupDockerInServer = (server: Server) => {
           # Create new secrets
           echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
           echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
-          echo "${cloudflareTunnelSecret}" | docker secret create cloudflare_tunnel_token -
           echo "Docker secrets created successfully."
         else
           echo "Error: Docker Swarm is not active. Cannot create secrets."

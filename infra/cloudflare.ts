@@ -202,6 +202,34 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     },
   );
 
+  // Create a rule to always use HTTPS for maumercado.com
+  const maumercadoHttpsRule = new cloudflare.Ruleset("maumercado-https-rule", {
+    zoneId: maumercadoZoneId,
+    name: "maumercado-https-rule",
+    kind: "zone",
+    phase: "http_request_firewall_rules",
+    rules: [
+      {
+        action: "always_use_https",
+        expression: "true",  // This will apply to all requests
+      },
+    ],
+  });
+
+  // Create a rule to always use HTTPS for codigo.sh
+  const codigoHttpsRule = new cloudflare.Ruleset("codigo-https-rule", {
+    zoneId: codigoZoneId,
+    name: "codigo-https-rule",
+    kind: "zone",
+    phase: "http_request_firewall_rules",
+    rules: [
+      {
+        action: "always_use_https",
+        expression: "true",  // This will apply to all requests
+      },
+    ],
+  });
+
   return {
     maumercadoTunnel,
     maumercadoDns,
@@ -216,5 +244,7 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     dozzleDns,
     maumercadoConfig,
     codigoConfig,
+    maumercadoHttpsRule,
+    codigoHttpsRule,
   };
 };

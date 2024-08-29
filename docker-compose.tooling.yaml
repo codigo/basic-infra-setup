@@ -16,20 +16,6 @@ services:
     networks:
       - caddy_net
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=/run/secrets/cloudflare_tunnel_token
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-    networks:
-      - caddy_net
-    secrets:
-      - cloudflare_tunnel_token
-
   dozzle:
     image: amir20/dozzle:latest
     deploy:
@@ -48,7 +34,6 @@ services:
       - source: users
         target: /data/users.yml
     networks:
-      - dozzle
       - caddy_net
 
   shepherd:
@@ -70,8 +55,6 @@ services:
 networks:
   caddy_net:
     external: true
-  dozzle:
-    driver: overlay
 
 configs:
   caddyfile:
@@ -82,6 +65,3 @@ configs:
 secrets:
   users:
     file: ./tooling/data/dozzle/users.yaml
-  cloudflare_tunnel_token:
-    name: cloudflare_tunnel_token
-    external: true
