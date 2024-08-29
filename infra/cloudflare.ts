@@ -144,19 +144,19 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
         ingressRules: [
           {
             hostname: "maumercado.com",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             hostname: "www.maumercado.com",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             hostname: "pocketbase.maumercado.com",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             hostname: "typesense.maumercado.com",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             service: "http_status:404",
@@ -176,23 +176,23 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
         ingressRules: [
           {
             hostname: "codigo.sh",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             hostname: "www.codigo.sh",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             hostname: "pocketbase.codigo.sh",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             hostname: "typesense.codigo.sh",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             hostname: "dozzle.codigo.sh",
-            service: `http://${ip}:80`,
+            service: `http://${ip}`,
           },
           {
             service: "http_status:404",
@@ -202,60 +202,20 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     },
   );
 
-  // Create a rule to always use HTTPS for maumercado
-  const maumercadoHttpsRule = new cloudflare.Ruleset("maumercado-https-rule", {
+  // For maumercado.com
+  const maumercadoHttpsRedirect = new cloudflare.ZoneSettingsOverride("maumercado-https-redirect", {
     zoneId: maumercadoZoneId,
-    name: "maumercado-https-rule",
-    kind: "zone",
-    phase: "http_request_redirect",
-    rules: [
-      {
-        action: "redirect",
-        expression: "(not ssl)",
-        actionParameters: {
-          fromValue: {
-            statusCode: 301
-          },
-          uri: {
-            origin: true,
-            path: {
-              value: "{uri.path}",
-            },
-            query: {
-              value: "{uri.query}",
-            },
-          }
-        }
-      }
-    ],
+    settings: {
+      alwaysUseHttps: "on",
+    },
   });
 
-  // Create a rule to always use HTTPS for codigo.sh
-  const codigoHttpsRule = new cloudflare.Ruleset("codigo-https-rule", {
+  // For codigo.sh
+  const codigoHttpsRedirect = new cloudflare.ZoneSettingsOverride("codigo-https-redirect", {
     zoneId: codigoZoneId,
-    name: "codigo-https-rule",
-    kind: "zone",
-    phase: "http_request_redirect",
-    rules: [
-      {
-        action: "redirect",
-        expression: "(not ssl)",
-        actionParameters: {
-          fromValue: {
-            statusCode: 301
-          },
-          uri: {
-            origin: true,
-            path: {
-              value: "{uri.path}",
-            },
-            query: {
-              value: "{uri.query}",
-            },
-          }
-        }
-      }
-    ],
+    settings: {
+      alwaysUseHttps: "on",
+    },
   });
 
   return {
@@ -272,7 +232,7 @@ export const createCloudflareTunnels = (serverIp: pulumi.Output<string>) => {
     dozzleDns,
     maumercadoConfig,
     codigoConfig,
-    maumercadoHttpsRule,
-    codigoHttpsRule,
+    maumercadoHttpsRedirect,
+    codigoHttpsRedirect,
   };
 };
