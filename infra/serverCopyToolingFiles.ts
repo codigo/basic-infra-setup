@@ -52,7 +52,10 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     "copy docker compose tooling",
     {
       connection,
-      create: pulumi.interpolate`echo '${docker_compose_tooling}' > /home/codigo/docker-compose.tooling.yaml`,
+      create: pulumi.interpolate`cat << 'EOF' > /home/codigo/docker-compose.tooling.yaml
+        ${docker_compose_tooling}
+        EOF
+      `,
     },
     { dependsOn: createToolingFolders },
   );
