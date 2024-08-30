@@ -59,8 +59,8 @@ services:
     image: cloudflare/cloudflared:latest
     command: >
       sh -c '
-      echo "Command to be executed: tunnel run --token $(cat /run/secrets/maumercado_tunnel_token)" &&
-      tunnel run --token $(cat /run/secrets/maumercado_tunnel_token)
+      echo "Command to be executed: tunnel run --token $$(cat /run/secrets/maumercado_tunnel_token | cut -c1-5)..." &&
+      tunnel run --token $$(cat /run/secrets/maumercado_tunnel_token)
       '
     networks:
       - caddy_net
@@ -75,8 +75,8 @@ services:
     image: cloudflare/cloudflared:latest
     command: >
       sh -c '
-      echo "Command to be executed: tunnel run --token $(cat /run/secrets/codigo_tunnel_token)" &&
-      tunnel run --token $(cat /run/secrets/codigo_tunnel_token)
+      echo "Command to be executed: tunnel run --token $$(cat /run/secrets/codigo_tunnel_token | cut -c1-5)..." &&
+      tunnel run --token $$(cat /run/secrets/codigo_tunnel_token)
       '
     networks:
       - caddy_net

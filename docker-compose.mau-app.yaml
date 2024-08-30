@@ -33,7 +33,7 @@ services:
       - --encryptionEnv
       - ENCRYPTION
     environment:
-      ENCRYPTION: /run/secrets/encryption_key
+      ENCRYPTION: /run/secrets/mau-app_pb_encryption_key
     volumes:
       - /home/codigo/mau-app/data/pocketbase/pb_data:/pb_data
       - /home/codigo/mau-app/data/pocketbase/pb_public:/pb_public
@@ -42,7 +42,7 @@ services:
       - internal_net
       - caddy_net
     secrets:
-      - encryption_key
+      - mau-app_pb_encryption_key
 
   typesense:
     image: typesense/typesense:26.0
@@ -64,11 +64,9 @@ services:
       - mau-app_typesense_api_key
 
 secrets:
-  encryption_key:
-    name: mau-app_pb_encryption_key
+  mau-app_pb_encryption_key:
     external: true
-  typesense_api_key:
-    name: mau-app_typesense_api_key
+  mau-app_typesense_api_key:
     external: true
 
 networks:
