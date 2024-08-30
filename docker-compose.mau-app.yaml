@@ -31,7 +31,7 @@ services:
         condition: on-failure
     command:
       - --encryptionEnv
-      - '$(cat /run/secrets/mau-app_pb_encryption_key)'
+      - $$(cat /run/secrets/mau-app_pb_encryption_key)
     volumes:
       - /home/codigo/mau-app/data/pocketbase/pb_data:/pb_data
       - /home/codigo/mau-app/data/pocketbase/pb_public:/pb_public
@@ -54,7 +54,7 @@ services:
       - --data-dir
       - /data
       - --api-key
-      - '$(cat /run/secrets/mau-app_typesense_api_key)'
+      - $$(cat /run/secrets/mau-app_typesense_api_key)
     networks:
       - internal_net
       - caddy_net

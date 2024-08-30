@@ -61,7 +61,7 @@ services:
       - tunnel
       - run
       - --token
-      - '$(cat /run/secrets/maumercado_tunnel_token)'
+      - $$(cat /run/secrets/maumercado_tunnel_token)
     networks:
       - caddy_net
     deploy:
@@ -77,7 +77,7 @@ services:
       - tunnel
       - run
       - --token
-      - '$(cat /run/secrets/codigo_tunnel_token)'
+      - $$(cat /run/secrets/codigo_tunnel_token)
     networks:
       - caddy_net
     deploy:
