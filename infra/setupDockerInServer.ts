@@ -12,8 +12,9 @@ export const setupDockerInServer = (
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
-  console.log("maumercadoTunnelToken", maumercadoTunnelToken);
-  console.log("codigoTunnelToken", codigoTunnelToken);
+  // At the beginning of the setupDockerInServer function:
+  pulumi.log.info(`maumercadoTunnelToken: ${maumercadoTunnelToken}`);
+  pulumi.log.info(`codigoTunnelToken: ${codigoTunnelToken}`);
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
@@ -105,30 +106,38 @@ export const setupDockerInServer = (
     "setupSecrets",
     {
       connection,
-      create: pulumi.interpolate`
-        # Ensure we're in a swarm before creating secrets
-        if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
-          # Remove existing secrets if they exist
-          docker secret ls --format '{{.Name}}' | grep -q "^mau-app_typesense_api_key$" && docker secret rm mau-app_typesense_api_key
-          docker secret ls --format '{{.Name}}' | grep -q "^mau-app_pb_encryption_key$" && docker secret rm mau-app_pb_encryption_key
-          docker secret ls --format '{{.Name}}' | grep -q "^maumercado_tunnel_token$" && docker secret rm maumercado_tunnel_token
-          docker secret ls --format '{{.Name}}' | grep -q "^codigo_tunnel_token$" && docker secret rm codigo_tunnel_token
+      create: pulumi.all([mauAppTypeSenseKey, mauAppPBEncryptionKey, maumercadoTunnelToken, codigoTunnelToken])
+        .apply(([typeSenseKey, pbEncryptionKey, maumercadoToken, codigoToken]) => {
+          // Log the values here
+          pulumi.log.info(`typeSenseKey: ${typeSenseKey}`);
+          pulumi.log.info(`pbEncryptionKey: ${pbEncryptionKey}`);
+          pulumi.log.info(`maumercadoToken: ${maumercadoToken}`);
+          pulumi.log.info(`codigoToken: ${codigoToken}`);
 
-          # Create new secrets
-          echo "${mauAppTypeSenseKey}" | docker secret create mau-app_typesense_api_key -
-          echo "${mauAppPBEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
-          echo "${maumercadoTunnelToken}" | docker secret create maumercado_tunnel_token -
-          echo "${codigoTunnelToken}" | docker secret create codigo_tunnel_token -
-          echo "Docker secrets created successfully."
-        else
-          echo "Error: Docker Swarm is not active. Cannot create secrets."
-          exit 1
-        fi
-      `,
+          return pulumi.interpolate`
+            # Ensure we're in a swarm before creating secrets
+            if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
+              # Remove existing secrets if they exist
+              docker secret ls --format '{{.Name}}' | grep -q "^mau-app_typesense_api_key$" && docker secret rm mau-app_typesense_api_key
+              docker secret ls --format '{{.Name}}' | grep -q "^mau-app_pb_encryption_key$" && docker secret rm mau-app_pb_encryption_key
+              docker secret ls --format '{{.Name}}' | grep -q "^maumercado_tunnel_token$" && docker secret rm maumercado_tunnel_token
+              docker secret ls --format '{{.Name}}' | grep -q "^codigo_tunnel_token$" && docker secret rm codigo_tunnel_token
+
+              # Create new secrets
+              echo "${typeSenseKey}" | docker secret create mau-app_typesense_api_key -
+              echo "${pbEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
+              echo "${maumercadoToken}" | docker secret create maumercado_tunnel_token -
+              echo "${codigoToken}" | docker secret create codigo_tunnel_token -
+              echo "Docker secrets created successfully."
+            else
+              echo "Error: Docker Swarm is not active. Cannot create secrets."
+              exit 1
+            fi
+          `;
+        }),
     },
     { dependsOn: createDockerNetworks },
   );
-
 
   return {
     installDocker,
