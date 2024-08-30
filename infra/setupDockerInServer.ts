@@ -12,10 +12,6 @@ export const setupDockerInServer = (
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
-  // At the beginning of the setupDockerInServer function:
-  pulumi.log.info(`maumercadoTunnelToken: ${maumercadoTunnelToken}`);
-  pulumi.log.info(`codigoTunnelToken: ${codigoTunnelToken}`);
-
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
@@ -80,7 +76,7 @@ export const setupDockerInServer = (
         rm /tmp/worker_token
       `,
     },
-    { dependsOn: initDockerSwarm }
+    { dependsOn: initDockerSwarm },
   );
 
   // Create Docker networks
@@ -106,15 +102,22 @@ export const setupDockerInServer = (
     "setupSecrets",
     {
       connection,
-      create: pulumi.all([mauAppTypeSenseKey, mauAppPBEncryptionKey, maumercadoTunnelToken, codigoTunnelToken])
-        .apply(([typeSenseKey, pbEncryptionKey, maumercadoToken, codigoToken]) => {
-          // Log the values here
-          pulumi.log.info(`typeSenseKey: ${typeSenseKey}`);
-          pulumi.log.info(`pbEncryptionKey: ${pbEncryptionKey}`);
-          pulumi.log.info(`maumercadoToken: ${maumercadoToken}`);
-          pulumi.log.info(`codigoToken: ${codigoToken}`);
+      create: pulumi
+        .all([
+          mauAppTypeSenseKey,
+          mauAppPBEncryptionKey,
+          maumercadoTunnelToken,
+          codigoTunnelToken,
+        ])
+        .apply(
+          ([typeSenseKey, pbEncryptionKey, maumercadoToken, codigoToken]) => {
+            // Log the values here
+            pulumi.log.info(`typeSenseKey: ${typeSenseKey}`);
+            pulumi.log.info(`pbEncryptionKey: ${pbEncryptionKey}`);
+            pulumi.log.info(`maumercadoToken: ${maumercadoToken}`);
+            pulumi.log.info(`codigoToken: ${codigoToken}`);
 
-          return pulumi.interpolate`
+            return pulumi.interpolate`
             # Ensure we're in a swarm before creating secrets
             if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
               # Remove existing secrets if they exist
@@ -134,7 +137,8 @@ export const setupDockerInServer = (
               exit 1
             fi
           `;
-        }),
+          },
+        ),
     },
     { dependsOn: createDockerNetworks },
   );
