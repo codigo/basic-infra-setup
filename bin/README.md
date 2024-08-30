@@ -56,7 +56,7 @@ The scripts use environment variables for configuration:
 
 Let's say you have the following directory structure in your home folder:
 
-```
+```plaintext
 ~/
 ├── project1/
 │   ├── data/
@@ -74,7 +74,7 @@ Let's say you have the following directory structure in your home folder:
 
 2. It will create backup files in the `BACKUP_DIR`:
 
-   ```
+   ```plaintext
    BACKUP_DIR/
    ├── project1_2024-08-19-12-00-00.tar.gz
    └── project2_2024-08-19-12-00-00.tar.gz
@@ -84,7 +84,7 @@ Let's say you have the following directory structure in your home folder:
 
 4. The `uploadToS3.js` script will then upload these files to the S3 bucket with the following structure:
 
-   ```
+   ```plaintext
    S3_BACKUPS_BUCKET/
    ├── backups/
    │   ├── project1/
@@ -95,7 +95,7 @@ Let's say you have the following directory structure in your home folder:
 
 5. To restore a backup, you would use the `restoreAndCopyBackup.js` script. For example:
 
-   ```
+   ```plaintext
    node restoreAndCopyBackup.js project1
    ```
 
@@ -132,9 +132,9 @@ Note: Be cautious when restoring backups, as it will overwrite existing files in
 
 ## Examples of Usage
 
-### Restore the latest backup of a project locally:
+### Restore the latest backup of a project locally
 
-```
+```sh
 node restoreAndCopyBackup.js project1
 ```
 
@@ -144,9 +144,9 @@ This command will:
 2. Prompt the user to choose between local or remote destination.
 3. If local is chosen, extract the backup to the local restore directory.
 
-### Restore a specific backup of a project to a remote host:
+### Restore a specific backup of a project to a remote host
 
-```
+```sh
 node restoreAndCopyBackup.js project2 project2_2024-08-19-12-00-00.tar.gz
 ```
 
@@ -155,15 +155,15 @@ This command will:
 1. Retrieve the specified backup for project2 from S3.
 2. Prompt the user to choose between local or remote destination.
 3. If remote is chosen:
-   - Prompt for the remote host information (e.g., user@example.com).
+   - Prompt for the remote host information (e.g., <user@example.com>).
    - Prompt for the remote destination folder.
    - Optionally prompt for an SSH key file.
    - Copy the backup to the remote host.
    - Extract the backup on the remote host.
 
-### Restore the latest backup of a project to a remote host:
+### Restore the latest backup of a project to a remote host
 
-```
+```sh
 node restoreAndCopyBackup.js project3
 ```
 
