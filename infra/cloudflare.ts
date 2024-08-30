@@ -3,9 +3,9 @@ import * as cloudflare from "@pulumi/cloudflare";
 import * as random from "@pulumi/random";
 
 const config = new pulumi.Config();
-const accountId = config.require("cloudflareAccountId");
-const maumercadoZoneId = config.require("cloudflareMaumercadoZoneId");
-const codigoZoneId = config.require("cloudflareCodigoZoneId");
+const accountId = config.requireSecret("cloudflareAccountId");
+const maumercadoZoneId = config.requireSecret("cloudflareMaumercadoZoneId");
+const codigoZoneId = config.requireSecret("cloudflareCodigoZoneId");
 
 interface DnsRecordArgs {
   name: string;
