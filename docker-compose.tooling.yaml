@@ -57,9 +57,9 @@ services:
 
   cloudflared-maumercado:
     image: cloudflare/cloudflared:latest
-    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel run --token ${TUNNEL_TOKEN}
     environment:
-      - CLOUDFLARE_TUNNEL_TOKEN=/run/secrets/maumercado_tunnel_token
+      - TUNNEL_TOKEN=/run/secrets/maumercado_tunnel_token
     networks:
       - caddy_net
     deploy:
@@ -71,9 +71,9 @@ services:
 
   cloudflared-codigo:
     image: cloudflare/cloudflared:latest
-    command: tunnel run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel run --token ${TUNNEL_TOKEN}
     environment:
-      - CLOUDFLARE_TUNNEL_TOKEN=/run/secrets/codigo_tunnel_token
+      - TUNNEL_TOKEN=/run/secrets/codigo_tunnel_token
     networks:
       - caddy_net
     deploy:
