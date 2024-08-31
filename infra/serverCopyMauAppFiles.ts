@@ -66,7 +66,13 @@ ${docker_compose_mau_app}
 EOF
 `,
     },
-    { dependsOn: [scpEntryPointPocketbase, scpEntryPointTypesense, createMauAppFolders] },
+    {
+      dependsOn: [
+        scpEntryPointPocketbase,
+        scpEntryPointTypesense,
+        createMauAppFolders,
+      ],
+    },
   );
 
   return {

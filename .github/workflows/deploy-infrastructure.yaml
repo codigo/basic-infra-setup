@@ -117,8 +117,6 @@ jobs:
           # Set entrypoints from bin scripts
           pulumi config set pocketbaseEntrypoint "$(cat ./mau-app/bin/pocketbase/entrypoint.sh)"
           pulumi config set typesenseEntrypoint "$(cat ./mau-app/bin/typesense/entrypoint.sh)"
-          pulumi config set cloudflaredMaumercadoEntrypoint "$(cat ./tooling/bin/cloudflared/maumercado_entrypoint.sh)"
-          pulumi config set cloudflaredCodigoEntrypoint "$(cat ./tooling/bin/cloudflared/codigo_entrypoint.sh)"
 
           # Set backup directory
           pulumi config set backupDir ${{ vars.BACKUP_DIR }}
