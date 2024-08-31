@@ -8,4 +8,7 @@
 **/pocketbase/*
 !**/pocketbase/.gitkeep
 
+!**/bin/pocketbase/*.sh
+!**/bin/typesense/*.sh
+
 .DS_Store

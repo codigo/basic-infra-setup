@@ -29,9 +29,7 @@ services:
       replicas: 1
       restart_policy:
         condition: on-failure
-    command:
-      - --encryptionEnv
-      - $$(cat /run/secrets/mau-app_pb_encryption_key)
+    entrypoint: ["/bin/sh", "/run/entrypoint.sh"]
     volumes:
       - /home/codigo/mau-app/data/pocketbase/pb_data:/pb_data
       - /home/codigo/mau-app/data/pocketbase/pb_public:/pb_public
@@ -41,31 +39,41 @@ services:
       - caddy_net
     secrets:
       - mau-app_pb_encryption_key
+    configs:
+      - source: mau-app_pocketbase_entrypoint
+        target: /run/entrypoint.sh
+        mode: 0755
 
   typesense:
-    image: typesense/typesense:26.0
+    image: typesense/typesense:27.0
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
+    entrypoint: ["/bin/sh", "/run/entrypoint.sh"]
     volumes:
       - /home/codigo/mau-app/data/typesense:/data
-    command:
-      - --data-dir
-      - /data
-      - --api-key
-      - $$(cat /run/secrets/mau-app_typesense_api_key)
     networks:
       - internal_net
       - caddy_net
     secrets:
       - mau-app_typesense_api_key
+    configs:
+      - source: mau-app_typesense_entrypoint
+        target: /run/entrypoint.sh
+        mode: 0755
 
 secrets:
   mau-app_pb_encryption_key:
     external: true
   mau-app_typesense_api_key:
     external: true
+
+configs:
+  mau-app_typesense_entrypoint:
+    file: /home/codigo/mau-app/bin/typesense/entrypoint.sh
+  mau-app_pocketbase_entrypoint:
+    file: /home/codigo/mau-app/bin/pocketbase/entrypoint.sh
 
 networks:
   internal_net:
