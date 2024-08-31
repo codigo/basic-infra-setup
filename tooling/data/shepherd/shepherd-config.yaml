@@ -1,6 +1,6 @@
 docker:
   watchByDefault: false
-  pollInterval: 5m
+  pollInterval: 20m
 
 notifications:
   discord:
@@ -13,16 +13,36 @@ notifications:
       - New version: {{ .New.Tag }}
       - Update status: {{ .Status }}
 
+auth:
+  registries:
+    - server: "{{ CONTAINER_REGISTRY_URL }}"
+      username: "{{ CONTAINER_REGISTRY_USERNAME }}"
+      password: "{{ CONTAINER_REGISTRY_PASSWORD }}"
+    - server: "https://registry-1.docker.io"
+      username: "{{ DOCKER_REGISTRY_USERNAME }}"
+      password: "{{ DOCKER_REGISTRY_PASSWORD }}"
 services:
   - name: mau-app-codigo
     image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    auth:
+      registry: "{{ CONTAINER_REGISTRY_URL }}"
   - name: mau-app-maumercado
     image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    auth:
+      registry: "{{ CONTAINER_REGISTRY_URL }}"
   - name: mau-app_pocketbase
     image: ghcr.io/muchobien/pocketbase:latest
+    auth:
+      registry: "https://registry-1.docker.io"
   - name: mau-app_typesense
     image: typesense/typesense:0.24.0
+    auth:
+      registry: "https://registry-1.docker.io"
   - name: tooling_caddy
     image: caddy:2
+    auth:
+      registry: "https://registry-1.docker.io"
   - name: tooling_cloudflared
     image: cloudflare/cloudflared:latest
+    auth:
+      registry: "https://registry-1.docker.io"

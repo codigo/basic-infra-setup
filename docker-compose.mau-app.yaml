@@ -7,6 +7,8 @@ services:
         condition: on-failure
     environment:
       ORIGIN: "{{ ORIGIN_CODIGO }}"
+    ports:
+      - "3000"
     networks:
       - internal_net
       - caddy_net
@@ -19,6 +21,8 @@ services:
         condition: on-failure
     environment:
       ORIGIN: "{{ ORIGIN_MAUMERCADO }}"
+    ports:
+      - "3000"
     networks:
       - internal_net
       - caddy_net
