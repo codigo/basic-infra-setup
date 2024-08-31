@@ -61,7 +61,7 @@ services:
       - tunnel
       - run
       - --token
-      - '{{ MAUMERCADO_TUNNEL_TOKEN }}'
+      - "{{ MAUMERCADO_TUNNEL_TOKEN }}"
     networks:
       - caddy_net
     deploy:
@@ -75,7 +75,7 @@ services:
       - tunnel
       - run
       - --token
-      - '{{ CODIGO_TUNNEL_TOKEN }}'
+      - "{{ CODIGO_TUNNEL_TOKEN }}"
 
     networks:
       - caddy_net

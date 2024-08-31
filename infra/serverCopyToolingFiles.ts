@@ -11,15 +11,14 @@ export const copyToolingDataFilesToServer = (
   const config = new pulumi.Config();
 
   const docker_compose_tooling = config.require("docker_compose_tooling");
-  const maumercadoTunnelTokenValue = maumercadoTunnelToken.get();
-  const codigoTunnelTokenValue = codigoTunnelToken.get();
 
   // Inject the tunnel tokens into the docker_compose_tooling
-  const injectedDockerComposeTooling =
-    pulumi.interpolate`${docker_compose_tooling}`.apply((compose) =>
+  const injectedDockerComposeTooling = pulumi
+    .all([docker_compose_tooling, maumercadoTunnelToken, codigoTunnelToken])
+    .apply(([compose, maumercadoToken, codigoToken]) =>
       compose
-        .replace("'{{ MAUMERCADO_TUNNEL_TOKEN }}'", maumercadoTunnelTokenValue)
-        .replace("'{{ CODIGO_TUNNEL_TOKEN }}'", codigoTunnelTokenValue),
+        .replace('"{{ MAUMERCADO_TUNNEL_TOKEN }}"', maumercadoToken)
+        .replace('"{{ CODIGO_TUNNEL_TOKEN }}"', codigoToken),
     );
 
   const dozzleUsers = config.requireSecret("users");
