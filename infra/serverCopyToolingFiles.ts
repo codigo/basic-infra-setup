@@ -33,13 +33,6 @@ export const copyToolingDataFilesToServer = (
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
-  const cloudflaredMaumercadoEntrypoint = config.require(
-    "cloudflaredMaumercadoEntrypoint",
-  );
-  const cloudflaredCodigoEntrypoint = config.require(
-    "cloudflaredCodigoEntrypoint",
-  );
-
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
@@ -67,26 +60,7 @@ export const copyToolingDataFilesToServer = (
     },
   );
 
-  const scpCloudflaredMaumercadoEntrypoint = new command.remote.Command(
-    "copy cloudflared maumercado entrypoint",
-    {
-      connection,
-      create: pulumi.interpolate`echo '${cloudflaredMaumercadoEntrypoint}' > /home/codigo/tooling/bin/cloudflared/maumercado_entrypoint.sh && chmod +x /home/codigo/tooling/bin/cloudflared/maumercado_entrypoint.sh`,
-    },
-    { dependsOn: createToolingFolders },
-  );
-
-  const scpCloudflaredCodigoEntrypoint = new command.remote.Command(
-    "copy cloudflared codigo entrypoint",
-    {
-      connection,
-      create: pulumi.interpolate`echo '${cloudflaredCodigoEntrypoint}' > /home/codigo/tooling/bin/cloudflared/codigo_entrypoint.sh && chmod +x /home/codigo/tooling/bin/cloudflared/codigo_entrypoint.sh`,
-    },
-    { dependsOn: createToolingFolders },
-  );
-
   // SCP commands to copy docker compose tooling string to the server
-
   const scpDockerComposeTooling = new command.remote.Command(
     "copy docker compose tooling",
     {
@@ -182,7 +156,5 @@ EOF
     scpToolingDataShepherd,
     scpCaddyFile,
     setPermissionsAndCronJob,
-    scpCloudflaredMaumercadoEntrypoint,
-    scpCloudflaredCodigoEntrypoint,
   };
 };
