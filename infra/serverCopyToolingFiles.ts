@@ -2,11 +2,25 @@ import * as pulumi from "@pulumi/pulumi";
 import * as command from "@pulumi/command";
 import { Server } from "@pulumi/hcloud";
 
-export const copyToolingDataFilesToServer = (server: Server) => {
+export const copyToolingDataFilesToServer = (
+  server: Server,
+  maumercadoTunnelToken: pulumi.Output<string>,
+  codigoTunnelToken: pulumi.Output<string>,
+) => {
   // Define the server details and credentials
   const config = new pulumi.Config();
 
   const docker_compose_tooling = config.require("docker_compose_tooling");
+  const maumercadoTunnelTokenValue = maumercadoTunnelToken.get();
+  const codigoTunnelTokenValue = codigoTunnelToken.get();
+
+  // Inject the tunnel tokens into the docker_compose_tooling
+  const injectedDockerComposeTooling =
+    pulumi.interpolate`${docker_compose_tooling}`.apply((compose) =>
+      compose
+        .replace("'{{ MAUMERCADO_TUNNEL_TOKEN }}'", maumercadoTunnelTokenValue)
+        .replace("'{{ CODIGO_TUNNEL_TOKEN }}'", codigoTunnelTokenValue),
+    );
 
   const dozzleUsers = config.requireSecret("users");
   const shepherdConfig = config.requireSecret("shepherd_config");
@@ -20,8 +34,12 @@ export const copyToolingDataFilesToServer = (server: Server) => {
 
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
 
-  const cloudflaredMaumercadoEntrypoint = config.require("cloudflaredMaumercadoEntrypoint");
-  const cloudflaredCodigoEntrypoint = config.require("cloudflaredCodigoEntrypoint");
+  const cloudflaredMaumercadoEntrypoint = config.require(
+    "cloudflaredMaumercadoEntrypoint",
+  );
+  const cloudflaredCodigoEntrypoint = config.require(
+    "cloudflaredCodigoEntrypoint",
+  );
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
@@ -75,7 +93,7 @@ export const copyToolingDataFilesToServer = (server: Server) => {
     {
       connection,
       create: pulumi.interpolate`cat << EOF > /home/codigo/docker-compose.tooling.yaml
-${docker_compose_tooling}
+${injectedDockerComposeTooling}
 EOF
 `,
     },

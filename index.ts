@@ -53,11 +53,7 @@ const setupDocker = pulumi
       initDockerSwarm,
       createDockerNetworks,
       setupSecrets,
-    } = setupDockerInServer(
-      resources.server,
-      resources.cloudflare.maumercadoTunnel.tunnelToken,
-      resources.cloudflare.codigoTunnel.tunnelToken,
-    );
+    } = setupDockerInServer(resources.server);
     return pulumi.all([
       installDocker.id,
       initDockerSwarm.id,
@@ -72,7 +68,11 @@ const filesCopied = pulumi
   .apply(([resources, _, __]) => {
     const server = resources.server;
     const mauAppFiles = copyMauAppDataFilesToServer(server);
-    const toolingFiles = copyToolingDataFilesToServer(server);
+    const toolingFiles = copyToolingDataFilesToServer(
+      server,
+      resources.cloudflare.maumercadoTunnel.tunnelToken,
+      resources.cloudflare.codigoTunnel.tunnelToken,
+    );
 
     return pulumi.all([
       mauAppFiles.createMauAppFolders.id,

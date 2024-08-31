@@ -57,35 +57,32 @@ services:
 
   cloudflared-maumercado:
     image: cloudflare/cloudflared:latest
-    entrypoint: ["/bin/sh", "/run/entrypoint.sh"]
+    command:
+      - tunnel
+      - run
+      - --token
+      - '{{ MAUMERCADO_TUNNEL_TOKEN }}'
     networks:
       - caddy_net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
-    secrets:
-      - maumercado_tunnel_token
-    configs:
-      - source: cloudflared_maumercado_entrypoint
-        target: /run/entrypoint.sh
-        mode: 0755
 
   cloudflared-codigo:
     image: cloudflare/cloudflared:latest
-    entrypoint: ["/bin/sh", "/run/entrypoint.sh"]
+    command:
+      - tunnel
+      - run
+      - --token
+      - '{{ CODIGO_TUNNEL_TOKEN }}'
+
     networks:
       - caddy_net
     deploy:
       replicas: 1
       restart_policy:
         condition: on-failure
-    secrets:
-      - codigo_tunnel_token
-    configs:
-      - source: cloudflared_codigo_entrypoint
-        target: /run/entrypoint.sh
-        mode: 0755
 
 networks:
   caddy_net:
@@ -96,15 +93,7 @@ configs:
     file: /home/codigo/tooling/data/caddy/Caddyfile
   shepherd_config:
     file: /home/codigo/tooling/data/shepherd/shepherd-config.yaml
-  cloudflared_maumercado_entrypoint:
-    file: /home/codigo/tooling/bin/cloudflared/maumercado_entrypoint.sh
-  cloudflared_codigo_entrypoint:
-    file: /home/codigo/tooling/bin/cloudflared/codigo_entrypoint.sh
 
 secrets:
   users:
     file: /home/codigo/tooling/data/dozzle/users.yaml
-  maumercado_tunnel_token:
-    external: true
-  codigo_tunnel_token:
-    external: true
