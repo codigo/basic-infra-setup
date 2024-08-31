@@ -7,6 +7,8 @@ export const copyMauAppDataFilesToServer = (server: Server) => {
   const config = new pulumi.Config();
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
   const docker_compose_mau_app = config.require("docker_compose_mau_app");
+  const pocketbaseEntrypoint = config.require("pocketbaseEntrypoint");
+  const typesenseEntrypoint = config.require("typesenseEntrypoint");
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
@@ -26,12 +28,32 @@ export const copyMauAppDataFilesToServer = (server: Server) => {
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`
+      mkdir -p /home/codigo/mau-app/bin/pocketbase &&
+      mkdir -p /home/codigo/mau-app/bin/typesense &&
       mkdir -p /home/codigo/mau-app/data/pocketbase/pb_data &&
       mkdir -p /home/codigo/mau-app/data/pocketbase/pb_public &&
       mkdir -p /home/codigo/mau-app/data/pocketbase/pb_migrations &&
       mkdir -p /home/codigo/mau-app/data/typesense
       `,
     },
+  );
+
+  const scpEntryPointPocketbase = new command.remote.Command(
+    "scp entrypoint.sh pocketbase",
+    {
+      connection: commonSshOptions,
+      create: pulumi.interpolate`echo '${pocketbaseEntrypoint}' > /home/codigo/mau-app/bin/pocketbase/entrypoint.sh && chmod +x /home/codigo/mau-app/bin/pocketbase/entrypoint.sh`,
+    },
+    { dependsOn: createMauAppFolders },
+  );
+
+  const scpEntryPointTypesense = new command.remote.Command(
+    "scp entrypoint.sh typesense",
+    {
+      connection: commonSshOptions,
+      create: pulumi.interpolate`echo '${typesenseEntrypoint}' > /home/codigo/mau-app/bin/typesense/entrypoint.sh && chmod +x /home/codigo/mau-app/bin/typesense/entrypoint.sh`,
+    },
+    { dependsOn: createMauAppFolders },
   );
 
   // SCP commands to copy docker compose tooling string to the server
@@ -44,11 +66,13 @@ ${docker_compose_mau_app}
 EOF
 `,
     },
-    { dependsOn: createMauAppFolders },
+    { dependsOn: [scpEntryPointPocketbase, scpEntryPointTypesense, createMauAppFolders] },
   );
 
   return {
     createMauAppFolders,
     scpDockerComposeMauApp,
+    scpEntryPointPocketbase,
+    scpEntryPointTypesense,
   };
 };
