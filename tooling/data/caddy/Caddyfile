@@ -8,50 +8,50 @@
 	@codigo host codigo.sh www.codigo.sh
 	handle @codigo {
 		reverse_proxy mau-app-codigo:3000 {
-			header_up X-Forwarded-Proto {http.request.scheme}
+			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
 			header_up X-Forwarded-Host {http.request.host}
-			header_up X-Forwarded-For {http.request.remote_addr}
-			header_up X-Real-IP {http.request.remote_addr}
+			header_up CF-Ray {http.request.header.CF-Ray}
 		}
 	}
 
 	@maumercado host maumercado.com www.maumercado.com
 	handle @maumercado {
 		reverse_proxy mau-app-maumercado:3000 {
-			header_up X-Forwarded-Proto {http.request.scheme}
+			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
 			header_up X-Forwarded-Host {http.request.host}
-			header_up X-Forwarded-For {http.request.remote_addr}
-			header_up X-Real-IP {http.request.remote_addr}
+			header_up CF-Ray {http.request.header.CF-Ray}
 		}
 	}
 
 	@pocketbase host pocketbase.codigo.sh pocketbase.maumercado.com
 	handle @pocketbase {
 		reverse_proxy pocketbase:8090 {
-			header_up X-Forwarded-Proto {http.request.scheme}
+			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
 			header_up X-Forwarded-Host {http.request.host}
-			header_up X-Forwarded-For {http.request.remote_addr}
-			header_up X-Real-IP {http.request.remote_addr}
+			header_up CF-Ray {http.request.header.CF-Ray}
 		}
 	}
 
 	@typesense host typesense.codigo.sh typesense.maumercado.com
 	handle @typesense {
 		reverse_proxy typesense:8108 {
-			header_up X-Forwarded-Proto {http.request.scheme}
-			header_up X-Forwarded-Host {http.request.host}
-			header_up X-Forwarded-For {http.request.remote_addr}
-			header_up X-Real-IP {http.request.remote_addr}
+			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+			header_up X-Forwarded-Host {http.request.header.X-Forwarded-Host}
+			header_up X-Forwarded-For {http.request.header.X-Forwarded-For}
+			header_up CF-Ray {http.request.header.CF-Ray}
 		}
 	}
 
 	@dozzle host dozzle.codigo.sh dozzle.maumercado.com
 	handle @dozzle {
 		reverse_proxy dozzle:8080 {
-			header_up X-Forwarded-Proto {http.request.scheme}
-			header_up X-Forwarded-Host {http.request.host}
-			header_up X-Forwarded-For {http.request.remote_addr}
-			header_up X-Real-IP {http.request.remote_addr}
+			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+			header_up X-Forwarded-Host {http.request.header.X-Forwarded-Host}
+			header_up X-Forwarded-For {http.request.header.X-Forwarded-For}
+			header_up CF-Ray {http.request.header.CF-Ray}
 		}
 	}
 }
