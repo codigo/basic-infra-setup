@@ -32,8 +32,6 @@ jobs:
           DOZZLE_PASSWORD: ${{ secrets.DOZZLE_PASSWORD }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           CONTAINER_REGISTRY_URL: ${{ vars.CONTAINER_REGISTRY_URL }}
-          ORIGIN_CODIGO: ${{ vars.ORIGIN_CODIGO }}
-          ORIGIN_MAUMERCADO: ${{ vars.ORIGIN_MAUMERCADO }}
           CONTAINER_REGISTRY_USERNAME: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
           CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
           DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
@@ -61,8 +59,6 @@ jobs:
                 s|{{ CONTAINER_REGISTRY_PASSWORD }}|'"$CONTAINER_REGISTRY_PASSWORD"'|g
                 s|{{ DOCKER_REGISTRY_USERNAME }}|'"$DOCKER_REGISTRY_USERNAME"'|g
                 s|{{ DOCKER_REGISTRY_PASSWORD }}|'"$DOCKER_REGISTRY_PASSWORD"'|g
-                s|{{ ORIGIN_CODIGO }}|'"$ORIGIN_CODIGO"'|g
-                s|{{ ORIGIN_MAUMERCADO }}|'"$ORIGIN_MAUMERCADO"'|g
                 s|{{ TYPESENSE_API_KEY }}|'"$TYPESENSE_API_KEY"'|g
                 s|{{ ENCRYPTION_KEY }}|'"$ENCRYPTION_KEY"'|g
               ' "$file"

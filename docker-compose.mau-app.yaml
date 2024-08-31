@@ -6,7 +6,8 @@ services:
       restart_policy:
         condition: on-failure
     environment:
-      ORIGIN: "{{ ORIGIN_CODIGO }}"
+      DEBUG: "true"
+      LOG_LEVEL: "debug"
     ports:
       - "3000"
     networks:
@@ -20,7 +21,8 @@ services:
       restart_policy:
         condition: on-failure
     environment:
-      ORIGIN: "{{ ORIGIN_MAUMERCADO }}"
+      DEBUG: "true"
+      LOG_LEVEL: "debug"
     ports:
       - "3000"
     networks:
