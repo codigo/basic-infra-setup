@@ -1,0 +1,29 @@
+services:
+  pocketbase:
+    image: ghcr.io/muchobien/pocketbase:latest
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - ./mau-app/data/pocketbase/pb_data:/pb_data
+      - ./mau-app/data/pocketbase/pb_public:/pb_public
+      - ./mau-app/data/pocketbase/pb_migrations:/pb_migrations
+    ports:
+      - "8090:8090"
+    environment:
+      PB_ENCRYPTION_KEY: ${PB_ENCRYPTION_KEY}
+
+  typesense:
+    image: typesense/typesense:27.0
+    command: ["--data-dir", "/data", "--api-key", "${TYPESENSE_API_KEY}"]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    volumes:
+      - ./mau-app/data/typesense:/data
+    ports:
+      - "8108:8108"
+    environment:
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY}
