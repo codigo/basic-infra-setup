@@ -7,7 +7,7 @@ services:
         condition: on-failure
     environment:
       DEBUG: "true"
-      LOG_LEVEL: "debug"
+      PUBLIC_LOG_LEVEL: "debug"
     ports:
       - "3000"
     networks:
@@ -22,7 +22,7 @@ services:
         condition: on-failure
     environment:
       DEBUG: "true"
-      LOG_LEVEL: "debug"
+      PUBLIC_LOG_LEVEL: "debug"
     ports:
       - "3000"
     networks:
