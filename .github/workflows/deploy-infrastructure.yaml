@@ -38,6 +38,7 @@ jobs:
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
           TYPESENSE_API_KEY: ${{ secrets.MAU_APP_TYPESENSE_API_KEY }}
           ENCRYPTION_KEY: ${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}
+          TAG: ${{ github.event.client_payload.tag }}
         run: |
           files=(
             "./tooling/data/dozzle/users.yaml"
@@ -61,6 +62,7 @@ jobs:
                 s|{{ DOCKER_REGISTRY_PASSWORD }}|'"$DOCKER_REGISTRY_PASSWORD"'|g
                 s|{{ TYPESENSE_API_KEY }}|'"$TYPESENSE_API_KEY"'|g
                 s|{{ ENCRYPTION_KEY }}|'"$ENCRYPTION_KEY"'|g
+                s|{{ TAG }}|'"$TAG"'|g
               ' "$file"
 
               echo "Processed $file"

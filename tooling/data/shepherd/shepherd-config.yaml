@@ -23,11 +23,11 @@ auth:
       password: "{{ DOCKER_REGISTRY_PASSWORD }}"
 services:
   - name: mau-app-codigo
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:{{ TAG }}"
     auth:
       registry: "{{ CONTAINER_REGISTRY_URL }}"
   - name: mau-app-maumercado
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:{{ TAG }}"
     auth:
       registry: "{{ CONTAINER_REGISTRY_URL }}"
   - name: mau-app_pocketbase
