@@ -15,7 +15,7 @@ notifications:
 
 auth:
   registries:
-    - server: "{{ CONTAINER_REGISTRY_URL }}"
+    - server: https://"{{ CONTAINER_REGISTRY_URL }}"
       username: "{{ CONTAINER_REGISTRY_USERNAME }}"
       password: "{{ CONTAINER_REGISTRY_PASSWORD }}"
     - server: "https://registry-1.docker.io"
@@ -23,13 +23,13 @@ auth:
       password: "{{ DOCKER_REGISTRY_PASSWORD }}"
 services:
   - name: mau-app-codigo
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:{{ TAG }}"
+    image: https://"{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
     auth:
-      registry: "{{ CONTAINER_REGISTRY_URL }}"
+      registry: https://"{{ CONTAINER_REGISTRY_URL }}"
   - name: mau-app-maumercado
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:{{ TAG }}"
+    image: https://"{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
     auth:
-      registry: "{{ CONTAINER_REGISTRY_URL }}"
+      registry: https://"{{ CONTAINER_REGISTRY_URL }}"
   - name: mau-app_pocketbase
     image: ghcr.io/muchobien/pocketbase:latest
     auth:
