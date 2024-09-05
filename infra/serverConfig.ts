@@ -107,7 +107,6 @@ export const configureServer = (server: Server) => {
         [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
         nvm install 22
         nvm alias default 22
-        npm install -g aws-sdk
 
         # Add NVM initialization to .bashrc and .profile
         echo 'export NVM_DIR="$HOME/.nvm"' >> $HOME/.bashrc
@@ -128,10 +127,47 @@ export const configureServer = (server: Server) => {
     },
   );
 
+  // Set up firewall
+  const setupFirewall = new command.remote.Command(
+    "setupFirewall",
+    {
+      connection: commonSshOptions,
+      create: `
+        # Install ufw if not already installed
+        sudo apt-get update && sudo apt-get install -y ufw
+
+        # Set default policies
+        sudo ufw default deny incoming
+        sudo ufw default deny routed
+        sudo ufw default allow outgoing
+
+        # Configure specific rules
+        sudo ufw deny 80/tcp
+        sudo ufw deny 80/udp
+        sudo ufw deny 443/tcp
+        sudo ufw deny 443/udp
+        sudo ufw allow 22/tcp
+        sudo ufw allow 9001/tcp
+        sudo ufw allow 9001/udp
+
+        # Enable logging
+        sudo ufw logging low
+
+        # Enable firewall
+        sudo ufw --force enable
+
+        # Show status
+        sudo ufw status verbose
+      `,
+    },
+    { dependsOn: [installNode] }
+  );
+
   return {
     installNode,
     disableRootSSH,
     createUser,
+    setupFirewall,
     server,
   };
 };
