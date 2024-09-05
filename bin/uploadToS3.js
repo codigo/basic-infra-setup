@@ -7,7 +7,7 @@ AWS.config.update({ region: process.env.AWS_REGION });
 const s3 = new AWS.S3();
 
 // Configuration
-const S3_BUCKET = process.env.S3_BACKUPS_BUCKET;
+const S3_BUCKET = process.env.APP_BUCKET;
 const BACKUP_DIR = process.env.BACKUP_DIR;
 
 const checkS3BucketExists = async (bucket) => {
