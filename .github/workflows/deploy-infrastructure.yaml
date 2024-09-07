@@ -41,7 +41,6 @@ jobs:
         run: |
           files=(
             "./tooling/data/dozzle/users.yaml"
-            "./tooling/data/shepherd/shepherd-config.yaml"
             "./docker-compose.mau-app.yaml"
             "./docker-compose.tooling.yaml"
           )
@@ -105,7 +104,7 @@ jobs:
           cat ~/.ssh/id_rsa | openssl base64 | tr -d '\n' | pulumi config set sshPrivateKey --secret
 
           # Set configs from files
-          for file in ./tooling/data/dozzle/users.yaml ./tooling/data/shepherd/shepherd-config.yaml ./tooling/data/caddy/Caddyfile; do
+          for file in ./tooling/data/dozzle/users.yaml ./tooling/data/caddy/Caddyfile; do
             pulumi config set --secret $(basename $file .yaml | tr '.-' '_') "$(cat $file)"
           done
 

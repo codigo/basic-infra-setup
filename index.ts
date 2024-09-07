@@ -79,7 +79,6 @@ const filesCopied = pulumi
       mauAppFiles.scpDockerComposeMauApp.id,
       toolingFiles.scpDockerComposeTooling.id,
       toolingFiles.scpToolingDataDozzle.id,
-      toolingFiles.scpToolingDataShepherd.id,
       toolingFiles.scpCaddyFile.id,
       toolingFiles.setPermissionsAndCronJob.id,
     ]);

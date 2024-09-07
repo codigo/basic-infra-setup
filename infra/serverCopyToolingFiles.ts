@@ -22,7 +22,6 @@ export const copyToolingDataFilesToServer = (
     );
 
   const dozzleUsers = config.requireSecret("users");
-  const shepherdConfig = config.requireSecret("shepherd_config");
   const caddyFile = config.requireSecret("Caddyfile");
 
   const backupDataScript = config.require("backupDataScript");
@@ -53,7 +52,6 @@ export const copyToolingDataFilesToServer = (
       mkdir -p /home/codigo/tooling/data/caddy/config &&
       mkdir -p /home/codigo/tooling/data/caddy/data &&
       mkdir -p /home/codigo/tooling/data/dozzle &&
-      mkdir -p /home/codigo/tooling/data/shepherd &&
       mkdir -p /home/codigo/tooling/data/typesense &&
       mkdir -p /home/codigo/tooling/bin/cloudflared
     `,
@@ -79,15 +77,6 @@ EOF
     {
       connection,
       create: pulumi.interpolate`echo '${dozzleUsers}' > /home/codigo/tooling/data/dozzle/users.yaml`,
-    },
-    { dependsOn: createToolingFolders },
-  );
-
-  const scpToolingDataShepherd = new command.remote.Command(
-    "copy shepherd config",
-    {
-      connection,
-      create: pulumi.interpolate`echo '${shepherdConfig}' > /home/codigo/tooling/data/shepherd/shepherd-config.yaml`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -163,7 +152,6 @@ EOF
   return {
     scpDockerComposeTooling,
     scpToolingDataDozzle,
-    scpToolingDataShepherd,
     scpCaddyFile,
     setPermissionsAndCronJob,
   };

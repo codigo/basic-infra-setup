@@ -19,7 +19,7 @@ This repository contains the infrastructure-as-code and deployment configuration
 - Automated backups to S3
 - Reverse proxy and SSL termination (Caddy)
 - Monitoring and logging (Dozzle)
-- Automatic Docker image updates (Shepherd)
+- Automatic Docker image updates (TODO as shepherd is not used anymore)
 
 ## Infrastructure Deployment Flow
 
@@ -93,7 +93,6 @@ The deployment is fully automated and includes:
 
 - **Caddy**: Reverse proxy and SSL termination
 - **Dozzle**: Docker container log viewer
-- **Shepherd**: Automatic Docker image updater
 - **Cloudflared**: Cloudflare tunnel client for secure access
 
 ## Customization
@@ -103,8 +102,7 @@ The deployment is fully automated and includes:
 
 ## Maintenance
 
-- Automated backups run periodically (configured in Shepherd)
-- Docker images are automatically updated (managed by Shepherd)
+- TODO as shepherd is not used anymore
 
 ## Security
 
