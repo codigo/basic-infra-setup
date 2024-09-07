@@ -5,19 +5,9 @@
 }
 
 :80 {
-	@codigo host codigo.sh www.codigo.sh
-	handle @codigo {
+	@codigo_and_maumercado host codigo.sh www.codigo.sh maumercado.com www.maumercado.com
+	handle @codigo_and_maumercado {
 		reverse_proxy mau-app-codigo:3000 {
-			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
-			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
-			header_up X-Forwarded-Host {http.request.host}
-			header_up CF-Ray {http.request.header.CF-Ray}
-		}
-	}
-
-	@maumercado host maumercado.com www.maumercado.com
-	handle @maumercado {
-		reverse_proxy mau-app-maumercado:3000 {
 			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
 			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
 			header_up X-Forwarded-Host {http.request.host}

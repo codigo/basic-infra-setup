@@ -39,36 +39,6 @@ services:
     networks:
       - caddy_net
 
-  shepherd:
-    image: containrrr/shepherd:latest
-    deploy:
-      mode: global
-      restart_policy:
-        condition: on-failure
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - SHEPHERD_DOCKER_API_VERSION=1.40
-    configs:
-      - source: shepherd_config
-        target: /config/config.yaml
-    networks:
-      - caddy_net
-
-  cloudflared-maumercado:
-    image: cloudflare/cloudflared:latest
-    command:
-      - tunnel
-      - run
-      - --token
-      - "{{ MAUMERCADO_TUNNEL_TOKEN }}"
-    networks:
-      - caddy_net
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-
   cloudflared-codigo:
     image: cloudflare/cloudflared:latest
     command:
@@ -91,8 +61,6 @@ networks:
 configs:
   caddyfile:
     file: /home/codigo/tooling/data/caddy/Caddyfile
-  shepherd_config:
-    file: /home/codigo/tooling/data/shepherd/shepherd-config.yaml
 
 secrets:
   users:

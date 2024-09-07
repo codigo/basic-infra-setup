@@ -14,21 +14,6 @@ services:
       - internal_net
       - caddy_net
 
-  mau-app-maumercado:
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/mau-app:latest"
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-    environment:
-      DEBUG: "true"
-      PUBLIC_LOG_LEVEL: "debug"
-    ports:
-      - "3000"
-    networks:
-      - internal_net
-      - caddy_net
-
   pocketbase:
     image: ghcr.io/muchobien/pocketbase:latest
     deploy:
