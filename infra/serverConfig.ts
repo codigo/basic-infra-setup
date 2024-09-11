@@ -90,7 +90,7 @@ export const configureServer = (server: Server) => {
       sudo rm -f /root/.ssh/authorized_keys
     `,
     },
-    { dependsOn: [createUser] },
+    { dependsOn: createUser },
   );
 
   // Install NVM and Node.js
@@ -123,7 +123,7 @@ export const configureServer = (server: Server) => {
       `,
     },
     {
-      dependsOn: [disableRootSSH],
+      dependsOn: disableRootSSH,
     },
   );
 
@@ -131,7 +131,10 @@ export const configureServer = (server: Server) => {
   const setupFirewall = new command.remote.Command(
     "setupFirewall",
     {
-      connection: commonSshOptions,
+      connection: commonSshOptions.apply((options) => ({
+        ...options,
+        user: "codigo",
+      })),
       create: `
         # Install ufw if not already installed
         sudo apt-get update && sudo apt-get install -y ufw
@@ -160,7 +163,7 @@ export const configureServer = (server: Server) => {
         sudo ufw status verbose
       `,
     },
-    { dependsOn: [installNode] }
+    { dependsOn: installNode },
   );
 
   return {
