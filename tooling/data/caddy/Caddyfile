@@ -44,4 +44,9 @@
 			header_up CF-Ray {http.request.header.CF-Ray}
 		}
 	}
+
+	# Catch-all for other requests
+	handle {
+		respond "Not Found" 404
+	}
 }
