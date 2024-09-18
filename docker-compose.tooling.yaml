@@ -21,6 +21,19 @@ services:
       retries: 3
       start_period: 30s
 
+  codigo-updater:
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/codigo-updater:latest"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - caddy_net
+
   dozzle:
     image: amir20/dozzle:latest
     deploy:
