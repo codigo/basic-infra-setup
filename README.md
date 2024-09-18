@@ -19,7 +19,7 @@ This repository contains the infrastructure-as-code and deployment configuration
 - Automated backups to S3
 - Reverse proxy and SSL termination (Caddy)
 - Monitoring and logging (Dozzle)
-- Automatic Docker image updates (TODO as shepherd is not used anymore)
+- Custom API for updating Docker images [(container-updater)](https://github.com/codigo/container-updater)
 
 ## Infrastructure Deployment Flow
 
@@ -94,6 +94,25 @@ The deployment is fully automated and includes:
 - **Caddy**: Reverse proxy and SSL termination
 - **Dozzle**: Docker container log viewer
 - **Cloudflared**: Cloudflare tunnel client for secure access
+- **container-updater**: Custom service for updating Docker containers
+
+### container-updater
+
+The container-updater is a custom service designed to facilitate automatic updates of Docker containers in the swarm. It exposes an endpoint `/update` that accepts POST requests with the following characteristics:
+
+- **Payload**: Includes the `appName` of the container to be updated
+- **Authentication**: Protected by a JWT Secret
+- **Functionality**: Uses Docker Swarm commands to update the specified container with a new image
+- **Trigger**: Designed to be called by a GitHub Action when a new image is available
+
+To update a container:
+
+1. A GitHub Action builds and pushes a new image
+2. The Action then sends a POST request to `https://updater.codigo.sh/update` with the `appName` in the payload
+3. The request must include a valid JWT for authentication
+4. The container-updater service receives the request and triggers the update in the Docker Swarm
+
+This approach allows for secure, automated updates of specific containers without manual intervention.
 
 ## Customization
 
@@ -102,7 +121,8 @@ The deployment is fully automated and includes:
 
 ## Maintenance
 
-- TODO as shepherd is not used anymore
+- Regular updates are handled automatically by the container-updater service
+- Monitor logs via Dozzle for any issues during updates
 
 ## Security
 
@@ -110,6 +130,7 @@ The deployment is fully automated and includes:
 - Only the `codigo` user can SSH into the server
 - Sensitive data stored in GitHub secrets and Pulumi config
 - Cloudflare Tunnels provide secure access without exposing ports
+- container-updater endpoint is protected by JWT authentication
 
 ## Development
 
