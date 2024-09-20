@@ -21,7 +21,7 @@ services:
       retries: 3
       start_period: 30s
 
-  codigo-updater:
+  container-updater:
     image: "{{ CONTAINER_REGISTRY_URL }}/codigo/container-updater:latest"
     deploy:
       replicas: 1
