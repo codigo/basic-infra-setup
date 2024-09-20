@@ -22,7 +22,7 @@ services:
       start_period: 30s
 
   codigo-updater:
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/codigo-updater:latest"
+    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/container-updater:latest"
     deploy:
       replicas: 1
       restart_policy:
