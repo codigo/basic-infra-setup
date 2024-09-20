@@ -53,9 +53,9 @@
 		}
 	}
 
-	@codigo_updater host updater.codigo.sh updater.maumercado.com
-	handle @codigo_updater {
-		reverse_proxy codigo-updater:3000 {
+	@container_updater host updater.codigo.sh updater.maumercado.com
+	handle @container_updater {
+		reverse_proxy container-updater:3000 {
 			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
 			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
 			header_up X-Forwarded-Host {http.request.host}

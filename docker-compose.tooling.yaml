@@ -21,7 +21,7 @@ services:
       retries: 3
       start_period: 30s
 
-  container-updater:
+  container_updater:
     image: "{{ CONTAINER_REGISTRY_URL }}/codigo/container-updater:latest"
     deploy:
       replicas: 1
@@ -84,8 +84,6 @@ services:
 networks:
   caddy_net:
     external: true
-    name: caddy_net
-    attachable: true
 
 configs:
   caddyfile:
