@@ -28,7 +28,7 @@ services:
       restart_policy:
         condition: on-failure
     environment:
-      - JWT_SECRET=${JWT_SECRET}
+      JWT_SECRET: "{{ JWT_SECRET }}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
