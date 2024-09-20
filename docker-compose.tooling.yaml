@@ -21,7 +21,7 @@ services:
       retries: 3
       start_period: 30s
 
-  container_updater:
+  container-updater:
     image: "{{ CONTAINER_REGISTRY_URL }}/codigo/container-updater:latest"
     deploy:
       replicas: 1
@@ -31,6 +31,8 @@ services:
       JWT_SECRET: "{{ JWT_SECRET }}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "3000"
     networks:
       - caddy_net
 
