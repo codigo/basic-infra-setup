@@ -23,6 +23,7 @@ services:
 
   container-updater:
     image: "{{ CONTAINER_REGISTRY_URL }}/codigo/container-updater:latest"
+    privileged: true
     deploy:
       replicas: 1
       restart_policy:
