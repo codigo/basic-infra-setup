@@ -7,6 +7,7 @@ export const setupDockerInServer = (server: Server) => {
   const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
+  const dockerGroupId = config.require("dockerGroupId");
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
@@ -20,6 +21,7 @@ export const setupDockerInServer = (server: Server) => {
       privateKey: key,
     }));
 
+
   // Install Docker
   const installDocker = new command.remote.Command("installDocker", {
     connection,
@@ -30,6 +32,7 @@ export const setupDockerInServer = (server: Server) => {
       echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
       sudo apt-get update
       sudo apt-get install -y docker-ce
+      sudo groupadd -g ${dockerGroupId} docker || true
       sudo usermod -aG docker codigo
       sudo systemctl enable docker
       sudo systemctl start docker
