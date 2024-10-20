@@ -1,7 +1,6 @@
 import * as pulumi from "@pulumi/pulumi";
 import { createS3Bucket } from "./infra/s3";
 import { createIAMResources } from "./infra/iam";
-import { createHetznerServer } from "./infra/hetznerServer";
 import { configureServer } from "./infra/serverConfig";
 import { setupDockerInServer } from "./infra/setupDockerInServer";
 import { copyToolingDataFilesToServer } from "./infra/serverCopyToolingFiles";
@@ -9,27 +8,35 @@ import { copyMauAppDataFilesToServer } from "./infra/serverCopyMauAppFiles";
 import { configureServerEnv } from "./infra/setupEnvs";
 import { deployDockerStacks } from "./infra/deployDockerStacks";
 import { createCloudflareTunnels } from "./infra/cloudflare";
+import { ServerProvider } from "./infra/serverProvider";
+import { HetznerProvider } from "./infra/hetznerProvider"; // or import DigitalOceanProvider
 
-// Step 1-4: Create S3 bucket, IAM resources, Hetzner server, and Cloudflare tunnels in parallel
+// Instantiate the desired server provider
+const serverProvider: ServerProvider = new HetznerProvider(); // or new DigitalOceanProvider()
+
+// Step 1-4: Create S3 bucket, IAM resources, server, and Cloudflare tunnels in parallel
 const s3Resources = createS3Bucket();
 const iamResources = createIAMResources();
-const hetznerResources = createHetznerServer();
+const serverResources = serverProvider.createServer(
+  new pulumi.Config().require("appName"),
+  new pulumi.Config().requireSecret("sshPublicKey")
+);
 const cloudflareResources = createCloudflareTunnels();
 
 // Wait for all parallel operations to complete
 const initialSetup = pulumi
-  .all([s3Resources, iamResources, hetznerResources, cloudflareResources])
-  .apply(([s3, iam, hetzner, cloudflare]) => ({
+  .all([s3Resources, iamResources, serverResources, cloudflareResources])
+  .apply(([s3, iam, server, cloudflare]) => ({
     appBucket: s3.appBucket,
     bucketUrl: s3.bucketUrl,
     iamUser: iam.iamUser,
     accessKey: iam.accessKey,
-    server: hetzner.server,
-    sshKey: hetzner.sshKey,
+    server: server.server,
+    sshKey: server.sshKey,
     cloudflare: cloudflare,
   }));
 
-// Step 5: Configure server (depends on Hetzner server creation)
+// Step 5: Configure server (depends on server creation)
 const serverConfig = initialSetup.apply((resources) => {
   const { createUser, installNode, disableRootSSH } = configureServer(
     resources.server,
