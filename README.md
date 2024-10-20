@@ -13,13 +13,50 @@ This repository contains the infrastructure-as-code and deployment configuration
 
 - S3 buckets for application data and tooling
 - IAM resources for AWS access management
-- Hetzner Cloud server for hosting the application
+- Cloud server provisioning with provider abstraction (Hetzner, DigitalOcean)
 - Cloudflare Tunnels for secure access
 - Docker Swarm setup
 - Automated backups to S3
 - Reverse proxy and SSL termination (Caddy)
 - Monitoring and logging (Dozzle)
 - Custom API for updating Docker images [(container-updater)](https://github.com/codigo/container-updater)
+
+## Server Provider Abstraction Overview
+
+The server provider abstraction allows you to seamlessly switch between different cloud providers (e.g., Hetzner, DigitalOcean) for server provisioning using Pulumi. By defining a common interface, `ServerProvider`, and implementing it for each provider, you can inject the desired provider's implementation without changing the rest of your infrastructure code.
+
+### How It Works
+
+1. **Interface Definition:**
+   - The `ServerProvider` interface defines a contract for creating servers. Each provider must implement this interface.
+
+2. **Provider Implementations:**
+   - **HetznerProvider:** Implements the `ServerProvider` interface to provision servers on Hetzner Cloud.
+
+3. **Usage:**
+   - Instantiate the desired provider and pass it to the server creation logic in your Pulumi program.
+
+### Example Usage
+
+```typescript
+import { HetznerProvider } from "./infra/hetznerProvider";
+import { ServerProvider } from "./infra/serverProvider";
+
+// Instantiate the desired server provider
+const serverProvider: ServerProvider = new HetznerProvider();
+
+// Use the provider to create a server
+const serverResources = serverProvider.createServer(
+  new pulumi.Config().require("appName"),
+  new pulumi.Config().requireSecret("sshPublicKey")
+);
+```
+
+### Benefits
+
+- **Flexibility:** Easily switch between different cloud providers without modifying your infrastructure code.
+- **Extensibility:** Add new providers by implementing the `ServerProvider` interface.
+- **Maintainability:** Centralized logic for server creation reduces duplication and simplifies maintenance.
 
 ## Infrastructure Deployment Flow
 
@@ -30,7 +67,7 @@ Our infrastructure deployment process follows a specific flow to ensure all comp
 graph TD
 A[Create S3 Bucket] --> D[Initial Setup]
 B[Create IAM Resources] --> D
-C[Create Hetzner Server] --> D
+C[Create Server with Provider Abstraction] --> D
 CF[Create Cloudflare Tunnels] --> D
 D --> E[Configure Server]
 E --> G[Setup Docker in Server]
@@ -69,6 +106,8 @@ end
 - `.github/workflows/`: Contains GitHub Actions workflow files for CI/CD
 - `bin/`: Utility scripts for the project
 - `infra/`: Pulumi infrastructure-as-code files
+  - `serverProvider.ts`: Defines the `ServerProvider` interface
+  - `hetznerProvider.ts`: Implements the `ServerProvider` interface for Hetzner
 - `mau-app/`: Main application code and configuration
 - `tooling/`: Additional tools and utilities for the project
 - `docker-compose.mau-app.yaml`: Docker Compose file for the main application
