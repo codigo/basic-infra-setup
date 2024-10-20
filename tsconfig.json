@@ -15,7 +15,8 @@
   },
   "files": [
     "infra/deployDockerStacks.ts",
-    "infra/hetznerServer.ts",
+    "infra/serverProvider.ts",
+    "infra/hetznerProvider.ts",
     "infra/iam.ts",
     "infra/s3.ts",
     "infra/serverConfig.ts",
