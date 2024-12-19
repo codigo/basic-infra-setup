@@ -52,7 +52,6 @@ export const copyToolingDataFilesToServer = (
       mkdir -p /home/codigo/tooling/data/caddy/config &&
       mkdir -p /home/codigo/tooling/data/caddy/data &&
       mkdir -p /home/codigo/tooling/data/dozzle &&
-      mkdir -p /home/codigo/tooling/data/typesense &&
       mkdir -p /home/codigo/tooling/bin/cloudflared
     `,
     },

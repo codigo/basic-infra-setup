@@ -50,7 +50,10 @@ We use Hetzner Cloud for our compute resources. The setup is defined in `infra/h
 
 ```typescript
 export class HetznerProvider implements ServerProvider {
-  createServer(appName: string, publicKey: pulumi.Output<string>): pulumi.Output<any> {
+  createServer(
+    appName: string,
+    publicKey: pulumi.Output<string>,
+  ): pulumi.Output<any> {
     const sshKey = new hcloud.SshKey("deploy-key", {
       name: `${appName}-deploy-key`,
       publicKey: publicKey,
@@ -81,7 +84,10 @@ One interesting aspect of our setup is the use of a provider abstraction. We def
 
 ```typescript
 export interface ServerProvider {
-  createServer(appName: string, publicKey: pulumi.Output<string>): pulumi.Output<any>;
+  createServer(
+    appName: string,
+    publicKey: pulumi.Output<string>,
+  ): pulumi.Output<any>;
 }
 ```
 

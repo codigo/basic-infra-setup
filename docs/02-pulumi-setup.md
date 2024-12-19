@@ -63,7 +63,7 @@ Let's walk through the basic setup of Pulumi in our project:
 
    ```typescript
    export const serverIp = initialSetup.apply(
-     (resources) => resources.server.ipv4Address
+     (resources) => resources.server.ipv4Address,
    );
    ```
 

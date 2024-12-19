@@ -2,13 +2,10 @@
 *.env.*
 *.env
 
-**/typesense/*
-!**/typesense/.gitkeep
 
 **/pocketbase/*
 !**/pocketbase/.gitkeep
 
 !**/bin/pocketbase/*.sh
-!**/bin/typesense/*.sh
 
 .DS_Store

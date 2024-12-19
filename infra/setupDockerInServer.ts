@@ -4,7 +4,6 @@ import { Server } from "@pulumi/hcloud";
 
 export const setupDockerInServer = (server: Server) => {
   const config = new pulumi.Config();
-  const mauAppTypeSenseKey = config.requireSecret("mauAppTypeSenseKey");
   const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
   const dockerGroupId = config.require("dockerGroupId");
@@ -20,7 +19,6 @@ export const setupDockerInServer = (server: Server) => {
       user: "codigo",
       privateKey: key,
     }));
-
 
   // Install Docker
   const installDocker = new command.remote.Command("installDocker", {
@@ -101,20 +99,16 @@ export const setupDockerInServer = (server: Server) => {
     "setupSecrets",
     {
       connection,
-      create: pulumi
-        .all([mauAppTypeSenseKey, mauAppPBEncryptionKey])
-        .apply(([typeSenseKey, pbEncryptionKey]) => {
-          // Log the values here
+      create: pulumi.all([mauAppPBEncryptionKey]).apply(([pbEncryptionKey]) => {
+        // Log the values here
 
-          return pulumi.interpolate`
+        return pulumi.interpolate`
             # Ensure we're in a swarm before creating secrets
             if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
               # Remove existing secrets if they exist
-              docker secret ls --format '{{.Name}}' | grep -q "^mau-app_typesense_api_key$" && docker secret rm mau-app_typesense_api_key
               docker secret ls --format '{{.Name}}' | grep -q "^mau-app_pb_encryption_key$" && docker secret rm mau-app_pb_encryption_key
 
               # Create new secrets
-              echo "${typeSenseKey}" | docker secret create mau-app_typesense_api_key -
               echo "${pbEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
               echo "Docker secrets created successfully."
             else
@@ -122,7 +116,7 @@ export const setupDockerInServer = (server: Server) => {
               exit 1
             fi
           `;
-        }),
+      }),
     },
     { dependsOn: createDockerNetworks },
   );

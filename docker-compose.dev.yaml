@@ -13,17 +13,3 @@ services:
       - "8090:8090"
     environment:
       PB_ENCRYPTION_KEY: ${PB_ENCRYPTION_KEY}
-
-  typesense:
-    image: typesense/typesense:27.0
-    command: ["--data-dir", "/data", "--api-key", "${TYPESENSE_API_KEY}"]
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-    volumes:
-      - ./mau-app/data/typesense:/data
-    ports:
-      - "8108:8108"
-    environment:
-      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY}

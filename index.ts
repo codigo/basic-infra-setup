@@ -19,7 +19,7 @@ const s3Resources = createS3Bucket();
 const iamResources = createIAMResources();
 const serverResources = serverProvider.createServer(
   new pulumi.Config().require("appName"),
-  new pulumi.Config().requireSecret("sshPublicKey")
+  new pulumi.Config().requireSecret("sshPublicKey"),
 );
 const cloudflareResources = createCloudflareTunnels();
 

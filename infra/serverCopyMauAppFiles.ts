@@ -8,7 +8,6 @@ export const copyMauAppDataFilesToServer = (server: Server) => {
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
   const docker_compose_mau_app = config.require("docker_compose_mau_app");
   const pocketbaseEntrypoint = config.require("pocketbaseEntrypoint");
-  const typesenseEntrypoint = config.require("typesenseEntrypoint");
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
@@ -29,11 +28,9 @@ export const copyMauAppDataFilesToServer = (server: Server) => {
       connection: commonSshOptions,
       create: pulumi.interpolate`
       mkdir -p /home/codigo/mau-app/bin/pocketbase &&
-      mkdir -p /home/codigo/mau-app/bin/typesense &&
       mkdir -p /home/codigo/mau-app/data/pocketbase/pb_data &&
       mkdir -p /home/codigo/mau-app/data/pocketbase/pb_public &&
-      mkdir -p /home/codigo/mau-app/data/pocketbase/pb_migrations &&
-      mkdir -p /home/codigo/mau-app/data/typesense
+      mkdir -p /home/codigo/mau-app/data/pocketbase/pb_migrations
       `,
     },
   );
@@ -43,15 +40,6 @@ export const copyMauAppDataFilesToServer = (server: Server) => {
     {
       connection: commonSshOptions,
       create: pulumi.interpolate`echo '${pocketbaseEntrypoint}' > /home/codigo/mau-app/bin/pocketbase/entrypoint.sh && chmod +x /home/codigo/mau-app/bin/pocketbase/entrypoint.sh`,
-    },
-    { dependsOn: createMauAppFolders },
-  );
-
-  const scpEntryPointTypesense = new command.remote.Command(
-    "scp entrypoint.sh typesense",
-    {
-      connection: commonSshOptions,
-      create: pulumi.interpolate`echo '${typesenseEntrypoint}' > /home/codigo/mau-app/bin/typesense/entrypoint.sh && chmod +x /home/codigo/mau-app/bin/typesense/entrypoint.sh`,
     },
     { dependsOn: createMauAppFolders },
   );
@@ -67,11 +55,7 @@ EOF
 `,
     },
     {
-      dependsOn: [
-        scpEntryPointPocketbase,
-        scpEntryPointTypesense,
-        createMauAppFolders,
-      ],
+      dependsOn: [scpEntryPointPocketbase, createMauAppFolders],
     },
   );
 
@@ -79,6 +63,5 @@ EOF
     createMauAppFolders,
     scpDockerComposeMauApp,
     scpEntryPointPocketbase,
-    scpEntryPointTypesense,
   };
 };
