@@ -13,7 +13,6 @@ Our infrastructure consists of several key components:
 5. **Caddy**: Acts as a reverse proxy and handles SSL termination.
 6. **Cloudflare**: Provides DNS management, DDoS protection, and acts as a global CDN.
 7. **PocketBase**: Serves as our database and backend service.
-8. **Typesense**: Provides fast and typo-tolerant search functionality.
 
 Here's how these components interact:
 
@@ -21,8 +20,8 @@ Here's how these components interact:
 2. On the Hetzner server, Docker Swarm orchestrates our containerized services.
 3. Caddy runs as a Docker service and acts as the entry point for all HTTP/HTTPS traffic.
 4. Cloudflare tunnels securely route internet traffic to our Caddy service.
-5. Caddy then routes requests to the appropriate service (PocketBase, Typesense, or our main application).
-6. PocketBase and Typesense provide backend functionality to our main application.
+5. Caddy then routes requests to the appropriate service (PocketBase).
+6. PocketBase provides backend functionality to our main application.
 7. AWS S3 is used for storing backups of our application data.
 
 ## Deployment Workflow

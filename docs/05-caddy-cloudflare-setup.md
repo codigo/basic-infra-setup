@@ -122,6 +122,6 @@ We use Cloudflare for DNS management, DDoS protection, and as a reverse proxy. H
 
 ## Next Steps
 
-In the next part, we'll explore how we set up our application services, including PocketBase for database management and Typesense for search functionality. We'll look at how these services are configured and integrated into our overall infrastructure.
+In the next part, we'll explore how we set up our application services, including PocketBase for database management. We'll look at how these services are configured and integrated into our overall infrastructure.
 
 Understanding how to set up a reverse proxy like Caddy and integrate with a service like Cloudflare is crucial for building secure and performant web applications. This setup provides a solid foundation for routing traffic to our services while benefiting from Cloudflare's security and performance features.

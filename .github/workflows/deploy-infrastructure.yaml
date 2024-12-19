@@ -36,7 +36,6 @@ jobs:
           CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
           DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-          TYPESENSE_API_KEY: ${{ secrets.MAU_APP_TYPESENSE_API_KEY }}
           ENCRYPTION_KEY: ${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
@@ -59,7 +58,6 @@ jobs:
                 s|{{ CONTAINER_REGISTRY_PASSWORD }}|'"$CONTAINER_REGISTRY_PASSWORD"'|g
                 s|{{ DOCKER_REGISTRY_USERNAME }}|'"$DOCKER_REGISTRY_USERNAME"'|g
                 s|{{ DOCKER_REGISTRY_PASSWORD }}|'"$DOCKER_REGISTRY_PASSWORD"'|g
-                s|{{ TYPESENSE_API_KEY }}|'"$TYPESENSE_API_KEY"'|g
                 s|{{ ENCRYPTION_KEY }}|'"$ENCRYPTION_KEY"'|g
                 s|{{ JWT_SECRET }}|'"$JWT_SECRET"'|g
               ' "$file"
@@ -96,7 +94,6 @@ jobs:
           # Set configs from secrets and vars
           pulumi config set --secret awsAccessKeyId "${{ secrets.AWS_ACCESS_KEY_ID }}"
           pulumi config set --secret awsSecretAccessKey "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          pulumi config set --secret mauAppTypeSenseKey "${{ secrets.MAU_APP_TYPESENSE_API_KEY }}"
           pulumi config set --secret mauAppPBEncryptionKey "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
           pulumi config set --secret dockerUsername "${{ secrets.CONTAINER_REGISTRY_USERNAME }}"
           pulumi config set --secret dockerPassword "${{ secrets.CONTAINER_REGISTRY_PASSWORD }}"
@@ -122,7 +119,6 @@ jobs:
 
           # Set entrypoints from bin scripts
           pulumi config set pocketbaseEntrypoint "$(cat ./mau-app/bin/pocketbase/entrypoint.sh)"
-          pulumi config set typesenseEntrypoint "$(cat ./mau-app/bin/typesense/entrypoint.sh)"
 
           # Set backup directory
           pulumi config set backupDir ${{ vars.BACKUP_DIR }}

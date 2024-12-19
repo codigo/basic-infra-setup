@@ -10,7 +10,7 @@ The Mau App Infrastructure is a robust setup designed to host a portfolio and bl
 2. **Cloud Providers**: Utilizing AWS for storage and Hetzner Cloud for compute resources.
 3. **Containerization**: Employing Docker and Docker Swarm for application deployment and management.
 4. **Reverse Proxy and SSL**: Implementing Caddy as a reverse proxy with automatic HTTPS.
-5. **Database and Search**: Integrating PocketBase for database management and Typesense for search functionality.
+5. **Database and Search**: Integrating PocketBase for database management.
 6. **Monitoring and Logging**: Using Dozzle for log management.
 7. **CI/CD**: Implementing GitHub Actions for continuous integration and deployment.
 8. **Security**: Leveraging Cloudflare for DDoS protection and secure access.
@@ -32,7 +32,7 @@ In the following posts, we'll dive deep into each component of this infrastructu
 - Configuring cloud providers (AWS and Hetzner)
 - Implementing Docker and Docker Swarm
 - Setting up Caddy as a reverse proxy
-- Integrating PocketBase and Typesense
+- Integrating PocketBase
 - Configuring Cloudflare for security and performance
 - Implementing CI/CD with GitHub Actions
 - And much more!

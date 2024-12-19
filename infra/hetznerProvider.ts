@@ -4,7 +4,10 @@ import * as pulumi from "@pulumi/pulumi";
 import { ServerProvider } from "./serverProvider";
 
 export class HetznerProvider implements ServerProvider {
-  createServer(appName: string, publicKey: pulumi.Output<string>): pulumi.Output<any> {
+  createServer(
+    appName: string,
+    publicKey: pulumi.Output<string>,
+  ): pulumi.Output<any> {
     const sshKey = new hcloud.SshKey("deploy-key", {
       name: `${appName}-deploy-key`,
       publicKey: publicKey,
@@ -25,4 +28,3 @@ export class HetznerProvider implements ServerProvider {
     return pulumi.output({ server, sshKey });
   }
 }
-

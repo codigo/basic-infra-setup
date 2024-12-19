@@ -28,9 +28,11 @@ The server provider abstraction allows you to seamlessly switch between differen
 ### How It Works
 
 1. **Interface Definition:**
+
    - The `ServerProvider` interface defines a contract for creating servers. Each provider must implement this interface.
 
 2. **Provider Implementations:**
+
    - **HetznerProvider:** Implements the `ServerProvider` interface to provision servers on Hetzner Cloud.
 
 3. **Usage:**
@@ -48,7 +50,7 @@ const serverProvider: ServerProvider = new HetznerProvider();
 // Use the provider to create a server
 const serverResources = serverProvider.createServer(
   new pulumi.Config().require("appName"),
-  new pulumi.Config().requireSecret("sshPublicKey")
+  new pulumi.Config().requireSecret("sshPublicKey"),
 );
 ```
 

@@ -8,16 +8,16 @@
   },
   "author": "",
   "dependencies": {
-    "@pulumi/aws": "^6.55.0",
-    "@pulumi/cloudflare": "^5.40.1",
+    "@pulumi/aws": "6.65.0",
+    "@pulumi/cloudflare": "5.45.0",
     "@pulumi/command": "^1.0.1",
-    "@pulumi/hcloud": "^1.20.4",
-    "@pulumi/pulumi": "3.136.1",
-    "@pulumi/random": "^4.16.6"
+    "@pulumi/hcloud": "1.21.1",
+    "@pulumi/pulumi": "3.143.0",
+    "@pulumi/random": "4.16.8"
   },
   "devDependencies": {
-    "@types/node": "22.7.5",
-    "typescript": "^5.6.3"
+    "@types/node": "22.10.2",
+    "typescript": "5.7.2"
   },
   "private": true,
   "release": {

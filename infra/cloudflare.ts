@@ -69,12 +69,6 @@ export const createCloudflareTunnels = () => {
       tunnel: maumercadoTunnel,
     },
     {
-      name: "typesense",
-      zoneId: maumercadoZoneId,
-      resourceName: "maumercado-typesense",
-      tunnel: maumercadoTunnel,
-    },
-    {
       name: "@",
       zoneId: codigoZoneId,
       resourceName: "codigo-root",
@@ -84,12 +78,6 @@ export const createCloudflareTunnels = () => {
       name: "www",
       zoneId: codigoZoneId,
       resourceName: "codigo-www",
-      tunnel: codigoTunnel,
-    },
-    {
-      name: "typesense",
-      zoneId: codigoZoneId,
-      resourceName: "codigo-typesense",
       tunnel: codigoTunnel,
     },
     {
@@ -138,10 +126,6 @@ export const createCloudflareTunnels = () => {
             service: "http://caddy:80",
           },
           {
-            hostname: "typesense.maumercado.com",
-            service: "http://caddy:80",
-          },
-          {
             service: "http_status:404",
           },
         ],
@@ -167,10 +151,6 @@ export const createCloudflareTunnels = () => {
           },
           {
             hostname: "pocketbase.codigo.sh",
-            service: "http://caddy:80",
-          },
-          {
-            hostname: "typesense.codigo.sh",
             service: "http://caddy:80",
           },
           {

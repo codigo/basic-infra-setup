@@ -106,11 +106,11 @@ export const setupDockerInServer = (server: Server) => {
     "setupSecrets",
     {
       connection,
-      create: pulumi
-        .all([mauAppTypeSenseKey, mauAppPBEncryptionKey])
-        .apply(([typeSenseKey, pbEncryptionKey]) => `
+      create: pulumi.all([mauAppPBEncryptionKey]).apply(
+        ([pbEncryptionKey]) => `
           # ... Docker secret creation commands ...
-        `),
+        `,
+      ),
     },
     { dependsOn: createDockerNetworks },
   );
