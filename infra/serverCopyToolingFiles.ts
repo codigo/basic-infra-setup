@@ -128,8 +128,8 @@ EOF
       cd /home/codigo/bin && nvm use default && npm install aws-sdk
 
       # Set up cron jobs with logging
-      (crontab -l 2>/dev/null; echo "0 */12 * * * sudo -u codigo \$(nvm which default) /home/codigo/bin/backupData.js >> /home/codigo/logs/backupData.log 2>&1") | crontab -
-      (crontab -l 2>/dev/null; echo "30 */12 * * * sudo -u codigo \$(nvm which default) /home/codigo/bin/uploadToS3.js >> /home/codigo/logs/uploadToS3.log 2>&1") | crontab -
+      (crontab -l 2>/dev/null; echo "0 */12 * * * sudo -u codigo BACKUP_DIR=/home/codigo/DATA_BACKUP node /home/codigo/bin/backupData.js >> /home/codigo/logs/backupData.log 2>&1") | crontab -
+      (crontab -l 2>/dev/null; echo "30 */12 * * * sudo -u codigo BACKUP_DIR=/home/codigo/DATA_BACKUP node /home/codigo/bin/uploadToS3.js >> /home/codigo/logs/uploadToS3.log 2>&1") | crontab -
 
       # Create log directory if it doesn't exist
       mkdir -p /home/codigo/logs
