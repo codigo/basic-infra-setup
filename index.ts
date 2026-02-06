@@ -58,13 +58,11 @@ const setupDocker = pulumi
       installDocker,
       initDockerSwarm,
       createDockerNetworks,
-      setupSecrets,
     } = setupDockerInServer(resources.server);
     return pulumi.all([
       installDocker.id,
       initDockerSwarm.id,
       createDockerNetworks.id,
-      setupSecrets.id,
     ]);
   });
 

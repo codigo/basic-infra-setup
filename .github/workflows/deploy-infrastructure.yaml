@@ -36,12 +36,9 @@ jobs:
           CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
           DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
-          ENCRYPTION_KEY: ${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           files=(
             "./tooling/data/dozzle/users.yaml"
-            "./docker-compose.mau-app.yaml"
             "./docker-compose.tooling.yaml"
           )
 
@@ -58,8 +55,6 @@ jobs:
                 s|{{ CONTAINER_REGISTRY_PASSWORD }}|'"$CONTAINER_REGISTRY_PASSWORD"'|g
                 s|{{ DOCKER_REGISTRY_USERNAME }}|'"$DOCKER_REGISTRY_USERNAME"'|g
                 s|{{ DOCKER_REGISTRY_PASSWORD }}|'"$DOCKER_REGISTRY_PASSWORD"'|g
-                s|{{ ENCRYPTION_KEY }}|'"$ENCRYPTION_KEY"'|g
-                s|{{ JWT_SECRET }}|'"$JWT_SECRET"'|g
               ' "$file"
 
               echo "Processed $file"
@@ -94,7 +89,6 @@ jobs:
           # Set configs from secrets and vars
           pulumi config set --secret awsAccessKeyId "${{ secrets.AWS_ACCESS_KEY_ID }}"
           pulumi config set --secret awsSecretAccessKey "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          pulumi config set --secret mauAppPBEncryptionKey "${{ secrets.MAU_APP_PB_ENCRYPTION_KEY }}"
           pulumi config set --secret dockerUsername "${{ secrets.CONTAINER_REGISTRY_USERNAME }}"
           pulumi config set --secret dockerPassword "${{ secrets.CONTAINER_REGISTRY_PASSWORD }}"
           pulumi config set dockerRegistry "${{ vars.CONTAINER_REGISTRY_URL }}"
@@ -108,17 +102,12 @@ jobs:
             pulumi config set --secret $(basename $file .yaml | tr '.-' '_') "$(cat $file)"
           done
 
-          # Set configs from files
-          pulumi config set docker_compose_mau_app "$(cat ./docker-compose.mau-app.yaml)"
           pulumi config set docker_compose_tooling "$(cat ./docker-compose.tooling.yaml)"
 
           # Set configs from bin scripts
           for script in backupData uploadToS3 restoreAndCopyBackup; do
             pulumi config set --secret ${script}Script "$(cat ./bin/${script}.js)"
           done
-
-          # Set entrypoints from bin scripts
-          pulumi config set pocketbaseEntrypoint "$(cat ./mau-app/bin/pocketbase/entrypoint.sh)"
 
           # Set backup directory
           pulumi config set backupDir ${{ vars.BACKUP_DIR }}

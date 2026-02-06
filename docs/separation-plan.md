@@ -16,6 +16,7 @@ The blog application (mau-app) has been fully separated from the infrastructure 
 - `infra/serverCopyMauAppFiles.ts` — mau-app creates its own directories during deployment
 - mau-app stack deployment from `infra/deployDockerStacks.ts` — only tooling stack is deployed
 - container-updater route from Caddyfile — no longer needed
+- container-updater service from `docker-compose.tooling.yaml` — fully removed
 
 ### mau-app now handles
 

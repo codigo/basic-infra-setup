@@ -21,22 +21,6 @@ services:
       retries: 3
       start_period: 30s
 
-  container-updater:
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/container-updater:latest"
-    privileged: true
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-    environment:
-      JWT_SECRET: "{{ JWT_SECRET }}"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "3000"
-    networks:
-      - caddy_net
-
   dozzle:
     image: amir20/dozzle:latest
     deploy:
