@@ -2,10 +2,7 @@
 *.env.*
 *.env
 
-
-**/pocketbase/*
-!**/pocketbase/.gitkeep
-
-!**/bin/pocketbase/*.sh
+# Local data directories (not committed)
+mau-app/
 
 .DS_Store

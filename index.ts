@@ -4,7 +4,6 @@ import { createIAMResources } from "./infra/iam";
 import { configureServer } from "./infra/serverConfig";
 import { setupDockerInServer } from "./infra/setupDockerInServer";
 import { copyToolingDataFilesToServer } from "./infra/serverCopyToolingFiles";
-import { copyMauAppDataFilesToServer } from "./infra/serverCopyMauAppFiles";
 import { configureServerEnv } from "./infra/setupEnvs";
 import { deployDockerStacks } from "./infra/deployDockerStacks";
 import { createCloudflareTunnels } from "./infra/cloudflare";
@@ -69,12 +68,13 @@ const setupDocker = pulumi
     ]);
   });
 
-// Step 7: Copy Mau App files and tooling files in parallel (depends on server environment setup)
+// Step 7: Copy tooling files to server (depends on server environment setup)
+// Application repos (e.g., mau-app) create their own directories and deploy
+// their own containers via their CI/CD pipelines.
 const filesCopied = pulumi
   .all([initialSetup, serverEnv, setupDocker])
   .apply(([resources, _, __]) => {
     const server = resources.server;
-    const mauAppFiles = copyMauAppDataFilesToServer(server);
     const toolingFiles = copyToolingDataFilesToServer(
       server,
       resources.cloudflare.maumercadoTunnel.tunnelToken,
@@ -82,8 +82,6 @@ const filesCopied = pulumi
     );
 
     return pulumi.all([
-      mauAppFiles.createMauAppFolders.id,
-      mauAppFiles.scpDockerComposeMauApp.id,
       toolingFiles.scpDockerComposeTooling.id,
       toolingFiles.scpToolingDataDozzle.id,
       toolingFiles.scpCaddyFile.id,
@@ -91,7 +89,9 @@ const filesCopied = pulumi
     ]);
   });
 
-// Step 8: Deploy Docker stacks (depends on file copying)
+// Step 8: Deploy tooling Docker stack (depends on file copying)
+// Only deploys platform services (Caddy, Cloudflare tunnels, Dozzle).
+// Application stacks deploy themselves.
 const dockerStacksDeployed = pulumi
   .all([initialSetup, filesCopied, serverEnv])
   .apply(([resources, _]) => {
