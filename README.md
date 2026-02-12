@@ -132,6 +132,50 @@ The deployment is fully automated and includes:
 - **Caddy**: Reverse proxy and SSL termination
 - **Dozzle**: Docker container log viewer
 - **Cloudflared**: Cloudflare tunnel client for secure access
+## Adding a New Application
+
+To deploy a new app on the platform and make it publicly available:
+
+### In the app repo
+
+1. Create a `docker-compose.yml` with the app's services. It must:
+   - Connect to the existing `caddy_net` overlay network (declared as `external: true`)
+   - NOT expose ports to the host — Caddy handles all external traffic
+   - Use `docker stack deploy` in CI/CD to deploy to the Swarm
+
+   ```yaml
+   services:
+     my-app:
+       image: my-app:latest
+       networks:
+         - caddy_net
+   networks:
+     caddy_net:
+       external: true
+   ```
+
+2. Set up CI/CD (GitHub Actions) to SSH into the VPS and run `docker stack deploy`
+
+### In this repo (services/)
+
+3. Add a Caddy route in `tooling/data/caddy/Caddyfile`:
+   ```
+   @my-app host myapp.codigo.sh
+   handle @my-app {
+       reverse_proxy my-app:3000 {
+           header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+           header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+           header_up X-Forwarded-Host {http.request.host}
+       }
+   }
+   ```
+
+4. Add Cloudflare tunnel ingress in `infra/cloudflare.ts` — add a hostname entry to the relevant tunnel config pointing to `http://caddy:80`
+
+5. Add a Cloudflare DNS CNAME record in `infra/cloudflare.ts` pointing the subdomain to the tunnel
+
+6. Run `pulumi up` to apply the changes (Caddyfile, DNS, tunnel config)
+
 ## Customization
 
 - Modify Pulumi scripts (`*.ts` files) to change infrastructure

@@ -61,11 +61,7 @@ This repository follows a clear **platform/application separation** pattern:
 
 ### Adding a New Application
 
-When deploying a new app to the platform:
-
-1. **In the app repo**: Create `docker-compose.yml` that connects to `caddy_net`
-2. **In services/**: Add Caddy routes to `tooling/data/caddy/Caddyfile`
-3. **In services/**: Run `pulumi up` to update Caddyfile on VPS (or manually update)
+See the [README](./README.md#adding-a-new-application) for the full step-by-step guide covering app repo setup, Caddy routing, Cloudflare tunnel/DNS, and deployment.
 
 ## Commands
 
