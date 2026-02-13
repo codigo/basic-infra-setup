@@ -77,6 +77,12 @@ services:
       - REDIS_URL=redis://infisical-redis:6379
       - SITE_URL=https://locker.codigo.sh
       - TELEMETRY_ENABLED=false
+      - SMTP_HOST=smtp.resend.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=resend
+      - SMTP_PASSWORD={{ INFISICAL_SMTP_PASSWORD }}
+      - SMTP_FROM_ADDRESS=noreply@codigo.sh
+      - SMTP_FROM_NAME=Locker
     networks:
       - caddy_net
       - infisical_internal

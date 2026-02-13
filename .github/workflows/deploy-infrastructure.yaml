@@ -43,6 +43,7 @@ jobs:
           INFISICAL_ENCRYPTION_KEY: ${{ secrets.INFISICAL_ENCRYPTION_KEY }}
           INFISICAL_AUTH_SECRET: ${{ secrets.INFISICAL_AUTH_SECRET }}
           INFISICAL_DB_PASSWORD: ${{ secrets.INFISICAL_DB_PASSWORD }}
+          INFISICAL_SMTP_PASSWORD: ${{ secrets.INFISICAL_SMTP_PASSWORD }}
         run: |
           files=(
             "./tooling/data/dozzle/users.yaml"
@@ -65,6 +66,7 @@ jobs:
                 s|{{ INFISICAL_ENCRYPTION_KEY }}|'"$INFISICAL_ENCRYPTION_KEY"'|g
                 s|{{ INFISICAL_AUTH_SECRET }}|'"$INFISICAL_AUTH_SECRET"'|g
                 s|{{ INFISICAL_DB_PASSWORD }}|'"$INFISICAL_DB_PASSWORD"'|g
+                s|{{ INFISICAL_SMTP_PASSWORD }}|'"$INFISICAL_SMTP_PASSWORD"'|g
               ' "$file"
 
               echo "Processed $file"
