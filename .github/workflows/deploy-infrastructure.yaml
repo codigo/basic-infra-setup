@@ -36,6 +36,9 @@ jobs:
           CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
           DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
           DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
+          INFISICAL_ENCRYPTION_KEY: ${{ secrets.INFISICAL_ENCRYPTION_KEY }}
+          INFISICAL_AUTH_SECRET: ${{ secrets.INFISICAL_AUTH_SECRET }}
+          INFISICAL_DB_PASSWORD: ${{ secrets.INFISICAL_DB_PASSWORD }}
         run: |
           files=(
             "./tooling/data/dozzle/users.yaml"
@@ -55,6 +58,9 @@ jobs:
                 s|{{ CONTAINER_REGISTRY_PASSWORD }}|'"$CONTAINER_REGISTRY_PASSWORD"'|g
                 s|{{ DOCKER_REGISTRY_USERNAME }}|'"$DOCKER_REGISTRY_USERNAME"'|g
                 s|{{ DOCKER_REGISTRY_PASSWORD }}|'"$DOCKER_REGISTRY_PASSWORD"'|g
+                s|{{ INFISICAL_ENCRYPTION_KEY }}|'"$INFISICAL_ENCRYPTION_KEY"'|g
+                s|{{ INFISICAL_AUTH_SECRET }}|'"$INFISICAL_AUTH_SECRET"'|g
+                s|{{ INFISICAL_DB_PASSWORD }}|'"$INFISICAL_DB_PASSWORD"'|g
               ' "$file"
 
               echo "Processed $file"

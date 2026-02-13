@@ -4,6 +4,8 @@ Central index of all planned, in-progress, and completed work for this platform.
 
 ## Planned
 
+## In Progress
+
 - [Self-hosted Infisical (Secret Management)](./infisical-migration-plan.md) — Add Infisical to the tooling stack as a single source of truth for secrets, replacing the GitHub UI for secret management.
 
 ## Completed

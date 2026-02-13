@@ -35,7 +35,6 @@ In this project, GitHub Actions is used to automate two main workflows: deployin
 - **Permissions:** The job requires write permissions for contents, pull requests, and issues to manage releases and update documentation.
 
 - **Jobs:**
-
   - **Semantic Release:** This job uses the `cycjimmy/semantic-release-action@v4` to automate the release process. It includes several plugins for analyzing commits, generating release notes, updating changelogs, publishing to npm, and committing changes back to the repository.
 
 - **Environment Variables:** The `GITHUB_TOKEN` is used to authenticate the action with GitHub, allowing it to perform operations like creating releases and updating files.

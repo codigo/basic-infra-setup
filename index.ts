@@ -54,11 +54,8 @@ const serverEnv = pulumi
 const setupDocker = pulumi
   .all([initialSetup, serverConfig, serverEnv])
   .apply(([resources]) => {
-    const {
-      installDocker,
-      initDockerSwarm,
-      createDockerNetworks,
-    } = setupDockerInServer(resources.server);
+    const { installDocker, initDockerSwarm, createDockerNetworks } =
+      setupDockerInServer(resources.server);
     return pulumi.all([
       installDocker.id,
       initDockerSwarm.id,

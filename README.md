@@ -27,11 +27,9 @@ The server provider abstraction allows you to seamlessly switch between differen
 ### How It Works
 
 1. **Interface Definition:**
-
    - The `ServerProvider` interface defines a contract for creating servers. Each provider must implement this interface.
 
 2. **Provider Implementations:**
-
    - **HetznerProvider:** Implements the `ServerProvider` interface to provision servers on Hetzner Cloud.
 
 3. **Usage:**
@@ -132,6 +130,7 @@ The deployment is fully automated and includes:
 - **Caddy**: Reverse proxy and SSL termination
 - **Dozzle**: Docker container log viewer
 - **Cloudflared**: Cloudflare tunnel client for secure access
+
 ## Adding a New Application
 
 To deploy a new app on the platform and make it publicly available:
@@ -159,6 +158,7 @@ To deploy a new app on the platform and make it publicly available:
 ### In this repo (services/)
 
 3. Add a Caddy route in `tooling/data/caddy/Caddyfile`:
+
    ```
    @my-app host myapp.codigo.sh
    handle @my-app {

@@ -46,18 +46,18 @@ This repository follows a clear **platform/application separation** pattern:
 
 ### Responsibility Boundaries
 
-| Concern | Owner | Notes |
-|---------|-------|-------|
-| VPS provisioning | `services/` | Pulumi creates Hetzner server |
-| Docker Swarm setup | `services/` | Initializes swarm, creates networks |
-| Cloudflare Tunnels | `services/` | Routes traffic without exposing ports |
-| Caddy reverse proxy | `services/` | SSL termination, routing rules |
-| Caddy route config | `services/` | Add routes when deploying new apps |
-| Log monitoring | `services/` | Dozzle for all containers |
-| Backups | `services/` | S3 backup scripts and cron |
-| App containers | App repo | Each app deploys its own containers |
-| App deployment | App repo | GitHub Actions → docker stack deploy |
-| DB migrations | App repo | Handled by app's deployment pipeline |
+| Concern             | Owner       | Notes                                 |
+| ------------------- | ----------- | ------------------------------------- |
+| VPS provisioning    | `services/` | Pulumi creates Hetzner server         |
+| Docker Swarm setup  | `services/` | Initializes swarm, creates networks   |
+| Cloudflare Tunnels  | `services/` | Routes traffic without exposing ports |
+| Caddy reverse proxy | `services/` | SSL termination, routing rules        |
+| Caddy route config  | `services/` | Add routes when deploying new apps    |
+| Log monitoring      | `services/` | Dozzle for all containers             |
+| Backups             | `services/` | S3 backup scripts and cron            |
+| App containers      | App repo    | Each app deploys its own containers   |
+| App deployment      | App repo    | GitHub Actions → docker stack deploy  |
+| DB migrations       | App repo    | Handled by app's deployment pipeline  |
 
 ### Adding a New Application
 

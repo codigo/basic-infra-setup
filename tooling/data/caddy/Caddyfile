@@ -41,6 +41,18 @@
 		}
 	}
 
+	@locker host locker.codigo.sh
+	handle @locker {
+		reverse_proxy infisical:8080 {
+			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+			header_up X-Forwarded-Host {http.request.host}
+			header_up X-Forwarded-For {http.request.header.X-Forwarded-For}
+			header_up CF-Ray {http.request.header.CF-Ray}
+			header_up CF-Connecting-IP {http.request.header.CF-Connecting-IP}
+		}
+	}
+
 	# Catch-all for other requests
 	handle {
 		respond "Not Found" 404
