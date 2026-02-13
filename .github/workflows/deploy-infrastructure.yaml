@@ -1,8 +1,12 @@
-name: Deploy Application
+name: Deploy Infrastructure
 
 on:
-  repository_dispatch:
-    types: [deploy-application]
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+      - ".claude/**"
 
 env:
   PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -86,11 +90,11 @@ jobs:
 
       - name: Configure Pulumi
         run: |
-          pulumi stack select codigo/${{ github.event.client_payload.name }}/prod
+          pulumi stack select codigo/services/prod
           pulumi config set aws:region ${{ vars.AWS_REGION }}
           pulumi config set dockerGroupId ${{ vars.DOCKER_GROUP_ID }}
           pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
-          pulumi config set appName ${{ github.event.client_payload.name }}
+          pulumi config set appName services
 
           # Set configs from secrets and vars
           pulumi config set --secret awsAccessKeyId "${{ secrets.AWS_ACCESS_KEY_ID }}"
@@ -136,7 +140,7 @@ jobs:
         uses: pulumi/actions@v5
         with:
           command: up
-          stack-name: codigo/${{ github.event.client_payload.name }}/prod
+          stack-name: codigo/services/prod
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}

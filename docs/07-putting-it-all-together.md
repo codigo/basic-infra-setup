@@ -40,9 +40,9 @@ When we want to deploy or update our infrastructure:
 
 We use GitHub Actions for continuous deployment. The workflow is defined in `.github/workflows/deploy-infrastructure.yaml`. Here's a simplified overview:
 
-1. When changes are pushed to the main branch, the workflow is triggered.
+1. When infrastructure changes are pushed to the main branch, the workflow is triggered (docs and markdown changes are ignored).
 2. The workflow sets up Pulumi and configures necessary secrets and environment variables.
-3. It then runs `pulumi up` to deploy any infrastructure changes.
+3. It then runs `pulumi up` to deploy infrastructure changes to the `codigo/services/prod` stack.
 
 ## Backup Strategy
 

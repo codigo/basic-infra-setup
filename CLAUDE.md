@@ -171,7 +171,7 @@ These are configured as cron jobs on the server via `infra/serverCopyToolingFile
 
 **GitHub Actions** (`.github/workflows/deploy-infrastructure.yaml`):
 
-- Triggered via `repository_dispatch` event with type `deploy-application`
+- Triggered on push to `main` branch (ignores docs/markdown changes)
 - Processes configuration file templates (replaces `{{ VAR }}` placeholders with secrets)
 - Configures Pulumi with all required secrets and configurations
 - Executes `pulumi up` to deploy infrastructure

@@ -6,7 +6,7 @@ In this project, GitHub Actions is used to automate two main workflows: deployin
 
 **File:** `.github/workflows/deploy-infrastructure.yaml`
 
-**Purpose:** This workflow is triggered by a `repository_dispatch` event with the type `deploy-application`. It is designed to deploy the application infrastructure using Pulumi, a modern infrastructure as code platform.
+**Purpose:** This workflow is triggered on push to the `main` branch (ignoring docs and markdown changes). It deploys the platform infrastructure using Pulumi.
 
 **Key Components:**
 
