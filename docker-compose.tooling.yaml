@@ -84,11 +84,6 @@ services:
       replicas: 1
       restart_policy:
         condition: any
-    depends_on:
-      infisical-db:
-        condition: service_healthy
-      infisical-redis:
-        condition: service_started
 
   infisical-db:
     image: postgres:18-alpine
