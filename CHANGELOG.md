@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/codigo/basic-infra-setup/compare/v1.1.2...v1.1.3) (2026-02-13)
+
+
+### Bug Fixes
+
+* rename Pulumi stack to codigo-services and decode SSH public key ([e6f7534](https://github.com/codigo/basic-infra-setup/commit/e6f7534b332d7236b79e75e3b24d1c9f7dd40dc3))
+
 ## [1.1.2](https://github.com/codigo/basic-infra-setup/compare/v1.1.1...v1.1.2) (2026-02-13)
 
 
