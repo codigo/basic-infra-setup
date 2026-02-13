@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/codigo/basic-infra-setup/compare/v1.1.3...v1.1.4) (2026-02-13)
+
+
+### Bug Fixes
+
+* remove depends_on from infisical service (unsupported in Swarm) ([f1ad1e5](https://github.com/codigo/basic-infra-setup/commit/f1ad1e5de4570b14fb04de09f5947aac5f4622f9))
+
 ## [1.1.3](https://github.com/codigo/basic-infra-setup/compare/v1.1.2...v1.1.3) (2026-02-13)
 
 
