@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/codigo/basic-infra-setup/compare/v1.1.0...v1.1.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* trigger deploy workflow on push to main instead of repository_dispatch ([c1bd8aa](https://github.com/codigo/basic-infra-setup/commit/c1bd8aa370d8f3689213c99ee1108332b8c4a61e))
+
 # [1.1.0](https://github.com/codigo/basic-infra-setup/compare/v1.0.0...v1.1.0) (2026-02-13)
 
 
