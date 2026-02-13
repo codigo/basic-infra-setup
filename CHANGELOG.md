@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/codigo/basic-infra-setup/compare/v1.1.5...v1.2.0) (2026-02-13)
+
+
+### Features
+
+* add SMTP/Resend email config to Infisical ([73630c2](https://github.com/codigo/basic-infra-setup/commit/73630c286992a1972840aff4a8f568359ef129ff))
+
 ## [1.1.5](https://github.com/codigo/basic-infra-setup/compare/v1.1.4...v1.1.5) (2026-02-13)
 
 
