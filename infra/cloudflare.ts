@@ -86,6 +86,12 @@ export const createCloudflareTunnels = () => {
       resourceName: "codigo-pocketbase",
       tunnel: codigoTunnel,
     },
+    {
+      name: "locker",
+      zoneId: codigoZoneId,
+      resourceName: "codigo-locker",
+      tunnel: codigoTunnel,
+    },
   ];
 
   const createdRecords = dnsRecords.map(
@@ -155,6 +161,10 @@ export const createCloudflareTunnels = () => {
           },
           {
             hostname: "dozzle.codigo.sh",
+            service: "http://caddy:80",
+          },
+          {
+            hostname: "locker.codigo.sh",
             service: "http://caddy:80",
           },
           {

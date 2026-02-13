@@ -19,7 +19,6 @@ This repository contains the infrastructure-as-code and deployment configuration
 - Automated backups to S3
 - Reverse proxy and SSL termination (Caddy)
 - Monitoring and logging (Dozzle)
-- Custom API for updating Docker images [(container-updater)](https://github.com/codigo/container-updater)
 
 ## Server Provider Abstraction Overview
 
@@ -28,11 +27,9 @@ The server provider abstraction allows you to seamlessly switch between differen
 ### How It Works
 
 1. **Interface Definition:**
-
    - The `ServerProvider` interface defines a contract for creating servers. Each provider must implement this interface.
 
 2. **Provider Implementations:**
-
    - **HetznerProvider:** Implements the `ServerProvider` interface to provision servers on Hetzner Cloud.
 
 3. **Usage:**
@@ -110,9 +107,7 @@ end
 - `infra/`: Pulumi infrastructure-as-code files
   - `serverProvider.ts`: Defines the `ServerProvider` interface
   - `hetznerProvider.ts`: Implements the `ServerProvider` interface for Hetzner
-- `mau-app/`: Main application code and configuration
 - `tooling/`: Additional tools and utilities for the project
-- `docker-compose.mau-app.yaml`: Docker Compose file for the main application
 - `docker-compose.tooling.yaml`: Docker Compose file for tooling services
 - `index.ts`: Main entry point for Pulumi infrastructure code
 - `Pulumi.yaml`: Pulumi project configuration
@@ -135,25 +130,51 @@ The deployment is fully automated and includes:
 - **Caddy**: Reverse proxy and SSL termination
 - **Dozzle**: Docker container log viewer
 - **Cloudflared**: Cloudflare tunnel client for secure access
-- **container-updater**: Custom service for updating Docker containers
 
-### container-updater
+## Adding a New Application
 
-The container-updater is a custom service designed to facilitate automatic updates of Docker containers in the swarm. It exposes an endpoint `/update` that accepts POST requests with the following characteristics:
+To deploy a new app on the platform and make it publicly available:
 
-- **Payload**: Includes the `appName` of the container to be updated
-- **Authentication**: Protected by a JWT Secret
-- **Functionality**: Uses Docker Swarm commands to update the specified container with a new image
-- **Trigger**: Designed to be called by a GitHub Action when a new image is available
+### In the app repo
 
-To update a container:
+1. Create a `docker-compose.yml` with the app's services. It must:
+   - Connect to the existing `caddy_net` overlay network (declared as `external: true`)
+   - NOT expose ports to the host — Caddy handles all external traffic
+   - Use `docker stack deploy` in CI/CD to deploy to the Swarm
 
-1. A GitHub Action builds and pushes a new image
-2. The Action then sends a POST request to `https://updater.codigo.sh/update` with the `appName` in the payload
-3. The request must include a valid JWT for authentication
-4. The container-updater service receives the request and triggers the update in the Docker Swarm
+   ```yaml
+   services:
+     my-app:
+       image: my-app:latest
+       networks:
+         - caddy_net
+   networks:
+     caddy_net:
+       external: true
+   ```
 
-This approach allows for secure, automated updates of specific containers without manual intervention.
+2. Set up CI/CD (GitHub Actions) to SSH into the VPS and run `docker stack deploy`
+
+### In this repo (services/)
+
+3. Add a Caddy route in `tooling/data/caddy/Caddyfile`:
+
+   ```
+   @my-app host myapp.codigo.sh
+   handle @my-app {
+       reverse_proxy my-app:3000 {
+           header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+           header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}
+           header_up X-Forwarded-Host {http.request.host}
+       }
+   }
+   ```
+
+4. Add Cloudflare tunnel ingress in `infra/cloudflare.ts` — add a hostname entry to the relevant tunnel config pointing to `http://caddy:80`
+
+5. Add a Cloudflare DNS CNAME record in `infra/cloudflare.ts` pointing the subdomain to the tunnel
+
+6. Run `pulumi up` to apply the changes (Caddyfile, DNS, tunnel config)
 
 ## Customization
 
@@ -162,8 +183,8 @@ This approach allows for secure, automated updates of specific containers withou
 
 ## Maintenance
 
-- Regular updates are handled automatically by the container-updater service
-- Monitor logs via Dozzle for any issues during updates
+- Monitor logs via Dozzle for any issues
+- Application deployments are handled by each app's own CI/CD pipeline
 
 ## Security
 
@@ -171,7 +192,6 @@ This approach allows for secure, automated updates of specific containers withou
 - Only the `codigo` user can SSH into the server
 - Sensitive data stored in GitHub secrets and Pulumi config
 - Cloudflare Tunnels provide secure access without exposing ports
-- container-updater endpoint is protected by JWT authentication
 
 ## Development
 

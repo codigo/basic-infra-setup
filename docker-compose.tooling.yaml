@@ -21,22 +21,6 @@ services:
       retries: 3
       start_period: 30s
 
-  container-updater:
-    image: "{{ CONTAINER_REGISTRY_URL }}/codigo/container-updater:latest"
-    privileged: true
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-    environment:
-      JWT_SECRET: "{{ JWT_SECRET }}"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "3000"
-    networks:
-      - caddy_net
-
   dozzle:
     image: amir20/dozzle:latest
     deploy:
@@ -84,9 +68,65 @@ services:
       restart_policy:
         condition: on-failure
 
+  infisical:
+    image: infisical/infisical:v0.158.2
+    environment:
+      - ENCRYPTION_KEY={{ INFISICAL_ENCRYPTION_KEY }}
+      - AUTH_SECRET={{ INFISICAL_AUTH_SECRET }}
+      - DB_CONNECTION_URI=postgres://infisical:{{ INFISICAL_DB_PASSWORD }}@infisical-db:5432/infisical
+      - REDIS_URL=redis://infisical-redis:6379
+      - SITE_URL=https://locker.codigo.sh
+      - TELEMETRY_ENABLED=false
+    networks:
+      - caddy_net
+      - infisical_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    depends_on:
+      infisical-db:
+        condition: service_healthy
+      infisical-redis:
+        condition: service_started
+
+  infisical-db:
+    image: postgres:18-alpine
+    environment:
+      - POSTGRES_USER=infisical
+      - POSTGRES_PASSWORD={{ INFISICAL_DB_PASSWORD }}
+      - POSTGRES_DB=infisical
+    volumes:
+      - /home/codigo/tooling/data/infisical/postgres:/var/lib/postgresql/data
+    networks:
+      - infisical_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U infisical"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  infisical-redis:
+    image: redis:7-alpine
+    volumes:
+      - /home/codigo/tooling/data/infisical/redis:/data
+    networks:
+      - infisical_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
 networks:
   caddy_net:
     external: true
+  infisical_internal:
+    driver: overlay
 
 configs:
   caddyfile:

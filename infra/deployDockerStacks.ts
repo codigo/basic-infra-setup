@@ -10,14 +10,14 @@ export const deployDockerStacks = (server: Server) => {
   const dockerPassword = config.requireSecret("dockerPassword");
   const dockerRegistry = config.require("dockerRegistry");
 
-  const MAUAPPDOCKERCOMPOSE = "docker-compose.mau-app.yaml";
   const TOOLINGDOCKERCOMPOSE = "docker-compose.tooling.yaml";
 
   const sshPrivateKey = pulumi
     .all([encodedSshPrivateKey])
     .apply(([encoded]) => Buffer.from(encoded, "base64").toString("utf-8"));
 
-  // SSH command to initialize Docker swarm and deploy docker stacks
+  // Deploy only the tooling stack (platform services).
+  // Application stacks (e.g., mau-app) deploy themselves via their own CI/CD pipelines.
   const deployDockerStacks = new command.remote.Command("deployDockerStacks", {
     connection: {
       host: server.ipv4Address,
@@ -57,11 +57,8 @@ export const deployDockerStacks = (server: Server) => {
         sleep 10
       }
 
-      # Deploy and debug tooling stack
+      # Deploy tooling stack (Caddy, Cloudflare tunnels, Dozzle)
       deploy_and_debug_stack "tooling" "${TOOLINGDOCKERCOMPOSE}"
-
-      # Deploy and debug mau-app stack
-      deploy_and_debug_stack "mau-app" "${MAUAPPDOCKERCOMPOSE}"
     `,
   });
   return {

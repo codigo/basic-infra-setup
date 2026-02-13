@@ -4,7 +4,6 @@ import { Server } from "@pulumi/hcloud";
 
 export const setupDockerInServer = (server: Server) => {
   const config = new pulumi.Config();
-  const mauAppPBEncryptionKey = config.requireSecret("mauAppPBEncryptionKey");
   const encodedSshPrivateKey = config.requireSecret("sshPrivateKey");
   const dockerGroupId = config.require("dockerGroupId");
 
@@ -94,38 +93,10 @@ export const setupDockerInServer = (server: Server) => {
     { dependsOn: getWorkerToken },
   );
 
-  // Set up Docker Swarm secrets
-  const setupSecrets = new command.remote.Command(
-    "setupSecrets",
-    {
-      connection,
-      create: pulumi.all([mauAppPBEncryptionKey]).apply(([pbEncryptionKey]) => {
-        // Log the values here
-
-        return pulumi.interpolate`
-            # Ensure we're in a swarm before creating secrets
-            if docker info --format '{{.Swarm.LocalNodeState}}' | grep -q "active"; then
-              # Remove existing secrets if they exist
-              docker secret ls --format '{{.Name}}' | grep -q "^mau-app_pb_encryption_key$" && docker secret rm mau-app_pb_encryption_key
-
-              # Create new secrets
-              echo "${pbEncryptionKey}" | docker secret create mau-app_pb_encryption_key -
-              echo "Docker secrets created successfully."
-            else
-              echo "Error: Docker Swarm is not active. Cannot create secrets."
-              exit 1
-            fi
-          `;
-      }),
-    },
-    { dependsOn: createDockerNetworks },
-  );
-
   return {
     installDocker,
     initDockerSwarm,
     createDockerNetworks,
-    setupSecrets,
     workerJoinToken: pulumi.secret(getWorkerToken.stdout),
   };
 };
