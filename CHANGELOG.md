@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/codigo/basic-infra-setup/compare/v1.1.4...v1.1.5) (2026-02-13)
+
+
+### Bug Fixes
+
+* trigger docker stack redeploy when compose file changes ([0b11c8c](https://github.com/codigo/basic-infra-setup/commit/0b11c8ced7676b60582fc8c2920d89655298e52b))
+
 ## [1.1.4](https://github.com/codigo/basic-infra-setup/compare/v1.1.3...v1.1.4) (2026-02-13)
 
 
