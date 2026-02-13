@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/codigo/basic-infra-setup/compare/v1.1.1...v1.1.2) (2026-02-13)
+
+
+### Bug Fixes
+
+* use correct Pulumi stack name codigo/mau-app/prod ([6d699bb](https://github.com/codigo/basic-infra-setup/commit/6d699bb3368597d7cb3e6d107b2d9de156ec23af))
+
 ## [1.1.1](https://github.com/codigo/basic-infra-setup/compare/v1.1.0...v1.1.1) (2026-02-13)
 
 
