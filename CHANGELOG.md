@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/codigo/basic-infra-setup/compare/v1.0.0...v1.1.0) (2026-02-13)
+
+
+### Features
+
+* add self-hosted Infisical to tooling stack ([b228924](https://github.com/codigo/basic-infra-setup/commit/b228924bfa2d4d64ee87f039f393388f6194db11))
+
 # 1.0.0 (2024-10-12)
 
 ### Features
