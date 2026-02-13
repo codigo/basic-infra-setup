@@ -90,11 +90,11 @@ jobs:
 
       - name: Configure Pulumi
         run: |
-          pulumi stack select codigo/services/prod
+          pulumi stack select codigo/mau-app/prod
           pulumi config set aws:region ${{ vars.AWS_REGION }}
           pulumi config set dockerGroupId ${{ vars.DOCKER_GROUP_ID }}
           pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
-          pulumi config set appName services
+          pulumi config set appName mau-app
 
           # Set configs from secrets and vars
           pulumi config set --secret awsAccessKeyId "${{ secrets.AWS_ACCESS_KEY_ID }}"
@@ -140,7 +140,7 @@ jobs:
         uses: pulumi/actions@v5
         with:
           command: up
-          stack-name: codigo/services/prod
+          stack-name: codigo/mau-app/prod
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
