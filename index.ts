@@ -16,9 +16,13 @@ const serverProvider: ServerProvider = new HetznerProvider(); // or new DigitalO
 // Step 1-4: Create S3 bucket, IAM resources, server, and Cloudflare tunnels in parallel
 const s3Resources = createS3Bucket();
 const iamResources = createIAMResources();
+const encodedSshPublicKey = new pulumi.Config().requireSecret("sshPublicKey");
+const sshPublicKey = encodedSshPublicKey.apply((encoded) =>
+  Buffer.from(encoded, "base64").toString("utf-8").trim(),
+);
 const serverResources = serverProvider.createServer(
   new pulumi.Config().require("appName"),
-  new pulumi.Config().requireSecret("sshPublicKey"),
+  sshPublicKey,
 );
 const cloudflareResources = createCloudflareTunnels();
 
