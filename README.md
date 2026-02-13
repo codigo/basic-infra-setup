@@ -116,7 +116,7 @@ end
 
 1. Fork this repository
 2. Set up required secrets in GitHub repository settings
-3. Push to main branch or manually trigger the GitHub Actions workflow
+3. Push to main branch — the deploy workflow triggers automatically (docs/markdown changes are ignored)
 
 The deployment is fully automated and includes:
 
