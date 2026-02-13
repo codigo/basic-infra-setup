@@ -9,6 +9,7 @@ export const deployDockerStacks = (server: Server) => {
   const dockerUsername = config.requireSecret("dockerUsername");
   const dockerPassword = config.requireSecret("dockerPassword");
   const dockerRegistry = config.require("dockerRegistry");
+  const dockerComposeTooling = config.require("docker_compose_tooling");
 
   const TOOLINGDOCKERCOMPOSE = "docker-compose.tooling.yaml";
 
@@ -18,7 +19,9 @@ export const deployDockerStacks = (server: Server) => {
 
   // Deploy only the tooling stack (platform services).
   // Application stacks (e.g., mau-app) deploy themselves via their own CI/CD pipelines.
+  // triggers: re-run docker stack deploy whenever the compose file content changes
   const deployDockerStacks = new command.remote.Command("deployDockerStacks", {
+    triggers: [dockerComposeTooling],
     connection: {
       host: server.ipv4Address,
       user: "codigo",
