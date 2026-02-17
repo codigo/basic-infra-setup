@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/codigo/basic-infra-setup/compare/v1.2.1...v1.2.2) (2026-02-17)
+
+
+### Bug Fixes
+
+* decode base64 SSH keys before writing to file ([8ef52bf](https://github.com/codigo/basic-infra-setup/commit/8ef52bf5692325dfe7e2f2ba61441c7378f9ebb3))
+
 ## [1.2.1](https://github.com/codigo/basic-infra-setup/compare/v1.2.0...v1.2.1) (2026-02-17)
 
 
