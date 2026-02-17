@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/codigo/basic-infra-setup/compare/v1.2.3...v1.2.4) (2026-02-17)
+
+
+### Bug Fixes
+
+* revert SSH key handling to use raw keys from secrets ([1ccc97c](https://github.com/codigo/basic-infra-setup/commit/1ccc97c87863efeb6cade7f272a16669335fa376))
+
 ## [1.2.3](https://github.com/codigo/basic-infra-setup/compare/v1.2.2...v1.2.3) (2026-02-17)
 
 
