@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/codigo/basic-infra-setup/compare/v1.2.0...v1.2.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* ignore SSH key changes to prevent Hetzner uniqueness error ([4538197](https://github.com/codigo/basic-infra-setup/commit/4538197e668b003e3405ccfa3885fe4ef8e24474))
+
 # [1.2.0](https://github.com/codigo/basic-infra-setup/compare/v1.1.5...v1.2.0) (2026-02-13)
 
 
