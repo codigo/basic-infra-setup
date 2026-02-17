@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/codigo/basic-infra-setup/compare/v1.2.4...v1.2.5) (2026-02-17)
+
+
+### Bug Fixes
+
+* revert SSH key handling to echo, add debug output ([b754e26](https://github.com/codigo/basic-infra-setup/commit/b754e264426d62bfc642edd941209d841300f990))
+
 ## [1.2.4](https://github.com/codigo/basic-infra-setup/compare/v1.2.3...v1.2.4) (2026-02-17)
 
 
