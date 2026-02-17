@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/codigo/basic-infra-setup/compare/v1.2.2...v1.2.3) (2026-02-17)
+
+
+### Bug Fixes
+
+* use printf for SSH key decode to avoid echo escape issues ([2dd03a4](https://github.com/codigo/basic-infra-setup/commit/2dd03a40632d93f88b25e14acdda6a9c48ace528))
+
 ## [1.2.2](https://github.com/codigo/basic-infra-setup/compare/v1.2.1...v1.2.2) (2026-02-17)
 
 
