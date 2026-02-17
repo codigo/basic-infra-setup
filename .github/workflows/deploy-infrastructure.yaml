@@ -86,6 +86,7 @@ jobs:
           # Debug: Check SSH key files
           ls -l ~/.ssh
           wc -l ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
+          head -1 ~/.ssh/id_rsa
 
       - name: Setup Pulumi
         uses: pulumi/actions@v5
