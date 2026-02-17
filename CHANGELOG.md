@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/codigo/basic-infra-setup/compare/v1.2.5...v1.2.6) (2026-02-17)
+
+
+### Bug Fixes
+
+* add ignoreChanges to root SSH commands in serverConfig ([81592c1](https://github.com/codigo/basic-infra-setup/commit/81592c1a72af85ff1bf0b20a51e4fdc3358eedf2))
+
 ## [1.2.5](https://github.com/codigo/basic-infra-setup/compare/v1.2.4...v1.2.5) (2026-02-17)
 
 
