@@ -35,6 +35,8 @@ export const configureServer = (server: Server) => {
     }));
 
   // Create 'codigo' user and set up SSH
+  // ignoreChanges prevents re-running when SSH key encoding changes in config,
+  // since root SSH is disabled after first run and this can't be re-executed
   const createUser = new command.remote.Command("createUser", {
     connection: commonSshOptions,
     create: pulumi.interpolate`
@@ -66,7 +68,7 @@ export const configureServer = (server: Server) => {
       echo "StrictHostKeyChecking no" | sudo tee /home/codigo/.ssh/config || { echo "Failed to set up SSH config"; exit 1; }
       echo "User creation and setup process completed successfully."
     `,
-  });
+  }, { ignoreChanges: ["connection", "create"] });
 
   // Disable root SSH access
   const disableRootSSH = new command.remote.Command(
@@ -90,7 +92,7 @@ export const configureServer = (server: Server) => {
       sudo rm -f /root/.ssh/authorized_keys
     `,
     },
-    { dependsOn: createUser },
+    { dependsOn: createUser, ignoreChanges: ["connection", "create"] },
   );
 
   // Install NVM and Node.js
@@ -124,6 +126,7 @@ export const configureServer = (server: Server) => {
     },
     {
       dependsOn: disableRootSSH,
+      ignoreChanges: ["connection", "create"],
     },
   );
 
@@ -163,7 +166,7 @@ export const configureServer = (server: Server) => {
         sudo ufw status verbose
       `,
     },
-    { dependsOn: installNode },
+    { dependsOn: installNode, ignoreChanges: ["connection", "create"] },
   );
 
   return {
