@@ -83,12 +83,9 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           chmod 644 ~/.ssh/id_rsa.pub
 
-          # Debug: Check SSH key files
+          # Verify SSH key files
           ls -l ~/.ssh
           wc -l ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
-          head -1 ~/.ssh/id_rsa
-          ssh-keygen -l -f ~/.ssh/id_rsa || echo "Key validation failed"
-          ssh -vvv -o StrictHostKeyChecking=no -o BatchMode=yes -i ~/.ssh/id_rsa codigo@5.78.86.194 "echo SSH_OK" 2>&1 || echo "SSH test failed"
 
       - name: Setup Pulumi
         uses: pulumi/actions@v5
