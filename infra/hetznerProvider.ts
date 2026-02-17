@@ -11,7 +11,7 @@ export class HetznerProvider implements ServerProvider {
     const sshKey = new hcloud.SshKey("deploy-key", {
       name: `${appName}-deploy-key`,
       publicKey: publicKey,
-    });
+    }, { ignoreChanges: ["publicKey"] });
 
     const server = new hcloud.Server(
       `${appName}-server`,
