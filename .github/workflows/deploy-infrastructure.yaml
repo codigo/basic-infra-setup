@@ -87,6 +87,8 @@ jobs:
           ls -l ~/.ssh
           wc -l ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
           head -1 ~/.ssh/id_rsa
+          ssh-keygen -l -f ~/.ssh/id_rsa || echo "Key validation failed"
+          ssh -o StrictHostKeyChecking=no -o BatchMode=yes -i ~/.ssh/id_rsa codigo@5.78.86.194 "echo SSH_OK" || echo "SSH test failed"
 
       - name: Setup Pulumi
         uses: pulumi/actions@v5
