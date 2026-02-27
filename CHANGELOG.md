@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/codigo/basic-infra-setup/compare/v1.2.11...v1.3.0) (2026-02-27)
+
+
+### Features
+
+* migrate backup scripts from AWS SDK v2 to v3 ([acd9738](https://github.com/codigo/basic-infra-setup/commit/acd97387a16c90358c2aa09d424d550e3b89a714))
+
 ## [1.2.11](https://github.com/codigo/basic-infra-setup/compare/v1.2.10...v1.2.11) (2026-02-27)
 
 
