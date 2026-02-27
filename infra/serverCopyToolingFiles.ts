@@ -138,22 +138,29 @@ ENDSCRIPT
     {
       connection,
       create: `
+      # Source fnm for non-interactive shell
+      export PATH="/home/codigo/.local/share/fnm:$PATH"
+      eval "$(fnm env)"
+
       # Set correct permissions
       chmod +x /home/codigo/bin/*
 
       # Install aws-sdk
-      cd /home/codigo/bin && nvm use default && npm install aws-sdk
+      cd /home/codigo/bin && npm install aws-sdk
 
-      # Set up cron jobs with logging
-      (crontab -l 2>/dev/null; echo "0 */12 * * * sudo -u codigo BACKUP_DIR=/home/codigo/DATA_BACKUP node /home/codigo/bin/backupData.js >> /home/codigo/logs/backupData.log 2>&1") | crontab -
-      (crontab -l 2>/dev/null; echo "30 */12 * * * sudo -u codigo BACKUP_DIR=/home/codigo/DATA_BACKUP node /home/codigo/bin/uploadToS3.js >> /home/codigo/logs/uploadToS3.log 2>&1") | crontab -
+      # Resolve full path to node for cron (fnm not available in cron)
+      NODE_PATH=$(which node)
 
       # Create log directory if it doesn't exist
       mkdir -p /home/codigo/logs
-
-      # Set appropriate permissions for the log directory
       chown codigo:codigo /home/codigo/logs
       chmod 755 /home/codigo/logs
+
+      # Set up cron jobs — source .bashrc for env vars, use absolute node path
+      # Remove existing backup cron entries first to avoid duplicates
+      crontab -l 2>/dev/null | grep -v 'backupData.js' | grep -v 'uploadToS3.js' | crontab -
+      (crontab -l 2>/dev/null; echo "0 */12 * * * . /home/codigo/.bashrc && $NODE_PATH /home/codigo/bin/backupData.js >> /home/codigo/logs/backupData.log 2>&1") | crontab -
+      (crontab -l 2>/dev/null; echo "30 */12 * * * . /home/codigo/.bashrc && $NODE_PATH /home/codigo/bin/uploadToS3.js >> /home/codigo/logs/uploadToS3.log 2>&1") | crontab -
     `,
     },
     {
