@@ -1,3 +1,10 @@
+## [1.2.8](https://github.com/codigo/basic-infra-setup/compare/v1.2.7...v1.2.8) (2026-02-27)
+
+
+### Bug Fixes
+
+* backup without sudo, exclude container-owned dirs ([d5c7461](https://github.com/codigo/basic-infra-setup/commit/d5c7461fef131119ab2a2f0cc7663805fba2e14d))
+
 ## [1.2.7](https://github.com/codigo/basic-infra-setup/compare/v1.2.6...v1.2.7) (2026-02-27)
 
 
