@@ -34,12 +34,9 @@ jobs:
       - name: Process configuration files
         env:
           DOZZLE_PASSWORD: ${{ secrets.DOZZLE_PASSWORD }}
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           CONTAINER_REGISTRY_URL: ${{ vars.CONTAINER_REGISTRY_URL }}
           CONTAINER_REGISTRY_USERNAME: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
           CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
-          DOCKER_REGISTRY_USERNAME: ${{ secrets.DOCKER_REGISTRY_USERNAME }}
-          DOCKER_REGISTRY_PASSWORD: ${{ secrets.DOCKER_REGISTRY_PASSWORD }}
           INFISICAL_ENCRYPTION_KEY: ${{ secrets.INFISICAL_ENCRYPTION_KEY }}
           INFISICAL_AUTH_SECRET: ${{ secrets.INFISICAL_AUTH_SECRET }}
           INFISICAL_DB_PASSWORD: ${{ secrets.INFISICAL_DB_PASSWORD }}
@@ -57,12 +54,9 @@ jobs:
               # Use sed to replace variables
               sed -i.bak -e '
                 s|{{ DOZZLE_PASSWORD }}|'"$DOZZLE_PASSWORD"'|g
-                s|{{ DISCORD_WEBHOOK }}|'"$DISCORD_WEBHOOK"'|g
                 s|{{ CONTAINER_REGISTRY_URL }}|'"$CONTAINER_REGISTRY_URL"'|g
                 s|{{ CONTAINER_REGISTRY_USERNAME }}|'"$CONTAINER_REGISTRY_USERNAME"'|g
                 s|{{ CONTAINER_REGISTRY_PASSWORD }}|'"$CONTAINER_REGISTRY_PASSWORD"'|g
-                s|{{ DOCKER_REGISTRY_USERNAME }}|'"$DOCKER_REGISTRY_USERNAME"'|g
-                s|{{ DOCKER_REGISTRY_PASSWORD }}|'"$DOCKER_REGISTRY_PASSWORD"'|g
                 s|{{ INFISICAL_ENCRYPTION_KEY }}|'"$INFISICAL_ENCRYPTION_KEY"'|g
                 s|{{ INFISICAL_AUTH_SECRET }}|'"$INFISICAL_AUTH_SECRET"'|g
                 s|{{ INFISICAL_DB_PASSWORD }}|'"$INFISICAL_DB_PASSWORD"'|g
@@ -94,7 +88,6 @@ jobs:
         run: |
           pulumi stack select codigo/mau-app/codigo-services
           pulumi config set aws:region ${{ vars.AWS_REGION }}
-          pulumi config set dockerGroupId ${{ vars.DOCKER_GROUP_ID }}
           pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
           pulumi config set appName mau-app
 

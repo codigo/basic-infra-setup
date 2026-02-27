@@ -116,10 +116,7 @@ Currently set manually in GitHub repo settings:
 | `SSH_PUBLIC_KEY`                | VPS SSH access (base64 encoded) |
 | `CONTAINER_REGISTRY_USERNAME`   | Docker registry pull auth       |
 | `CONTAINER_REGISTRY_PASSWORD`   | Docker registry pull auth       |
-| `DOCKER_REGISTRY_USERNAME`      | Docker registry (template var)  |
-| `DOCKER_REGISTRY_PASSWORD`      | Docker registry (template var)  |
 | `DOZZLE_PASSWORD`               | Dozzle web UI auth              |
-| `DISCORD_WEBHOOK`               | Notifications                   |
 | `PULUMI_ACCESS_TOKEN`           | Pulumi Cloud API                |
 | `PULUMI_CONFIG_PASSPHRASE`      | Pulumi state encryption         |
 | `CLOUDFLARE_TUNNEL_SECRET`      | Tunnel auth                     |
