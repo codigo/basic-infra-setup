@@ -77,7 +77,10 @@ EOF
     "copy dozzle users file",
     {
       connection,
-      create: pulumi.interpolate`echo '${dozzleUsers}' > /home/codigo/tooling/data/dozzle/users.yaml`,
+      create: pulumi.interpolate`cat << 'ENDFILE' > /home/codigo/tooling/data/dozzle/users.yaml
+${dozzleUsers}
+ENDFILE
+`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -86,7 +89,10 @@ EOF
     "copy caddy file",
     {
       connection,
-      create: pulumi.interpolate`echo '${caddyFile}' > /home/codigo/tooling/data/caddy/Caddyfile`,
+      create: pulumi.interpolate`cat << 'ENDFILE' > /home/codigo/tooling/data/caddy/Caddyfile
+${caddyFile}
+ENDFILE
+`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -95,7 +101,10 @@ EOF
     "copy restore backup script",
     {
       connection,
-      create: pulumi.interpolate`echo '${restoreAndCopyBackupScript}' > /home/codigo/bin/restoreBackup.js`,
+      create: pulumi.interpolate`cat << 'ENDSCRIPT' > /home/codigo/bin/restoreBackup.js
+${restoreAndCopyBackupScript}
+ENDSCRIPT
+`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -104,7 +113,10 @@ EOF
     "copy backup data script",
     {
       connection,
-      create: pulumi.interpolate`echo '${backupDataScript}' > /home/codigo/bin/backupData.js`,
+      create: pulumi.interpolate`cat << 'ENDSCRIPT' > /home/codigo/bin/backupData.js
+${backupDataScript}
+ENDSCRIPT
+`,
     },
     { dependsOn: createToolingFolders },
   );
@@ -113,7 +125,10 @@ EOF
     "copy upload to S3 script",
     {
       connection,
-      create: pulumi.interpolate`echo '${uploadToS3Script}' > /home/codigo/bin/uploadToS3.js`,
+      create: pulumi.interpolate`cat << 'ENDSCRIPT' > /home/codigo/bin/uploadToS3.js
+${uploadToS3Script}
+ENDSCRIPT
+`,
     },
     { dependsOn: createToolingFolders },
   );
