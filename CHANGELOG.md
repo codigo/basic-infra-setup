@@ -1,3 +1,10 @@
+## [1.2.7](https://github.com/codigo/basic-infra-setup/compare/v1.2.6...v1.2.7) (2026-02-27)
+
+
+### Bug Fixes
+
+* harden infrastructure, backups, and S3 lifecycle ([#121](https://github.com/codigo/basic-infra-setup/issues/121)) ([0bf490d](https://github.com/codigo/basic-infra-setup/commit/0bf490d032e01bf60607d71ebdd24e4f5d6c3283))
+
 ## [1.2.6](https://github.com/codigo/basic-infra-setup/compare/v1.2.5...v1.2.6) (2026-02-17)
 
 ### Bug Fixes
