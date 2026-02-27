@@ -1,3 +1,10 @@
+## [1.2.10](https://github.com/codigo/basic-infra-setup/compare/v1.2.9...v1.2.10) (2026-02-27)
+
+
+### Bug Fixes
+
+* use heredocs instead of echo for copying scripts to server ([0152c8b](https://github.com/codigo/basic-infra-setup/commit/0152c8b641d1641ce71b09e74a8b8bad20acfed2))
+
 ## [1.2.9](https://github.com/codigo/basic-infra-setup/compare/v1.2.8...v1.2.9) (2026-02-27)
 
 
