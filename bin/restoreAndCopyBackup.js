@@ -56,6 +56,107 @@ const extractLocally = async (tempFilePath, projectName) => {
   console.log(`Backup extracted to: ${projectPath}`);
 };
 
+const restoreDatabases = async (projectName) => {
+  if (projectName !== "tooling") return;
+
+  const dumpsDir = path.join(RESTORE_DIR, projectName, "data/infisical/dumps");
+  const sqlDump = path.join(dumpsDir, "backup.sql");
+  const rdbDump = path.join(dumpsDir, "dump.rdb");
+
+  // Restore Postgres
+  if (fs.existsSync(sqlDump)) {
+    try {
+      // Check if the container is running
+      const { stdout: dbContainer } = await execAsync(
+        `docker ps -q -f name=tooling_infisical-db`,
+      );
+      if (!dbContainer.trim()) {
+        console.warn(
+          "Infisical DB container not running. Start the tooling stack first, then re-run restore.",
+        );
+      } else {
+        // Drop and recreate to ensure clean restore
+        await execAsync(
+          `docker exec ${dbContainer.trim()} psql -U infisical -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"`,
+        );
+        await execAsync(
+          `docker exec -i ${dbContainer.trim()} psql -U infisical infisical < "${sqlDump}"`,
+        );
+        console.log("Infisical Postgres restored successfully");
+      }
+    } catch (e) {
+      console.error("Failed to restore Infisical Postgres:", e.message);
+    }
+  } else {
+    console.warn("No Postgres dump found at:", sqlDump);
+  }
+
+  // Restore Redis
+  if (fs.existsSync(rdbDump)) {
+    try {
+      const { stdout: redisContainer } = await execAsync(
+        `docker ps -q -f name=tooling_infisical-redis`,
+      );
+      if (!redisContainer.trim()) {
+        console.warn(
+          "Infisical Redis container not running. Start the tooling stack first, then re-run restore.",
+        );
+      } else {
+        await execAsync(
+          `docker cp "${rdbDump}" ${redisContainer.trim()}:/data/dump.rdb`,
+        );
+        // Restart Redis to load the dump
+        await execAsync(
+          `docker service update --force tooling_infisical-redis`,
+        );
+        console.log("Infisical Redis restored successfully");
+      }
+    } catch (e) {
+      console.error("Failed to restore Infisical Redis:", e.message);
+    }
+  } else {
+    console.warn("No Redis dump found at:", rdbDump);
+  }
+};
+
+const restoreServices = async (projectName) => {
+  // Restart the relevant Docker stack to pick up restored files
+  try {
+    const { stdout } = await execAsync(`docker stack ls --format "{{.Name}}"`);
+    const stacks = stdout.trim().split("\n");
+
+    if (projectName === "tooling" && stacks.includes("tooling")) {
+      await restoreDatabases(projectName);
+      // Restart Infisical to pick up restored DB
+      await execAsync(`docker service update --force tooling_infisical`);
+      console.log("Infisical service restarted");
+    } else if (stacks.includes(projectName)) {
+      // For other projects (e.g. mau-app), just restart the stack
+      // so services pick up restored data files
+      const composeFile = path.join(
+        RESTORE_DIR,
+        `docker-compose.${projectName}.yaml`,
+      );
+      if (fs.existsSync(composeFile)) {
+        await execAsync(
+          `docker stack deploy -c "${composeFile}" ${projectName}`,
+        );
+        console.log(`${projectName} stack redeployed with restored data`);
+      } else {
+        console.log(
+          `${projectName} files restored. Redeploy the stack manually to pick up changes.`,
+        );
+      }
+    } else {
+      console.log(
+        `${projectName} files restored. No running stack found — deploy when ready.`,
+      );
+    }
+  } catch (e) {
+    console.error("Failed to restore services:", e.message);
+  }
+};
+
 const copyToRemote = async (
   sourceFile,
   destinationFolder,
@@ -135,6 +236,7 @@ const restoreAndCopyBackup = async (projectName, backupFileName) => {
 
     if (destinationType.toLowerCase() === "local") {
       await extractLocally(tempFilePath, projectName);
+      await restoreServices(projectName);
     } else if (destinationType.toLowerCase() === "remote") {
       const remoteHost = await getUserInput(
         "Enter remote host (e.g., user@example.com): ",
@@ -157,6 +259,9 @@ const restoreAndCopyBackup = async (projectName, backupFileName) => {
         path.join(remoteDestination, finalBackupFileName),
         remoteDestination,
         sshKeyFile || null,
+      );
+      console.log(
+        "Files extracted on remote. SSH in and run database restore manually if needed.",
       );
     } else {
       console.error(
