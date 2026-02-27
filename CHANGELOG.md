@@ -1,3 +1,10 @@
+## [1.2.9](https://github.com/codigo/basic-infra-setup/compare/v1.2.8...v1.2.9) (2026-02-27)
+
+
+### Bug Fixes
+
+* add database restore to backup restore script ([a590519](https://github.com/codigo/basic-infra-setup/commit/a590519b3b02b5bdd930d1fb5622aa80119679e3))
+
 ## [1.2.8](https://github.com/codigo/basic-infra-setup/compare/v1.2.7...v1.2.8) (2026-02-27)
 
 
