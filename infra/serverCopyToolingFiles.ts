@@ -145,8 +145,8 @@ ENDSCRIPT
       # Set correct permissions
       chmod +x /home/codigo/bin/*
 
-      # Install aws-sdk
-      cd /home/codigo/bin && npm install aws-sdk
+      # Install AWS SDK v3
+      cd /home/codigo/bin && npm install @aws-sdk/client-s3
 
       # Resolve full path to node for cron (fnm not available in cron)
       NODE_PATH=$(which node)

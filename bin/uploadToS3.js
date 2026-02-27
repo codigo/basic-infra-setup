@@ -1,10 +1,14 @@
-const AWS = require("aws-sdk");
+const {
+  S3Client,
+  HeadBucketCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+} = require("@aws-sdk/client-s3");
 const fs = require("fs");
 const path = require("path");
 
-// Configure AWS SDK
-AWS.config.update({ region: process.env.AWS_REGION });
-const s3 = new AWS.S3();
+// Configure AWS SDK v3
+const s3 = new S3Client({ region: process.env.AWS_REGION });
 
 // Configuration
 const S3_BUCKET = process.env.APP_BUCKET;
@@ -12,10 +16,10 @@ const BACKUP_DIR = process.env.BACKUP_DIR;
 
 const checkS3BucketExists = async (bucket) => {
   try {
-    await s3.headBucket({ Bucket: bucket }).promise();
+    await s3.send(new HeadBucketCommand({ Bucket: bucket }));
     return true;
   } catch (error) {
-    if (error.code === "NotFound") {
+    if (error.name === "NotFound") {
       console.error(`Error: The S3 bucket '${bucket}' does not exist.`);
       return false;
     }
@@ -26,26 +30,9 @@ const checkS3BucketExists = async (bucket) => {
 const getBackupFiles = (dir) =>
   fs.readdirSync(dir).filter((file) => file.endsWith(".tar.gz"));
 
-const readFileContent = (filePath) => fs.readFileSync(filePath);
-
-const createS3UploadParams = (bucket, file, content) => ({
-  Bucket: bucket,
-  Key: `backups/${file.split("_")[0]}/${file}`,
-  Body: content,
-});
-
-const uploadFileToS3 = async (params) => {
-  try {
-    const result = await s3.upload(params).promise();
-    console.log(`File uploaded successfully to ${result.Location}`);
-  } catch (uploadError) {
-    console.error(`Error uploading file ${params.Key}:`, uploadError);
-  }
-};
-
 const fileExistsInS3 = async (bucket, key) => {
   try {
-    await s3.headObject({ Bucket: bucket, Key: key }).promise();
+    await s3.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
     return true;
   } catch {
     return false;
@@ -59,9 +46,17 @@ const processFile = async (file) => {
     return;
   }
   const filePath = path.join(BACKUP_DIR, file);
-  const fileContent = readFileContent(filePath);
-  const params = createS3UploadParams(S3_BUCKET, file, fileContent);
-  await uploadFileToS3(params);
+  const fileContent = fs.readFileSync(filePath);
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: s3Key,
+      Body: fileContent,
+    }),
+  );
+  console.log(
+    `File uploaded successfully to https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`,
+  );
 };
 
 const uploadToS3 = async () => {

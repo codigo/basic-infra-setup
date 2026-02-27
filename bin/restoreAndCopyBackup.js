@@ -1,4 +1,8 @@
-const AWS = require("aws-sdk");
+const {
+  S3Client,
+  ListObjectsV2Command,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
@@ -8,22 +12,21 @@ const os = require("os");
 
 const execAsync = util.promisify(exec);
 
-// Configure AWS SDK
-AWS.config.update({ region: process.env.AWS_REGION });
-const s3 = new AWS.S3();
+// Configure AWS SDK v3
+const s3 = new S3Client({ region: process.env.AWS_REGION });
 
 // Configuration
 const S3_BUCKET = process.env.S3_BACKUPS_BUCKET;
 const RESTORE_DIR = process.env.RESTORE_DIR || process.env.HOME;
 
 const getLatestBackup = async (projectName) => {
-  const params = {
-    Bucket: S3_BUCKET,
-    Prefix: `backups/${projectName}/`,
-  };
-
-  const data = await s3.listObjectsV2(params).promise();
-  if (data.Contents.length === 0) {
+  const data = await s3.send(
+    new ListObjectsV2Command({
+      Bucket: S3_BUCKET,
+      Prefix: `backups/${projectName}/`,
+    }),
+  );
+  if (!data.Contents || data.Contents.length === 0) {
     throw new Error(`No backups found for project: ${projectName}`);
   }
 
@@ -34,13 +37,19 @@ const getLatestBackup = async (projectName) => {
 
 const downloadBackup = async (projectName, backupFileName) => {
   const s3Key = `backups/${projectName}/${backupFileName}`;
-  const params = { Bucket: S3_BUCKET, Key: s3Key };
+  const data = await s3.send(
+    new GetObjectCommand({ Bucket: S3_BUCKET, Key: s3Key }),
+  );
 
-  const data = await s3.getObject(params).promise();
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "backup-"));
   const tempFilePath = path.join(tempDir, backupFileName);
 
-  fs.writeFileSync(tempFilePath, data.Body);
+  // v3 returns a readable stream for Body
+  const chunks = [];
+  for await (const chunk of data.Body) {
+    chunks.push(chunk);
+  }
+  fs.writeFileSync(tempFilePath, Buffer.concat(chunks));
   console.log(`Backup downloaded to: ${tempFilePath}`);
 
   return { tempDir, tempFilePath };
@@ -52,7 +61,9 @@ const extractLocally = async (tempFilePath, projectName) => {
     fs.mkdirSync(projectPath, { recursive: true });
   }
 
-  await execAsync(`tar -xzf "${tempFilePath}" -C "${RESTORE_DIR}" --overwrite`);
+  await execAsync(
+    `tar -xzf "${tempFilePath}" -C "${RESTORE_DIR}" --overwrite`,
+  );
   console.log(`Backup extracted to: ${projectPath}`);
 };
 
@@ -66,7 +77,6 @@ const restoreDatabases = async (projectName) => {
   // Restore Postgres
   if (fs.existsSync(sqlDump)) {
     try {
-      // Check if the container is running
       const { stdout: dbContainer } = await execAsync(
         `docker ps -q -f name=tooling_infisical-db`,
       );
@@ -120,19 +130,17 @@ const restoreDatabases = async (projectName) => {
 };
 
 const restoreServices = async (projectName) => {
-  // Restart the relevant Docker stack to pick up restored files
   try {
-    const { stdout } = await execAsync(`docker stack ls --format "{{.Name}}"`);
+    const { stdout } = await execAsync(
+      `docker stack ls --format "{{.Name}}"`,
+    );
     const stacks = stdout.trim().split("\n");
 
     if (projectName === "tooling" && stacks.includes("tooling")) {
       await restoreDatabases(projectName);
-      // Restart Infisical to pick up restored DB
       await execAsync(`docker service update --force tooling_infisical`);
       console.log("Infisical service restarted");
     } else if (stacks.includes(projectName)) {
-      // For other projects (e.g. mau-app), just restart the stack
-      // so services pick up restored data files
       const composeFile = path.join(
         RESTORE_DIR,
         `docker-compose.${projectName}.yaml`,
