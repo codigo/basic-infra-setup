@@ -1,3 +1,10 @@
+## [1.2.11](https://github.com/codigo/basic-infra-setup/compare/v1.2.10...v1.2.11) (2026-02-27)
+
+
+### Bug Fixes
+
+* add AWS_REGION to server env, fix cron and fnm setup ([cca4847](https://github.com/codigo/basic-infra-setup/commit/cca48471416bfb7d63da5fcf44e2f5ff61e6f687))
+
 ## [1.2.10](https://github.com/codigo/basic-infra-setup/compare/v1.2.9...v1.2.10) (2026-02-27)
 
 
