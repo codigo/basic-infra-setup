@@ -20,10 +20,8 @@ const encodedSshPublicKey = new pulumi.Config().requireSecret("sshPublicKey");
 const sshPublicKey = encodedSshPublicKey.apply((encoded) =>
   Buffer.from(encoded, "base64").toString("utf-8").trim(),
 );
-const serverResources = serverProvider.createServer(
-  new pulumi.Config().require("appName"),
-  sshPublicKey,
-);
+const APP_NAME = "mau-app";
+const serverResources = serverProvider.createServer(APP_NAME, sshPublicKey);
 const cloudflareResources = createCloudflareTunnels();
 
 // Wait for all parallel operations to complete
@@ -58,12 +56,17 @@ const serverEnv = pulumi
 const setupDocker = pulumi
   .all([initialSetup, serverConfig, serverEnv])
   .apply(([resources]) => {
-    const { installDocker, initDockerSwarm, createDockerNetworks } =
-      setupDockerInServer(resources.server);
+    const {
+      installDocker,
+      initDockerSwarm,
+      createDockerNetworks,
+      workerJoinToken,
+    } = setupDockerInServer(resources.server);
     return pulumi.all([
       installDocker.id,
       initDockerSwarm.id,
       createDockerNetworks.id,
+      workerJoinToken,
     ]);
   });
 
@@ -121,3 +124,6 @@ export const serverEnvOutput = serverEnv;
 export const filesCopiedOutput = filesCopied;
 export const dockerStacksDeployedOutput = dockerStacksDeployed;
 export const cloudflareSetupOutput = cloudflareResources;
+export const workerJoinToken = setupDocker.apply(
+  ([, , , token]) => token,
+);

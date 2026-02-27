@@ -1,7 +1,7 @@
-name: Deploy Infrastructure
+name: Preview Infrastructure
 
 on:
-  push:
+  pull_request:
     branches: [main]
     paths-ignore:
       - "docs/**"
@@ -17,7 +17,7 @@ env:
   CLOUDFLARE_TUNNEL_SECRET: ${{ secrets.CLOUDFLARE_TUNNEL_SECRET }}
 
 jobs:
-  deploy:
+  preview:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -77,10 +77,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           chmod 644 ~/.ssh/id_rsa.pub
 
-          # Verify SSH key files
-          ls -l ~/.ssh
-          wc -l ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
-
       - name: Setup Pulumi
         uses: pulumi/actions@v5
 
@@ -122,18 +118,16 @@ jobs:
           pulumi config set --secret cloudflareMaumercadoZoneId "${{ secrets.CLOUDFLARE_MAUMERCADO_ZONE_ID }}"
           pulumi config set --secret cloudflare:apiToken "${{ secrets.CLOUDFLARE_API_TOKEN }}"
 
-          # Debug: Check Pulumi config (be careful not to expose secrets)
-          pulumi config get aws:region
-
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
 
-      - name: Deploy infrastructure
+      - name: Preview infrastructure
         uses: pulumi/actions@v5
         with:
-          command: up
+          command: preview
           stack-name: codigo/mau-app/codigo-services
+          comment-on-pr: true
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
