@@ -1,9 +1,10 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
+const APP_NAME = "mau-app";
+
 export const createIAMResources = () => {
-  const config = new pulumi.Config();
-  const appName = config.require("appName");
+  const appName = APP_NAME;
 
   // Create an IAM user
   const iamUser = new aws.iam.User(`${appName}-user`, {

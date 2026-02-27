@@ -8,10 +8,14 @@ export class HetznerProvider implements ServerProvider {
     appName: string,
     publicKey: pulumi.Output<string>,
   ): pulumi.Output<any> {
-    const sshKey = new hcloud.SshKey("deploy-key", {
-      name: `${appName}-deploy-key`,
-      publicKey: publicKey,
-    }, { ignoreChanges: ["publicKey"] });
+    const sshKey = new hcloud.SshKey(
+      "deploy-key",
+      {
+        name: `${appName}-deploy-key`,
+        publicKey: publicKey,
+      },
+      { ignoreChanges: ["publicKey"] },
+    );
 
     const server = new hcloud.Server(
       `${appName}-server`,

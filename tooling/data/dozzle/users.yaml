@@ -2,6 +2,6 @@ users:
   # "admin" here is username
   maumercado:
     name: "Mau"
-    # Just sha-256 which can be computed with "echo -n password | shasum -a 256"
+    # bcrypt hash generated with: docker run --rm amir20/dozzle generate <user> --password <pass> --email <email>
     password: "{{ DOZZLE_PASSWORD }}"
     email: mau@codigo.sh

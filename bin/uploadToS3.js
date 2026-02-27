@@ -43,7 +43,21 @@ const uploadFileToS3 = async (params) => {
   }
 };
 
+const fileExistsInS3 = async (bucket, key) => {
+  try {
+    await s3.headObject({ Bucket: bucket, Key: key }).promise();
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const processFile = async (file) => {
+  const s3Key = `backups/${file.split("_")[0]}/${file}`;
+  if (await fileExistsInS3(S3_BUCKET, s3Key)) {
+    console.log(`Skipping ${file} (already in S3)`);
+    return;
+  }
   const filePath = path.join(BACKUP_DIR, file);
   const fileContent = readFileContent(filePath);
   const params = createS3UploadParams(S3_BUCKET, file, fileContent);

@@ -6,6 +6,15 @@ export const createS3Bucket = () => {
     bucket: `codigo-backups`,
     acl: "private",
     forceDestroy: true,
+    lifecycleRules: [
+      {
+        enabled: true,
+        prefix: "backups/",
+        expiration: {
+          days: 90,
+        },
+      },
+    ],
   });
 
   return {

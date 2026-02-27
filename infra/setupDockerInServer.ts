@@ -18,9 +18,11 @@ export const setupDockerInServer = (server: Server) => {
     }));
 
   // Install Docker
-  const installDocker = new command.remote.Command("installDocker", {
-    connection,
-    create: `
+  const installDocker = new command.remote.Command(
+    "installDocker",
+    {
+      connection,
+      create: `
       sudo apt-get update
       sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
@@ -32,7 +34,9 @@ export const setupDockerInServer = (server: Server) => {
       sudo systemctl enable docker
       sudo systemctl start docker
     `,
-  });
+    },
+    { ignoreChanges: ["connection", "create"] },
+  );
 
   // Initialize Docker Swarm
   const initDockerSwarm = new command.remote.Command(

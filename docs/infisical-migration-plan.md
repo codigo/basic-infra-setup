@@ -123,11 +123,11 @@ Currently set manually in GitHub repo settings:
 
 ### Secrets that must stay in GitHub (bootstrap)
 
-| Secret                     | Reason                           |
-| -------------------------- | -------------------------------- |
-| `INFISICAL_ENCRYPTION_KEY` | Needed to start Infisical itself |
-| `INFISICAL_AUTH_SECRET`    | Needed to start Infisical itself |
-| `INFISICAL_DB_PASSWORD`    | Needed to start Infisical itself |
+| Secret                     | Reason                             |
+| -------------------------- | ---------------------------------- |
+| `INFISICAL_ENCRYPTION_KEY` | Needed to start Infisical itself   |
+| `INFISICAL_AUTH_SECRET`    | Needed to start Infisical itself   |
+| `INFISICAL_DB_PASSWORD`    | Needed to start Infisical itself   |
 | `INFISICAL_SMTP_PASSWORD`  | Resend API key for Infisical email |
 
 These create a circular dependency — Infisical can't serve its own bootstrap secrets.
