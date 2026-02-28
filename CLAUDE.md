@@ -12,7 +12,7 @@ This is the **shared platform layer** — a Pulumi-based Infrastructure-as-Code 
 - **Cloud Providers:** AWS (S3, IAM), Hetzner Cloud, Cloudflare
 - **Orchestration:** Docker Swarm
 - **CI/CD:** GitHub Actions
-- **Runtime:** Node.js 22
+- **Runtime:** Node.js 24
 
 ## Platform/Application Separation
 
@@ -87,7 +87,7 @@ pulumi config set --secret <key> <value>    # Set secret config value
 
 Ensure you have:
 
-- Node.js 22+ installed (version specified in `.nvmrc`)
+- Node.js 24+ installed (version specified in `.nvmrc`)
 - Pulumi CLI installed
 - AWS credentials configured
 - Hetzner Cloud API token (if using Hetzner provider)
@@ -159,22 +159,47 @@ When adding a new application, add its route here and deploy via `pulumi up`.
 
 ### Backup System
 
-Three backup scripts in `bin/`:
+**Convention:** Any application that stores persistent data in `~/appname/data/` is automatically discovered and backed up. No configuration needed — just follow the convention.
 
-- `backupData.js`: Create backups of application data
-- `uploadToS3.js`: Upload backups to S3 bucket
-- `restoreAndCopyBackup.js`: Restore backups from S3
+**How it works:**
+1. `backupData.js` finds all directories under `$HOME` with a `data/` subdirectory
+2. For `tooling/`, it dumps Infisical Postgres (`pg_dump`) and Redis (`BGSAVE` + `docker cp`) to `data/infisical/dumps/` before tarring
+3. Container-owned directories (caddy data/config, raw postgres/redis) are excluded from tar since they're captured via dumps
+4. `uploadToS3.js` uploads new `.tar.gz` files to S3, skipping files already uploaded
+5. S3 bucket has a 90-day lifecycle rule on the `backups/` prefix for automatic cleanup
+6. Local backups older than 7 days are cleaned up
 
-These are configured as cron jobs on the server via `infra/serverCopyToolingFiles.ts`.
+**Scripts in `bin/`:**
+- `backupData.js`: Create tar.gz backups (with database dumps for tooling)
+- `uploadToS3.js`: Upload backups to S3 (skips duplicates)
+- `restoreAndCopyBackup.js`: Restore from S3 — downloads latest backup, extracts, restores databases, restarts services
+
+**Cron schedule** (configured via `infra/serverCopyToolingFiles.ts`):
+- Backups run every 12 hours (0:00, 12:00)
+- S3 uploads run every 12 hours at :30 (0:30, 12:30)
+
+**Restore on a new server:**
+```bash
+source ~/.bashrc && node /home/codigo/bin/restoreBackup.js tooling
+source ~/.bashrc && node /home/codigo/bin/restoreBackup.js mau-app
+```
+
+All scripts use AWS SDK v3 (`@aws-sdk/client-s3`).
 
 ### CI/CD
 
-**GitHub Actions** (`.github/workflows/deploy-infrastructure.yaml`):
+**Deploy** (`.github/workflows/deploy-infrastructure.yaml`):
 
 - Triggered on push to `main` branch (ignores docs/markdown changes)
 - Processes configuration file templates (replaces `{{ VAR }}` placeholders with secrets)
 - Configures Pulumi with all required secrets and configurations
 - Executes `pulumi up` to deploy infrastructure
+
+**Preview** (`.github/workflows/preview-infrastructure.yaml`):
+
+- Triggered on pull requests
+- Runs `pulumi preview` with full config and posts results as PR comment
+- Pulumi Deployments previews are disabled (config lives in GitHub Actions, not Pulumi Cloud)
 
 **Configuration Management:**
 Secrets and configs are stored in GitHub and loaded into Pulumi config during deployment. The workflow processes template variables in Docker Compose and config files before deployment.
@@ -201,6 +226,27 @@ All configuration is managed through Pulumi config and GitHub secrets. Configura
 - Backup scripts
 
 Use `pulumi config` to view/modify configuration locally.
+
+## Important Implementation Details
+
+### File Copy Mechanism
+Scripts and config files are copied to the server using heredocs with single-quoted delimiters (`cat << 'ENDSCRIPT'`) to prevent shell expansion. Never use `echo '...'` — it breaks when content contains `$(...)`, backticks, or other shell-sensitive patterns.
+
+### Server Environment
+- `setupEnvs.ts` writes env vars to `/home/codigo/.bashrc` (cleans old entries first to avoid duplicates)
+- Env vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `BACKUP_DIR`, `APP_BUCKET`
+- Server uses `fnm` (not `nvm`) for Node.js version management
+- Non-interactive SSH sessions must source fnm: `export PATH="/home/codigo/.local/share/fnm:$PATH" && eval "$(fnm env)"`
+- Cron jobs source `.bashrc` for env vars and use absolute node path (resolved via `which node` after sourcing fnm)
+
+### Docker Setup Protection
+- `installDocker` has `ignoreChanges: ["connection", "create"]` to prevent Docker reinstall from breaking the swarm
+- `initDockerSwarm`, `getWorkerToken`, `createDockerNetworks` are idempotent and safe to re-run (no `ignoreChanges`)
+- The Docker Swarm worker join token is exported from Pulumi for future worker nodes
+
+### Infisical Bootstrap Secrets
+These stay in GitHub only (circular dependency — Infisical can't sync its own bootstrap secrets):
+- `INFISICAL_ENCRYPTION_KEY`, `INFISICAL_AUTH_SECRET`, `INFISICAL_DB_PASSWORD`, `INFISICAL_SMTP_PASSWORD`
 
 ## Security Notes
 
