@@ -44,12 +44,9 @@ const downloadBackup = async (projectName, backupFileName) => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "backup-"));
   const tempFilePath = path.join(tempDir, backupFileName);
 
-  // v3 returns a readable stream for Body
-  const chunks = [];
-  for await (const chunk of data.Body) {
-    chunks.push(chunk);
-  }
-  fs.writeFileSync(tempFilePath, Buffer.concat(chunks));
+  // v3 Body has transformToByteArray() for binary content
+  const bodyBytes = await data.Body.transformToByteArray();
+  fs.writeFileSync(tempFilePath, Buffer.from(bodyBytes));
   console.log(`Backup downloaded to: ${tempFilePath}`);
 
   return { tempDir, tempFilePath };
