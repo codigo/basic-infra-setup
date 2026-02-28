@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/codigo/basic-infra-setup/compare/v1.3.2...v1.3.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* simplify restore script to default to local restore ([8877e88](https://github.com/codigo/basic-infra-setup/commit/8877e8894527ef880a8ad702cdf174c1d022d344))
+
 ## [1.3.2](https://github.com/codigo/basic-infra-setup/compare/v1.3.1...v1.3.2) (2026-02-28)
 
 
