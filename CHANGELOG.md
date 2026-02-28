@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/codigo/basic-infra-setup/compare/v1.3.0...v1.3.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* use transformToByteArray for S3 GetObject body in v3 ([5824fb1](https://github.com/codigo/basic-infra-setup/commit/5824fb1aa54ffc83016c4c339be4af26d2790e8e))
+
 # [1.3.0](https://github.com/codigo/basic-infra-setup/compare/v1.2.11...v1.3.0) (2026-02-27)
 
 
