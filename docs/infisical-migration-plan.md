@@ -1,6 +1,6 @@
 # Infisical Self-Hosted — Migration Plan
 
-Status: **In Progress**
+Status: **Completed**
 
 ## Goal
 
