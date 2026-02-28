@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/codigo/basic-infra-setup/compare/v1.3.1...v1.3.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* align restore script to use APP_BUCKET env var ([5b07d2d](https://github.com/codigo/basic-infra-setup/commit/5b07d2de01ef988acc95bcee0998afd0e4262898))
+
 ## [1.3.1](https://github.com/codigo/basic-infra-setup/compare/v1.3.0...v1.3.1) (2026-02-28)
 
 
