@@ -202,7 +202,7 @@ All scripts use AWS SDK v3 (`@aws-sdk/client-s3`).
 - Pulumi Deployments previews are disabled (config lives in GitHub Actions, not Pulumi Cloud)
 
 **Configuration Management:**
-Secrets and configs are stored in GitHub and loaded into Pulumi config during deployment. The workflow processes template variables in Docker Compose and config files before deployment.
+Secrets are managed in Infisical (locker.codigo.sh) and synced to GitHub via Infisical's GitHub Sync integration. GitHub Actions loads them into Pulumi config during deployment. The workflow processes template variables in Docker Compose and config files before deployment.
 
 ## Key Files
 
@@ -214,18 +214,39 @@ Secrets and configs are stored in GitHub and loaded into Pulumi config during de
 - `tsconfig.json`: TypeScript configuration with strict mode
 - `bin/*.js`: Backup and maintenance scripts
 
-## Configuration
+## Configuration & Secrets Management
 
-All configuration is managed through Pulumi config and GitHub secrets. Configuration values are set during GitHub Actions deployment and include:
+### Infisical (locker.codigo.sh)
 
-- AWS credentials and region
-- Docker registry credentials
+Secrets are the source of truth in Infisical and auto-sync to GitHub repos:
+
+**`codigo-infra` project** (Production env → `basic-infra-setup` repo):
+- AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
+- Hetzner, Cloudflare tokens and zone IDs
 - SSH keys (base64 encoded)
-- Cloudflare API tokens and tunnel configurations
-- Docker Compose file contents
-- Backup scripts
+- Container registry credentials
+- Dozzle password (bcrypt), Pulumi tokens, Cloudflare tunnel secret
 
-Use `pulumi config` to view/modify configuration locally.
+**`website` project** (Production env → `website` repo):
+- Cloudflare Turnstile keys, PocketBase URL and admin creds
+- OpenAI API key, Semantic Release PAT
+- SSH key, container registry credentials (duplicated from infra)
+- VPS IP
+
+### GitHub-only secrets (not in Infisical)
+
+Bootstrap secrets for Infisical itself (circular dependency):
+- `INFISICAL_ENCRYPTION_KEY`, `INFISICAL_AUTH_SECRET`, `INFISICAL_DB_PASSWORD`, `INFISICAL_SMTP_PASSWORD`
+
+### GitHub Variables (not secrets, not in Infisical)
+
+- `CONTAINER_REGISTRY_URL` — set per-repo (`sjc.vultrcr.com`)
+- `AWS_REGION` — `basic-infra-setup` only (`us-west-2`)
+- `BACKUP_DIR` — `basic-infra-setup` only (`/home/codigo/DATA_BACKUP`)
+
+### Pulumi Config
+
+GitHub Actions loads secrets into Pulumi config during deployment. Use `pulumi config` to view/modify configuration locally.
 
 ## Important Implementation Details
 
@@ -244,9 +265,13 @@ Scripts and config files are copied to the server using heredocs with single-quo
 - `initDockerSwarm`, `getWorkerToken`, `createDockerNetworks` are idempotent and safe to re-run (no `ignoreChanges`)
 - The Docker Swarm worker join token is exported from Pulumi for future worker nodes
 
-### Infisical Bootstrap Secrets
-These stay in GitHub only (circular dependency — Infisical can't sync its own bootstrap secrets):
-- `INFISICAL_ENCRYPTION_KEY`, `INFISICAL_AUTH_SECRET`, `INFISICAL_DB_PASSWORD`, `INFISICAL_SMTP_PASSWORD`
+### Infisical
+- Self-hosted at locker.codigo.sh (deployed as part of the tooling stack)
+- Two projects: `codigo-infra` (infrastructure secrets) and `website` (app secrets)
+- GitHub Sync configured per-project to their respective repos (auto-sync + overwrite)
+- Bootstrap secrets (`INFISICAL_ENCRYPTION_KEY`, `INFISICAL_AUTH_SECRET`, `INFISICAL_DB_PASSWORD`, `INFISICAL_SMTP_PASSWORD`) stay in GitHub only — circular dependency
+- Cross-project secret sharing is not supported in Infisical; shared secrets are duplicated across projects
+- For future apps: consider consolidating into a single project with folders (`/shared`, `/infra`, `/website`, `/new-app`) and using secret imports within the project
 
 ## Security Notes
 
