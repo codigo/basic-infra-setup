@@ -16,7 +16,7 @@ const execAsync = util.promisify(exec);
 const s3 = new S3Client({ region: process.env.AWS_REGION });
 
 // Configuration
-const S3_BUCKET = process.env.S3_BACKUPS_BUCKET;
+const S3_BUCKET = process.env.APP_BUCKET;
 const RESTORE_DIR = process.env.RESTORE_DIR || process.env.HOME;
 
 const getLatestBackup = async (projectName) => {
