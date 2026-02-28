@@ -7,7 +7,6 @@ const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
 const util = require("util");
-const readline = require("readline");
 const os = require("os");
 
 const execAsync = util.promisify(exec);
@@ -162,67 +161,7 @@ const restoreServices = async (projectName) => {
   }
 };
 
-const copyToRemote = async (
-  sourceFile,
-  destinationFolder,
-  remoteHost,
-  sshKeyFile,
-) => {
-  const sshKeyOption = sshKeyFile ? `-i "${sshKeyFile}"` : "";
-  const scpCommand = `scp ${sshKeyOption} "${sourceFile}" ${remoteHost}:"${destinationFolder}"`;
-
-  console.log(
-    `Copying file: ${path.basename(sourceFile)} to ${remoteHost}:${destinationFolder}`,
-  );
-
-  const { stdout, stderr } = await execAsync(scpCommand);
-
-  if (stderr) {
-    console.error("Error during file copy:", stderr);
-    return;
-  }
-
-  console.log("File copied successfully!");
-  if (stdout) console.log(stdout);
-};
-
-const extractRemotely = async (
-  remoteHost,
-  remoteFilePath,
-  remoteDestination,
-  sshKeyFile,
-) => {
-  const sshKeyOption = sshKeyFile ? `-i "${sshKeyFile}"` : "";
-  const sshCommand = `ssh ${sshKeyOption} ${remoteHost} "mkdir -p ${remoteDestination} && tar -xzf ${remoteFilePath} -C ${remoteDestination} --overwrite"`;
-
-  console.log(`Extracting backup on remote host: ${remoteHost}`);
-
-  const { stdout, stderr } = await execAsync(sshCommand);
-
-  if (stderr) {
-    console.error("Error during remote extraction:", stderr);
-    return;
-  }
-
-  console.log("Backup extracted successfully on remote host!");
-  if (stdout) console.log(stdout);
-};
-
-const getUserInput = (question) => {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer);
-    });
-  });
-};
-
-const restoreAndCopyBackup = async (projectName, backupFileName) => {
+const restoreBackup = async (projectName, backupFileName) => {
   try {
     const finalBackupFileName =
       backupFileName || (await getLatestBackup(projectName));
@@ -235,51 +174,15 @@ const restoreAndCopyBackup = async (projectName, backupFileName) => {
       finalBackupFileName,
     );
 
-    const destinationType = await getUserInput(
-      "Enter destination type (local/remote): ",
-    );
-
-    if (destinationType.toLowerCase() === "local") {
-      await extractLocally(tempFilePath, projectName);
-      await restoreServices(projectName);
-    } else if (destinationType.toLowerCase() === "remote") {
-      const remoteHost = await getUserInput(
-        "Enter remote host (e.g., user@example.com): ",
-      );
-      const remoteDestination = await getUserInput(
-        "Enter remote destination folder: ",
-      );
-      const sshKeyFile = await getUserInput(
-        "Enter SSH key file path (optional, press Enter to skip): ",
-      );
-
-      await copyToRemote(
-        tempFilePath,
-        remoteDestination,
-        remoteHost,
-        sshKeyFile || null,
-      );
-      await extractRemotely(
-        remoteHost,
-        path.join(remoteDestination, finalBackupFileName),
-        remoteDestination,
-        sshKeyFile || null,
-      );
-      console.log(
-        "Files extracted on remote. SSH in and run database restore manually if needed.",
-      );
-    } else {
-      console.error(
-        "Invalid destination type. Please choose 'local' or 'remote'.",
-      );
-    }
+    await extractLocally(tempFilePath, projectName);
+    await restoreServices(projectName);
 
     fs.rmSync(tempDir, { recursive: true, force: true });
     console.log("Temporary files cleaned up");
 
-    console.log("Restore and copy process completed successfully.");
+    console.log("Restore process completed successfully.");
   } catch (error) {
-    console.error("Error during restore and copy process:", error);
+    console.error("Error during restore process:", error);
   }
 };
 
@@ -287,9 +190,9 @@ const [, , projectName, backupFileName] = process.argv;
 
 if (!projectName) {
   console.error(
-    "Usage: node restoreAndCopyBackup.js <projectName> [backupFileName]",
+    "Usage: node restoreBackup.js <projectName> [backupFileName]",
   );
   process.exit(1);
 }
 
-restoreAndCopyBackup(projectName, backupFileName);
+restoreBackup(projectName, backupFileName);
