@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/codigo/basic-infra-setup/compare/v1.3.3...v1.4.0) (2026-03-20)
+
+
+### Features
+
+* rename internal_net to tooling_net and attach Infisical to it ([26b8767](https://github.com/codigo/basic-infra-setup/commit/26b876786842cb320de63200de4545aaddaa2af2))
+
 ## [1.3.3](https://github.com/codigo/basic-infra-setup/compare/v1.3.2...v1.3.3) (2026-02-28)
 
 
