@@ -83,9 +83,13 @@ export const setupDockerInServer = (server: Server) => {
     {
       connection,
       create: `
+        # Remove old internal_net if unused
+        if docker network ls | grep -q "internal_net"; then
+          docker network rm internal_net 2>/dev/null || echo "internal_net in use or already removed"
+        fi
         # Create networks if they don't exist
-        if ! docker network ls | grep -q "internal_net"; then
-          docker network create --driver overlay internal_net
+        if ! docker network ls | grep -q "tooling_net"; then
+          docker network create --driver overlay tooling_net
         fi
         if ! docker network ls | grep -q "caddy_net"; then
           docker network create --driver overlay caddy_net
