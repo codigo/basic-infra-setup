@@ -1,0 +1,161 @@
+---
+# ── User setup ───────────────────────────────────────────────────────────────
+- name: Create codigo user
+  ansible.builtin.user:
+    name: codigo
+    shell: /bin/bash
+    create_home: true
+    groups:
+      - sudo
+    append: true
+    state: present
+
+- name: Create passwordless sudo for codigo
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/codigo
+    content: "codigo ALL=(ALL) NOPASSWD:ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Ensure .ssh directory exists
+  ansible.builtin.file:
+    path: /home/codigo/.ssh
+    state: directory
+    owner: codigo
+    group: codigo
+    mode: "0700"
+
+- name: Deploy SSH authorized key
+  ansible.posix.authorized_key:
+    user: codigo
+    key: "{{ ssh_public_key }}"
+    state: present
+    exclusive: true
+
+- name: Ensure .bashrc exists
+  ansible.builtin.file:
+    path: /home/codigo/.bashrc
+    state: touch
+    owner: codigo
+    group: codigo
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+
+# ── SSH hardening ─────────────────────────────────────────────────────────────
+- name: Disable root SSH login
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+    state: present
+  notify: Restart sshd
+
+- name: Disable password authentication
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PasswordAuthentication'
+    line: 'PasswordAuthentication no'
+    state: present
+  notify: Restart sshd
+
+- name: Remove root authorized_keys
+  ansible.builtin.file:
+    path: /root/.ssh/authorized_keys
+    state: absent
+
+# ── Firewall ──────────────────────────────────────────────────────────────────
+- name: Install UFW
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: UFW — default deny incoming
+  community.general.ufw:
+    default: deny
+    direction: incoming
+
+- name: UFW — default deny routed
+  community.general.ufw:
+    default: deny
+    direction: routed
+
+- name: UFW — default allow outgoing
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: UFW — deny HTTP (traffic comes via Cloudflare tunnels only)
+  community.general.ufw:
+    rule: deny
+    port: "80"
+
+- name: UFW — deny HTTPS (traffic comes via Cloudflare tunnels only)
+  community.general.ufw:
+    rule: deny
+    port: "443"
+
+- name: UFW — allow SSH
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: UFW — enable logging
+  community.general.ufw:
+    logging: 'low'
+
+- name: UFW — enable
+  community.general.ufw:
+    state: enabled
+
+# ── Node.js via fnm ───────────────────────────────────────────────────────────
+- name: Check if fnm is already installed
+  ansible.builtin.stat:
+    path: "{{ fnm_dir }}/fnm"
+  register: fnm_binary
+  become: true
+  become_user: codigo
+
+- name: Install fnm (Fast Node Manager)
+  ansible.builtin.shell:
+    cmd: curl -fsSL https://fnm.vercel.app/install | bash
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: codigo
+  when: not fnm_binary.stat.exists
+
+- name: Install Node.js {{ node_version }} via fnm
+  ansible.builtin.shell:
+    cmd: |
+      export PATH="{{ fnm_dir }}:$PATH"
+      eval "$(fnm env)"
+      fnm install {{ node_version }}
+      fnm default {{ node_version }}
+  args:
+    executable: /bin/bash
+    creates: "{{ fnm_dir }}/node-versions/v{{ node_version }}"
+  become: true
+  become_user: codigo
+
+# ── Environment variables ─────────────────────────────────────────────────────
+- name: Set platform environment variables in .bashrc
+  ansible.builtin.blockinfile:
+    path: /home/codigo/.bashrc
+    marker: "# {mark} ANSIBLE MANAGED — Platform Env Vars"
+    create: true
+    owner: codigo
+    group: codigo
+    mode: "0644"
+    block: |
+      export AWS_ACCESS_KEY_ID="{{ aws_access_key_id }}"
+      export AWS_SECRET_ACCESS_KEY="{{ aws_secret_access_key }}"
+      export AWS_REGION="{{ aws_region }}"
+      export BACKUP_DIR="{{ backup_dir }}"
+      export APP_BUCKET="{{ app_bucket }}"
+      export PATH="{{ fnm_dir }}:$PATH"
+      eval "$(fnm env --use-on-cd)"
