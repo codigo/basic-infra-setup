@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/codigo/basic-infra-setup/compare/v1.5.0...v1.6.0) (2026-03-22)
+
+
+### Features
+
+* **ansible:** cut over server configuration from command.remote.Command to Ansible (Phase 2) ([#123](https://github.com/codigo/basic-infra-setup/issues/123)) ([300fc93](https://github.com/codigo/basic-infra-setup/commit/300fc93c82f64d2f053e4d0a37ded9088e3b5b69)), closes [#122](https://github.com/codigo/basic-infra-setup/issues/122)
+
 # [1.5.0](https://github.com/codigo/basic-infra-setup/compare/v1.4.0...v1.5.0) (2026-03-22)
 
 
