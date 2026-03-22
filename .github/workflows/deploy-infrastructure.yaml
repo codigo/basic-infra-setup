@@ -48,6 +48,8 @@ jobs:
         uses: pulumi/actions@v5
 
       - name: Configure Pulumi
+        # Category A only — cloud provider credentials that Pulumi providers need.
+        # Category B (Ansible-only secrets) are passed as env vars on the deploy step.
         run: |
           pulumi stack select codigo/mau-app/codigo-services
 
@@ -62,30 +64,11 @@ jobs:
           # SSH public key (used to provision Hetzner VPS + passed to Ansible bootstrap)
           cat ~/.ssh/id_rsa.pub | openssl base64 | tr -d '\n' | pulumi config set sshPublicKey --secret
 
-          # Container registry
-          pulumi config set --secret dockerUsername "${{ secrets.CONTAINER_REGISTRY_USERNAME }}"
-          pulumi config set --secret dockerPassword "${{ secrets.CONTAINER_REGISTRY_PASSWORD }}"
-          pulumi config set dockerRegistry "${{ vars.CONTAINER_REGISTRY_URL }}"
-
           # Cloudflare
           pulumi config set --secret cloudflareAccountId "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
           pulumi config set --secret cloudflareCodigoZoneId "${{ secrets.CLOUDFLARE_CODIGO_ZONE_ID }}"
           pulumi config set --secret cloudflareMaumercadoZoneId "${{ secrets.CLOUDFLARE_MAUMERCADO_ZONE_ID }}"
           pulumi config set --secret cloudflare:apiToken "${{ secrets.CLOUDFLARE_API_TOKEN }}"
-
-          # Backup
-          pulumi config set backupDir ${{ vars.BACKUP_DIR }}
-
-          # Infisical secrets (passed to Ansible as Jinja2 template vars for docker-compose.tooling.yaml)
-          pulumi config set --secret infisicalEncryptionKey "${{ secrets.INFISICAL_ENCRYPTION_KEY }}"
-          pulumi config set --secret infisicalAuthSecret "${{ secrets.INFISICAL_AUTH_SECRET }}"
-          pulumi config set --secret infisicalDbPassword "${{ secrets.INFISICAL_DB_PASSWORD }}"
-          pulumi config set --secret infisicalSmtpPassword "${{ secrets.INFISICAL_SMTP_PASSWORD }}"
-
-          # Dozzle auth (passed to Ansible for dozzle-users.yaml template)
-          # Stored in Infisical codigo-infra project → synced to GitHub secrets
-          pulumi config set --secret dozzleUsername "${{ secrets.DOZZLE_USERNAME }}"
-          pulumi config set --secret dozzlePasswordHash "${{ secrets.DOZZLE_PASSWORD }}"
 
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
@@ -99,3 +82,18 @@ jobs:
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          # ── Category B: Ansible reads these directly via lookup('env') ──────
+          # Infisical bootstrap secrets (GitHub-only — circular dependency)
+          INFISICAL_ENCRYPTION_KEY: ${{ secrets.INFISICAL_ENCRYPTION_KEY }}
+          INFISICAL_AUTH_SECRET: ${{ secrets.INFISICAL_AUTH_SECRET }}
+          INFISICAL_DB_PASSWORD: ${{ secrets.INFISICAL_DB_PASSWORD }}
+          INFISICAL_SMTP_PASSWORD: ${{ secrets.INFISICAL_SMTP_PASSWORD }}
+          # Dozzle (Infisical codigo project → GitHub Sync)
+          DOZZLE_USERNAME: ${{ secrets.DOZZLE_USERNAME }}
+          DOZZLE_PASSWORD: ${{ secrets.DOZZLE_PASSWORD }}
+          # Container registry (Infisical codigo project → GitHub Sync)
+          DOCKER_REGISTRY: ${{ vars.CONTAINER_REGISTRY_URL }}
+          DOCKER_USERNAME: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
+          # Backup (GitHub Variable)
+          BACKUP_DIR: ${{ vars.BACKUP_DIR }}
