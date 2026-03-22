@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/codigo/basic-infra-setup/compare/v1.4.0...v1.5.0) (2026-03-22)
+
+
+### Features
+
+* **ansible:** add Ansible roles for server configuration (Phase 1) ([#122](https://github.com/codigo/basic-infra-setup/issues/122)) ([b619941](https://github.com/codigo/basic-infra-setup/commit/b619941e9da0edd1220bd22202c67761850c1d50))
+
 # [1.4.0](https://github.com/codigo/basic-infra-setup/compare/v1.3.3...v1.4.0) (2026-03-20)
 
 
