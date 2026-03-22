@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/codigo/basic-infra-setup/compare/v1.6.0...v1.7.0) (2026-03-22)
+
+
+### Features
+
+* **secrets:** simplify secrets flow — remove Pulumi as middleman for Ansible-only secrets ([#125](https://github.com/codigo/basic-infra-setup/issues/125)) ([eb289f1](https://github.com/codigo/basic-infra-setup/commit/eb289f1e1ee10aa66c91ad5506deda2942c18d88))
+
 # [1.6.0](https://github.com/codigo/basic-infra-setup/compare/v1.5.0...v1.6.0) (2026-03-22)
 
 
