@@ -1,0 +1,4 @@
+---
+# Docker stack names managed on manager nodes
+tooling_stack_name: tooling
+tooling_compose_path: /home/codigo/tooling/docker-compose.tooling.yaml

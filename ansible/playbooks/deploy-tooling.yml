@@ -1,0 +1,19 @@
+---
+# deploy-tooling.yml — Redeploy the tooling Docker stack only.
+# Use this when only Docker compose or config files have changed,
+# without re-running the full server configuration.
+#
+# Usage:
+#   ansible-playbook \
+#     -i ansible/inventory/production/hosts.yml \
+#     --private-key <(op read "op://Codigo/Hetzner VPS SSH Key (mau@codigo.sh)/ssh_private_key") \
+#     --extra-vars "tunnel_token_maumercado=... tunnel_token_codigo=... ..." \
+#     ansible/playbooks/deploy-tooling.yml
+
+- name: Redeploy tooling stack
+  hosts: managers
+  become: true
+  gather_facts: false
+  roles:
+    - tooling-files
+    - tooling-deploy

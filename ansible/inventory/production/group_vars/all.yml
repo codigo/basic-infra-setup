@@ -1,0 +1,29 @@
+---
+# Paths on the remote server
+codigo_home: /home/codigo
+tooling_dir: /home/codigo/tooling
+bin_dir: /home/codigo/bin
+logs_dir: /home/codigo/logs
+
+# Node.js version to install via fnm
+node_version: "24"
+
+# fnm install path
+fnm_dir: /home/codigo/.local/share/fnm
+
+# Docker overlay networks
+docker_networks:
+  - name: caddy_net
+    driver: overlay
+    attachable: true
+  - name: tooling_net
+    driver: overlay
+    attachable: true
+
+# Legacy network to remove if present
+legacy_networks:
+  - internal_net
+
+# Cron schedule
+backup_cron_hour: "0,12"
+upload_cron_hour: "0,12"

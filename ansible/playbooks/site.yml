@@ -1,0 +1,26 @@
+---
+# site.yml — Full server configuration. Runs as codigo (become: true for root tasks).
+# Safe to run repeatedly — all roles are idempotent.
+#
+# Usage:
+#   Local:
+#     ansible-playbook \
+#       -i ansible/inventory/production/hosts.yml \
+#       --private-key <(op read "op://Codigo/Hetzner VPS SSH Key (mau@codigo.sh)/ssh_private_key") \
+#       --extra-vars "aws_access_key_id=... aws_secret_access_key=... ..." \
+#       ansible/playbooks/site.yml
+#
+#   Dry-run (check what would change without applying):
+#     ansible-playbook ... --check --diff ansible/playbooks/site.yml
+#
+#   CI/CD: triggered by Pulumi command.local.Command after bootstrap.
+
+- name: Configure tooling VPS
+  hosts: managers
+  become: true
+  gather_facts: true
+  roles:
+    - base-server
+    - docker
+    - tooling-files
+    - tooling-deploy
