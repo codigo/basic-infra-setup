@@ -1,0 +1,110 @@
+---
+# ── Directory structure ───────────────────────────────────────────────────────
+- name: Create tooling directory structure
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: codigo
+    group: codigo
+    mode: "0755"
+  loop:
+    - "{{ bin_dir }}"
+    - "{{ logs_dir }}"
+    - "{{ tooling_dir }}/data/caddy/config"
+    - "{{ tooling_dir }}/data/caddy/data"
+    - "{{ tooling_dir }}/data/dozzle"
+    - "{{ tooling_dir }}/bin/cloudflared"
+    - "{{ tooling_dir }}/data/infisical/postgres"
+    - "{{ tooling_dir }}/data/infisical/redis"
+
+# ── Config file templates ─────────────────────────────────────────────────────
+- name: Template docker-compose.tooling.yaml
+  ansible.builtin.template:
+    src: docker-compose.tooling.yaml.j2
+    dest: "{{ tooling_dir }}/docker-compose.tooling.yaml"
+    owner: codigo
+    group: codigo
+    mode: "0644"
+
+- name: Template Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ tooling_dir }}/data/caddy/Caddyfile"
+    owner: codigo
+    group: codigo
+    mode: "0644"
+
+- name: Template dozzle users.yaml
+  ansible.builtin.template:
+    src: dozzle-users.yaml.j2
+    dest: "{{ tooling_dir }}/data/dozzle/users.yaml"
+    owner: codigo
+    group: codigo
+    mode: "0600"
+
+# ── Backup scripts ────────────────────────────────────────────────────────────
+- name: Copy backup scripts to bin/
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ bin_dir }}/{{ item.dest }}"
+    owner: codigo
+    group: codigo
+    mode: "0755"
+  loop:
+    - { src: backupData.js, dest: backupData.js }
+    - { src: uploadToS3.js, dest: uploadToS3.js }
+    - { src: restoreAndCopyBackup.js, dest: restoreBackup.js }
+
+- name: Check if package.json exists in bin/
+  ansible.builtin.stat:
+    path: "{{ bin_dir }}/package.json"
+  register: bin_package_json
+
+- name: Init npm in bin/ if needed
+  ansible.builtin.command:
+    cmd: npm init -y
+    chdir: "{{ bin_dir }}"
+  become: true
+  become_user: codigo
+  when: not bin_package_json.stat.exists
+
+- name: Install AWS SDK for backup scripts
+  community.general.npm:
+    path: "{{ bin_dir }}"
+    name: "@aws-sdk/client-s3"
+    state: present
+  become: true
+  become_user: codigo
+
+# ── Cron jobs ─────────────────────────────────────────────────────────────────
+- name: Ensure log directory exists
+  ansible.builtin.file:
+    path: "{{ logs_dir }}"
+    state: directory
+    owner: codigo
+    group: codigo
+    mode: "0755"
+
+- name: Schedule backup cron job
+  ansible.builtin.cron:
+    name: "Run data backup"
+    minute: "0"
+    hour: "{{ backup_cron_hour }}"
+    job: >-
+      source {{ codigo_home }}/.bashrc &&
+      {{ fnm_dir }}/fnm exec --using={{ node_version }}
+      node {{ bin_dir }}/backupData.js >> {{ logs_dir }}/backup.log 2>&1
+    user: codigo
+    state: present
+
+- name: Schedule S3 upload cron job
+  ansible.builtin.cron:
+    name: "Upload backups to S3"
+    minute: "30"
+    hour: "{{ upload_cron_hour }}"
+    job: >-
+      source {{ codigo_home }}/.bashrc &&
+      {{ fnm_dir }}/fnm exec --using={{ node_version }}
+      node {{ bin_dir }}/uploadToS3.js >> {{ logs_dir }}/upload.log 2>&1
+    user: codigo
+    state: present

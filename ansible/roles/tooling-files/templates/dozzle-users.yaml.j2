@@ -1,0 +1,5 @@
+users:
+  {{ dozzle_username }}:
+    name: {{ dozzle_display_name | default(dozzle_username) }}
+    password: {{ dozzle_password_hash }}
+    email: {{ dozzle_email | default('') }}

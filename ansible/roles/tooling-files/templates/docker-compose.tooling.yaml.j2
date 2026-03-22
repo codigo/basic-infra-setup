@@ -1,0 +1,140 @@
+services:
+  caddy:
+    image: caddy:2
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/codigo/tooling/data/caddy/data:/data
+      - /home/codigo/tooling/data/caddy/config:/config
+      - /home/codigo/tooling/data/caddy/Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - caddy_net
+    healthcheck:
+      test: ["CMD", "caddy", "validate", "--config", "/etc/caddy/Caddyfile"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  dozzle:
+    image: amir20/dozzle:latest
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+    environment:
+      - DOZZLE_LEVEL=debug
+      - DOZZLE_MODE=swarm
+      - DOZZLE_AUTH_PROVIDER=simple
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets:
+      - source: users
+        target: /data/users.yml
+    networks:
+      - caddy_net
+
+  cloudflared-maumercado:
+    image: cloudflare/cloudflared:latest
+    command:
+      - tunnel
+      - run
+      - --token
+      - "{{ tunnel_token_maumercado }}"
+    networks:
+      - caddy_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  cloudflared-codigo:
+    image: cloudflare/cloudflared:latest
+    command:
+      - tunnel
+      - run
+      - --token
+      - "{{ tunnel_token_codigo }}"
+    networks:
+      - caddy_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  infisical:
+    image: infisical/infisical:v0.158.2
+    environment:
+      - ENCRYPTION_KEY={{ infisical_encryption_key }}
+      - AUTH_SECRET={{ infisical_auth_secret }}
+      - DB_CONNECTION_URI=postgres://infisical:{{ infisical_db_password }}@infisical-db:5432/infisical
+      - REDIS_URL=redis://infisical-redis:6379
+      - SITE_URL=https://locker.codigo.sh
+      - TELEMETRY_ENABLED=false
+      - SMTP_HOST=smtp.resend.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=resend
+      - SMTP_PASSWORD={{ infisical_smtp_password }}
+      - SMTP_FROM_ADDRESS=noreply@codigo.sh
+      - SMTP_FROM_NAME=Locker
+    networks:
+      - caddy_net
+      - infisical_internal
+      - tooling_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+  infisical-db:
+    image: postgres:18-alpine
+    environment:
+      - POSTGRES_USER=infisical
+      - POSTGRES_PASSWORD={{ infisical_db_password }}
+      - POSTGRES_DB=infisical
+    volumes:
+      - /home/codigo/tooling/data/infisical/postgres:/var/lib/postgresql/data
+    networks:
+      - infisical_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U infisical"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  infisical-redis:
+    image: redis:7-alpine
+    volumes:
+      - /home/codigo/tooling/data/infisical/redis:/data
+    networks:
+      - infisical_internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+
+networks:
+  caddy_net:
+    external: true
+  tooling_net:
+    external: true
+  infisical_internal:
+    driver: overlay
+
+configs:
+  caddyfile:
+    file: /home/codigo/tooling/data/caddy/Caddyfile
+
+secrets:
+  users:
+    file: /home/codigo/tooling/data/dozzle/users.yaml
