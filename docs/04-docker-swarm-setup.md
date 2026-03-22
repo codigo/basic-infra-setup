@@ -145,14 +145,14 @@ services:
     ports:
       - "3000"
     networks:
-      - internal_net
+      - tooling_net
       - caddy_net
 
   # ... other services ...
 
 networks:
-  internal_net:
-    driver: overlay
+  tooling_net:
+    external: true
   caddy_net:
     external: true
 ```

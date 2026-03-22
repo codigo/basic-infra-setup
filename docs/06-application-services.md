@@ -22,8 +22,8 @@ PocketBase is an open-source backend for your next SaaS and Mobile app in 1 file
          - /home/codigo/mau-app/data/pocketbase/pb_public:/pb_public
          - /home/codigo/mau-app/data/pocketbase/pb_migrations:/pb_migrations
        networks:
-         - internal_net
-         - caddy_net
+          - tooling_net
+          - caddy_net
        secrets:
          - mau-app_pb_encryption_key
        configs:
@@ -68,7 +68,7 @@ This command creates Docker secrets for the PocketBase encryption key.
 
 Both services are connected to two Docker networks:
 
-- `internal_net`: An overlay network for internal communication between services.
+- `tooling_net`: An external overlay network for internal communication between services and tooling (e.g. Infisical).
 - `caddy_net`: An external network that allows these services to communicate with Caddy.
 
 ## Benefits of This Setup

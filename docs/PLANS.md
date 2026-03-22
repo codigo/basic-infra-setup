@@ -4,17 +4,19 @@ Central index of all planned, in-progress, and completed work for this platform.
 
 ## Planned
 
-- [Hetzner private network attachment](./basic-infra-setup-plan.md) — Attach the tooling VPS to the Hetzner Cloud Network created by the Reporter Pulumi stack. Write tooling VPS private IP to Infisical `infrastructure/TOOLING_VPS_PRIVATE_IP` so Reporter can build the Loki push URL. Depends on Reporter Pulumi Phase 2 running first.
+- [Ansible migration](./ansible-migration-plan.md) — Replace 18 `command.remote.Command` resources across 5 Pulumi TypeScript files with 4 Ansible roles. Pulumi keeps cloud provisioning; Ansible takes over server configuration, Docker setup, file copies, and stack deployment. Also fixes nvm/fnm conflict, SSH hardening duplicates, and the `setupFirewall` dependency bug.
 
-- [Observability stack](./basic-infra-setup-plan.md) — Deploy Loki, Prometheus, Grafana, cAdvisor, and node-exporter on the tooling VPS. Loki bound to private network interface for Reporter log driver push. Prometheus scrapes Reporter VPS health endpoint over private IP. Depends on Hetzner private network attachment.
+- [Hetzner private network](./basic-infra-setup-plan.md) — Create Hetzner Cloud Network in `basic-infra-setup` Pulumi, attach tooling VPS, export network ID and tooling VPS private IP to Infisical. Reporter Pulumi reads these to attach the Reporter VPS. No dependency on Reporter running first.
 
-- [Infisical Reporter project setup](./basic-infra-setup-plan.md) — Create Reporter project in Infisical with `staging` and `production` environments, load ~44 secrets, create CI/CD and runtime machine identities, enable GitHub Sync to Reporter repo.
+- [Observability stack](./basic-infra-setup-plan.md) — Deploy Loki, Prometheus, Grafana, cAdvisor, and node-exporter on the tooling VPS via Ansible roles (depends on Ansible migration). Loki bound to private network interface. Prometheus scrapes Reporter VPS over private IP. Depends on Hetzner private network.
 
 - [Vultr CR access verification](./basic-infra-setup-plan.md) — Confirm `sjc.vultrcr.com/codigo` is reachable from the Reporter VPS and that Vultr CR credentials are stored in Infisical `infrastructure/VULTR_CR_USERNAME` + `VULTR_CR_PASSWORD`.
 
 ## In Progress
 
 ## Completed
+
+- Infisical Reporter GitHub Sync — Enabled GitHub Sync on the Reporter Infisical project, syncing the `production` environment `infrastructure/` folder to Reporter GitHub Actions secrets. Duplicate empty environments (`dev`, `prod` slugs) removed via API.
 
 - tooling_net overlay network — Renamed unused `internal_net` to `tooling_net`, attached Infisical to it so app services can reach tooling internally without going through the internet.
 
