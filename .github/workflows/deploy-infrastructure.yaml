@@ -28,46 +28,8 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Install dependencies
+      - name: Install Node dependencies
         run: npm ci
-
-      - name: Process configuration files
-        env:
-          DOZZLE_PASSWORD: ${{ secrets.DOZZLE_PASSWORD }}
-          CONTAINER_REGISTRY_URL: ${{ vars.CONTAINER_REGISTRY_URL }}
-          CONTAINER_REGISTRY_USERNAME: ${{ secrets.CONTAINER_REGISTRY_USERNAME }}
-          CONTAINER_REGISTRY_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
-          INFISICAL_ENCRYPTION_KEY: ${{ secrets.INFISICAL_ENCRYPTION_KEY }}
-          INFISICAL_AUTH_SECRET: ${{ secrets.INFISICAL_AUTH_SECRET }}
-          INFISICAL_DB_PASSWORD: ${{ secrets.INFISICAL_DB_PASSWORD }}
-          INFISICAL_SMTP_PASSWORD: ${{ secrets.INFISICAL_SMTP_PASSWORD }}
-        run: |
-          files=(
-            "./tooling/data/dozzle/users.yaml"
-            "./docker-compose.tooling.yaml"
-          )
-
-          for file in "${files[@]}"; do
-            if [ -f "$file" ]; then
-              echo "Processing $file"
-
-              # Use sed to replace variables
-              sed -i.bak -e '
-                s|{{ DOZZLE_PASSWORD }}|'"$DOZZLE_PASSWORD"'|g
-                s|{{ CONTAINER_REGISTRY_URL }}|'"$CONTAINER_REGISTRY_URL"'|g
-                s|{{ CONTAINER_REGISTRY_USERNAME }}|'"$CONTAINER_REGISTRY_USERNAME"'|g
-                s|{{ CONTAINER_REGISTRY_PASSWORD }}|'"$CONTAINER_REGISTRY_PASSWORD"'|g
-                s|{{ INFISICAL_ENCRYPTION_KEY }}|'"$INFISICAL_ENCRYPTION_KEY"'|g
-                s|{{ INFISICAL_AUTH_SECRET }}|'"$INFISICAL_AUTH_SECRET"'|g
-                s|{{ INFISICAL_DB_PASSWORD }}|'"$INFISICAL_DB_PASSWORD"'|g
-                s|{{ INFISICAL_SMTP_PASSWORD }}|'"$INFISICAL_SMTP_PASSWORD"'|g
-              ' "$file"
-
-              echo "Processed $file"
-            else
-              echo "File not found: $file"
-            fi
-          done
 
       - name: Setup SSH keys
         run: |
@@ -77,9 +39,10 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           chmod 644 ~/.ssh/id_rsa.pub
 
-          # Verify SSH key files
-          ls -l ~/.ssh
-          wc -l ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
+      - name: Install Ansible + collections
+        run: |
+          pip install ansible pyyaml
+          ansible-galaxy collection install -r ansible/requirements.yml
 
       - name: Setup Pulumi
         uses: pulumi/actions@v5
@@ -87,43 +50,43 @@ jobs:
       - name: Configure Pulumi
         run: |
           pulumi stack select codigo/mau-app/codigo-services
-          pulumi config set aws:region ${{ vars.AWS_REGION }}
-          pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
 
-          # Set configs from secrets and vars
+          # AWS
+          pulumi config set aws:region ${{ vars.AWS_REGION }}
           pulumi config set --secret awsAccessKeyId "${{ secrets.AWS_ACCESS_KEY_ID }}"
           pulumi config set --secret awsSecretAccessKey "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+
+          # Hetzner
+          pulumi config set --secret hcloud:token ${{ secrets.HETZNER_CLOUD_KEY }}
+
+          # SSH public key (used to provision Hetzner VPS + passed to Ansible bootstrap)
+          cat ~/.ssh/id_rsa.pub | openssl base64 | tr -d '\n' | pulumi config set sshPublicKey --secret
+
+          # Container registry
           pulumi config set --secret dockerUsername "${{ secrets.CONTAINER_REGISTRY_USERNAME }}"
           pulumi config set --secret dockerPassword "${{ secrets.CONTAINER_REGISTRY_PASSWORD }}"
           pulumi config set dockerRegistry "${{ vars.CONTAINER_REGISTRY_URL }}"
 
-          # Set SSH keys
-          cat ~/.ssh/id_rsa.pub | openssl base64 | tr -d '\n' | pulumi config set sshPublicKey --secret
-          cat ~/.ssh/id_rsa | openssl base64 | tr -d '\n' | pulumi config set sshPrivateKey --secret
-
-          # Set configs from files
-          for file in ./tooling/data/dozzle/users.yaml ./tooling/data/caddy/Caddyfile; do
-            pulumi config set --secret $(basename $file .yaml | tr '.-' '_') "$(cat $file)"
-          done
-
-          pulumi config set docker_compose_tooling "$(cat ./docker-compose.tooling.yaml)"
-
-          # Set configs from bin scripts
-          for script in backupData uploadToS3 restoreAndCopyBackup; do
-            pulumi config set --secret ${script}Script "$(cat ./bin/${script}.js)"
-          done
-
-          # Set backup directory
-          pulumi config set backupDir ${{ vars.BACKUP_DIR }}
-
-          # Set Cloudflare tunnel configurations
+          # Cloudflare
           pulumi config set --secret cloudflareAccountId "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
           pulumi config set --secret cloudflareCodigoZoneId "${{ secrets.CLOUDFLARE_CODIGO_ZONE_ID }}"
           pulumi config set --secret cloudflareMaumercadoZoneId "${{ secrets.CLOUDFLARE_MAUMERCADO_ZONE_ID }}"
           pulumi config set --secret cloudflare:apiToken "${{ secrets.CLOUDFLARE_API_TOKEN }}"
 
-          # Debug: Check Pulumi config (be careful not to expose secrets)
-          pulumi config get aws:region
+          # Backup
+          pulumi config set backupDir ${{ vars.BACKUP_DIR }}
+
+          # Infisical secrets (passed to Ansible as Jinja2 template vars for docker-compose.tooling.yaml)
+          pulumi config set --secret infisicalEncryptionKey "${{ secrets.INFISICAL_ENCRYPTION_KEY }}"
+          pulumi config set --secret infisicalAuthSecret "${{ secrets.INFISICAL_AUTH_SECRET }}"
+          pulumi config set --secret infisicalDbPassword "${{ secrets.INFISICAL_DB_PASSWORD }}"
+          pulumi config set --secret infisicalSmtpPassword "${{ secrets.INFISICAL_SMTP_PASSWORD }}"
+
+          # Dozzle auth (passed to Ansible for dozzle-users.yaml template)
+          pulumi config set --secret dozzleUsername "${{ secrets.DOZZLE_USERNAME }}"
+          pulumi config set --secret dozzlePasswordHash "${{ secrets.DOZZLE_PASSWORD }}"
+          pulumi config set dozzleDisplayName "${{ vars.DOZZLE_DISPLAY_NAME }}"
+          pulumi config set dozzleEmail "${{ vars.DOZZLE_EMAIL }}"
 
         env:
           PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
