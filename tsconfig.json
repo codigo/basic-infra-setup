@@ -14,15 +14,11 @@
     "allowJs": true
   },
   "files": [
-    "infra/deployDockerStacks.ts",
     "infra/serverProvider.ts",
     "infra/hetznerProvider.ts",
     "infra/iam.ts",
     "infra/s3.ts",
-    "infra/serverConfig.ts",
-    "infra/serverCopyToolingFiles.ts",
-    "infra/setupDockerInServer.ts",
-    "infra/setupEnvs.ts",
+    "infra/cloudflare.ts",
     "index.ts"
   ]
 }
