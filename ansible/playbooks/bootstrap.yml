@@ -1,0 +1,69 @@
+---
+# bootstrap.yml — Run ONCE on a fresh VPS as root.
+# Creates the codigo user and deploys the SSH key so subsequent
+# runs can connect as codigo. After this playbook succeeds, use site.yml.
+#
+# Usage:
+#   Local:
+#     ansible-playbook \
+#       -i '<VPS_IP>,' \
+#       -u root \
+#       --private-key <(op read "op://Codigo/Hetzner VPS SSH Key (mau@codigo.sh)/ssh_private_key") \
+#       --extra-vars "ssh_public_key='$(op read op://Codigo/Hetzner\ VPS\ SSH\ Key\ \(mau@codigo.sh\)/ssh_public_key)'" \
+#       ansible/playbooks/bootstrap.yml
+#
+#   CI/CD: triggered by Pulumi command.local.Command on first VPS creation.
+
+- name: Bootstrap new VPS — create codigo user
+  hosts: managers
+  remote_user: root
+  gather_facts: false
+
+  tasks:
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+
+    - name: Gather facts
+      ansible.builtin.setup:
+
+    - name: Create codigo user
+      ansible.builtin.user:
+        name: codigo
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: Create passwordless sudo for codigo
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/codigo
+        content: "codigo ALL=(ALL) NOPASSWD:ALL\n"
+        owner: root
+        group: root
+        mode: "0440"
+        validate: visudo -cf %s
+
+    - name: Ensure .ssh directory exists for codigo
+      ansible.builtin.file:
+        path: /home/codigo/.ssh
+        state: directory
+        owner: codigo
+        group: codigo
+        mode: "0700"
+
+    - name: Deploy SSH authorized key for codigo
+      ansible.posix.authorized_key:
+        user: codigo
+        key: "{{ ssh_public_key }}"
+        state: present
+        exclusive: true
+
+    - name: Ensure .bashrc exists for codigo
+      ansible.builtin.file:
+        path: /home/codigo/.bashrc
+        state: touch
+        owner: codigo
+        group: codigo
+        mode: "0644"
+        modification_time: preserve
+        access_time: preserve
