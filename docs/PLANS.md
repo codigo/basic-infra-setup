@@ -5,43 +5,23 @@ Central index of all planned, in-progress, and completed work for this platform.
 ## Planned
 
 <!--
-Dependency graph — what can run in parallel vs what must be serial:
+Dependency graph:
 
-  [Ansible migration ✓ merging] ──┬── [Simplify secrets flow]  ──┐
-                                   │                               │
-                                   └── [Hetzner private network] ──┼── [Observability stack]
-                                                                    │
-                                   ┌── [Infisical verify + sync] ──┘
-                                   │
-                                   └── [Vultr CR verification] ── blocked on Reporter VPS
+  [Hetzner private network] ──── [Observability stack]
+
+  [Vultr CR verification] ── blocked on Reporter VPS
 -->
-
-### Group A — Parallel (no dependencies between them, both unblock Group B)
-
-- [Simplify secrets flow](./simplify-secrets-flow-plan.md) — Remove Pulumi as middleman for
-  Ansible-only secrets. CI/CD passes Category B secrets (Infisical, Dozzle, Docker registry,
-  tunnel tokens) as direct env vars to Ansible instead of routing them through `pulumi config set`.
-  Pulumi config shrinks to cloud-provider-only credentials (~8 entries vs 20+). Separate PR after
-  Ansible migration merges.
 
 - [Hetzner private network](./basic-infra-setup-plan.md) — Create Hetzner Cloud Network in
   `basic-infra-setup` Pulumi, attach tooling VPS, export network ID and tooling VPS private IP
   to Infisical `infrastructure/HETZNER_PRIVATE_NETWORK_ID` + `TOOLING_VPS_PRIVATE_IP`. Reporter
-  Pulumi reads these to attach the Reporter VPS. Separate PR.
-
-- [Infisical verify + sync check](./basic-infra-setup-plan.md) — Verify all `codigo` project
-  secrets are present in `prod` env and GitHub Sync is pushing correctly to GitHub Actions secrets.
-  Pre-flight check before the secrets flow simplification PR can be safely merged. Manual task.
-
-### Group B — Serial (depends on Group A completing)
+  Pulumi reads these to attach the Reporter VPS. No dependency on Reporter running first.
 
 - [Observability stack](./basic-infra-setup-plan.md) — Deploy Loki, Prometheus, Grafana, cAdvisor,
   and node-exporter on the tooling VPS as new Ansible roles (`monitoring-config` +
   `monitoring-deploy`). Loki bound to private network interface for Reporter log driver push.
-  Prometheus scrapes Reporter VPS health endpoint over private IP. Depends on: Ansible migration
-  merged + Hetzner private network deployed.
-
-### Group C — Blocked on external work
+  Prometheus scrapes Reporter VPS health endpoint over private IP. Depends on Hetzner private
+  network being deployed first.
 
 - [Vultr CR access verification](./basic-infra-setup-plan.md) — Confirm `sjc.vultrcr.com/codigo`
   is reachable from the Reporter VPS and credentials are in Infisical
@@ -49,14 +29,21 @@ Dependency graph — what can run in parallel vs what must be serial:
 
 ## In Progress
 
-- Ansible migration cutover (PR #123) — Phase 2: `index.ts` updated, old `infra/*.ts` deleted,
-  CI/CD workflows updated. Awaiting merge + GitHub Sync to push `DOZZLE_USERNAME` to Actions.
-
 ## Completed
 
-- Ansible migration (Phase 1, PR #122) — Added 4 Ansible roles (base-server, docker,
-  tooling-files, tooling-deploy), playbooks, inventory, and requirements. Validated with
-  `--check --diff` against live server.
+- Ansible migration — Replaced 18 `command.remote.Command` resources with 4 Ansible roles
+  (base-server, docker, tooling-files, tooling-deploy). Pulumi provisions cloud resources;
+  Ansible configures the server. Validated with `--check --diff` against live server.
+  PRs #122 (roles) + #123 (cutover).
+
+- Simplify secrets flow — Removed Pulumi as middleman for Ansible-only secrets. Category B
+  secrets (Infisical, Dozzle, Docker registry, backup) now flow directly from GitHub Actions
+  env vars to Ansible via `lookup('env')` in group_vars/all.yml. Pulumi config reduced from
+  ~20 entries to 9 cloud-provider-only credentials. PR #125.
+
+- Infisical verify + sync check — Confirmed all Category B secrets present in Infisical
+  `codigo` project (`prod` env) and syncing correctly to GitHub Actions secrets. `DOZZLE_USERNAME`
+  added to Infisical. Bcrypt hash verified correct against 1Password plaintext.
 
 - Infisical Reporter GitHub Sync — Enabled GitHub Sync on the Reporter Infisical project,
   syncing the `production` environment `infrastructure/` folder to Reporter GitHub Actions
