@@ -81,6 +81,14 @@ yaml.dump({'ssh_public_key': os.environ['ANSIBLE_SSH_PUBLIC_KEY']}, open(sys.arg
 // ── Step 6: Configure server + deploy tooling stack ──────────────────────────
 // Ansible handles: base-server, docker, tooling-files, tooling-deploy roles.
 // Idempotent — safe to run on every deploy.
+//
+// Category A (Pulumi-derived outputs — not available from env):
+//   server_ip, ssh_public_key, app_bucket, tunnel tokens
+//
+// Category B (Ansible-only secrets) are read by Ansible directly from the
+// CI/CD process environment via lookup('env', ...) in group_vars/all.yml.
+// They are passed as env vars on the pulumi/actions step in the workflow,
+// not routed through pulumi config.
 const configure = new command.local.Command(
   "configure-server",
   {
@@ -88,7 +96,7 @@ const configure = new command.local.Command(
       VARS_FILE=$(mktemp /tmp/ansible-vars-XXXXXX.yml)
       python3 -c "
 import os, sys, yaml
-# Read all ANSIBLE_VAR_* env vars, strip prefix, lowercase key → Ansible var name
+# Only Pulumi-derived values that aren't available from env
 raw = {k: v for k, v in os.environ.items() if k.startswith('ANSIBLE_VAR_')}
 vars = {k[12:].lower(): v for k, v in raw.items()}
 yaml.dump(vars, open(sys.argv[1], 'w'))
@@ -101,27 +109,18 @@ yaml.dump(vars, open(sys.argv[1], 'w'))
       rm -f "$VARS_FILE"
     `,
     environment: {
-      ANSIBLE_VAR_SERVER_IP:                 serverIp,
-      ANSIBLE_VAR_SSH_PUBLIC_KEY:            sshPublicKey,
-      ANSIBLE_VAR_AWS_ACCESS_KEY_ID:         config.requireSecret("awsAccessKeyId"),
-      ANSIBLE_VAR_AWS_SECRET_ACCESS_KEY:     config.requireSecret("awsSecretAccessKey"),
-      ANSIBLE_VAR_AWS_REGION:                awsConfig.require("region"),
-      ANSIBLE_VAR_BACKUP_DIR:                config.require("backupDir"),
-      ANSIBLE_VAR_APP_BUCKET:                appBucketName,
-      ANSIBLE_VAR_TUNNEL_TOKEN_MAUMERCADO:   maumercadoTunnelToken,
-      ANSIBLE_VAR_TUNNEL_TOKEN_CODIGO:       codigoTunnelToken,
-      ANSIBLE_VAR_INFISICAL_ENCRYPTION_KEY:  config.requireSecret("infisicalEncryptionKey"),
-      ANSIBLE_VAR_INFISICAL_AUTH_SECRET:     config.requireSecret("infisicalAuthSecret"),
-      ANSIBLE_VAR_INFISICAL_DB_PASSWORD:     config.requireSecret("infisicalDbPassword"),
-      ANSIBLE_VAR_INFISICAL_SMTP_PASSWORD:   config.requireSecret("infisicalSmtpPassword"),
-      ANSIBLE_VAR_DOZZLE_USERNAME:           config.requireSecret("dozzleUsername"),
-      ANSIBLE_VAR_DOZZLE_PASSWORD_HASH:      config.requireSecret("dozzlePasswordHash"),
-      ANSIBLE_VAR_DOCKER_REGISTRY:           config.require("dockerRegistry"),
-      ANSIBLE_VAR_DOCKER_USERNAME:           config.requireSecret("dockerUsername"),
-      ANSIBLE_VAR_DOCKER_PASSWORD:           config.requireSecret("dockerPassword"),
+      // Category A only — Pulumi outputs not available from CI/CD env
+      ANSIBLE_VAR_SERVER_IP:               serverIp,
+      ANSIBLE_VAR_SSH_PUBLIC_KEY:          sshPublicKey,
+      ANSIBLE_VAR_AWS_ACCESS_KEY_ID:       config.requireSecret("awsAccessKeyId"),
+      ANSIBLE_VAR_AWS_SECRET_ACCESS_KEY:   config.requireSecret("awsSecretAccessKey"),
+      ANSIBLE_VAR_AWS_REGION:              awsConfig.require("region"),
+      ANSIBLE_VAR_APP_BUCKET:              appBucketName,
+      ANSIBLE_VAR_TUNNEL_TOKEN_MAUMERCADO: maumercadoTunnelToken,
+      ANSIBLE_VAR_TUNNEL_TOKEN_CODIGO:     codigoTunnelToken,
     },
-    // Re-run when dockerRegistry changes (signals a config update)
-    triggers: [config.require("dockerRegistry")],
+    // Re-run when any Pulumi-derived trigger value changes
+    triggers: [serverIp, appBucketName],
   },
   { dependsOn: [bootstrap] },
 );
