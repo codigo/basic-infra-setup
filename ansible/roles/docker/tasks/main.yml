@@ -43,19 +43,22 @@
       - docker
     append: true
 
-- name: Install Python packages for community.docker modules
-  ansible.builtin.pip:
+- name: Install Python Docker SDK and dependencies via apt (avoids pip bootstrap issues)
+  ansible.builtin.apt:
     name:
-      - "docker>=2.0.0"
-      - jsondiff
-      - pyyaml
+      - python3-docker
+      - python3-jsondiff
+      - python3-yaml
     state: present
+    update_cache: false
 
 # ── Docker Swarm init ─────────────────────────────────────────────────────────
 - name: Initialize Docker Swarm
   community.docker.docker_swarm:
     state: present
   register: swarm_result
+  # In check mode, python3-docker may not yet be installed
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Store worker join token as fact
   ansible.builtin.set_fact:
@@ -77,3 +80,5 @@
     scope: swarm
     state: present
   loop: "{{ docker_networks }}"
+  # In check mode, python3-docker may not yet be installed
+  ignore_errors: "{{ ansible_check_mode }}"

@@ -129,6 +129,20 @@
   become_user: codigo
   when: not fnm_binary.stat.exists
 
+- name: Check if Node.js {{ node_version }} is already installed via fnm
+  ansible.builtin.shell:
+    cmd: |
+      export PATH="{{ fnm_dir }}:$PATH"
+      eval "$(fnm env)"
+      fnm list | grep -q "v{{ node_version }}"
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: codigo
+  register: node_version_check
+  changed_when: false
+  failed_when: false
+
 - name: Install Node.js {{ node_version }} via fnm
   ansible.builtin.shell:
     cmd: |
@@ -138,11 +152,23 @@
       fnm default {{ node_version }}
   args:
     executable: /bin/bash
-    creates: "{{ fnm_dir }}/node-versions/v{{ node_version }}"
   become: true
   become_user: codigo
+  when: node_version_check.rc != 0
 
 # ── Environment variables ─────────────────────────────────────────────────────
+- name: Remove legacy Pulumi-written env vars from .bashrc (replaced by blockinfile)
+  ansible.builtin.lineinfile:
+    path: /home/codigo/.bashrc
+    regexp: "{{ item }}"
+    state: absent
+  loop:
+    - '^export AWS_ACCESS_KEY_ID='
+    - '^export AWS_SECRET_ACCESS_KEY='
+    - '^export AWS_REGION='
+    - '^export BACKUP_DIR='
+    - '^export APP_BUCKET='
+
 - name: Set platform environment variables in .bashrc
   ansible.builtin.blockinfile:
     path: /home/codigo/.bashrc

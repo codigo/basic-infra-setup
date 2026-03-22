@@ -77,6 +77,27 @@
   become_user: codigo
 
 # ── Cron jobs ─────────────────────────────────────────────────────────────────
+- name: Remove legacy unnamed cron entries (replaced by named Ansible cron tasks)
+  ansible.builtin.cron:
+    name: "{{ item }}"
+    state: absent
+    user: codigo
+  loop:
+    - "UNNAMED_backupData"
+    - "UNNAMED_uploadToS3"
+  # The old entries have no name — use a shell task to remove them by pattern
+  ignore_errors: true
+
+- name: Remove old Pulumi-style cron entries by pattern
+  ansible.builtin.shell: |
+    crontab -l -u codigo 2>/dev/null | \
+      grep -v 'backupData.js' | \
+      grep -v 'uploadToS3.js' | \
+      crontab -u codigo -
+  args:
+    executable: /bin/bash
+  changed_when: false
+
 - name: Ensure log directory exists
   ansible.builtin.file:
     path: "{{ logs_dir }}"
