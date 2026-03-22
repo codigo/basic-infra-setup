@@ -1,0 +1,36 @@
+---
+# ── Container registry login ──────────────────────────────────────────────────
+- name: Login to container registry
+  community.docker.docker_login:
+    registry_url: "{{ docker_registry }}"
+    username: "{{ docker_username }}"
+    password: "{{ docker_password }}"
+    reauthorize: true
+
+# ── Deploy tooling stack ──────────────────────────────────────────────────────
+- name: Deploy tooling Docker stack
+  community.docker.docker_stack:
+    name: "{{ tooling_stack_name }}"
+    state: present
+    compose:
+      - "{{ tooling_compose_path }}"
+    with_registry_auth: true
+    prune: true
+  register: stack_deploy_result
+
+- name: Wait for tooling stack services to stabilise
+  ansible.builtin.pause:
+    seconds: 30
+  when: stack_deploy_result.changed
+
+- name: List tooling stack services
+  ansible.builtin.command:
+    cmd: docker stack services {{ tooling_stack_name }}
+  register: stack_services
+  changed_when: false
+  when: stack_deploy_result.changed
+
+- name: Show stack services
+  ansible.builtin.debug:
+    var: stack_services.stdout_lines
+  when: stack_deploy_result.changed and stack_services is defined
