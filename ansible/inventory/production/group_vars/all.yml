@@ -1,5 +1,29 @@
 ---
-# Paths on the remote server
+# ── Category B secrets — read directly from CI/CD environment ─────────────────
+# These are set as env vars on the pulumi/actions step (not routed through
+# pulumi config). For local runs, export them from Infisical or 1Password first.
+#
+# CI/CD source:
+#   INFISICAL_* → GitHub-only secrets (circular dependency, can't be in Infisical)
+#   DOZZLE_*, DOCKER_*, BACKUP_DIR → Infisical codigo project → GitHub Sync
+#   CONTAINER_REGISTRY_* → Infisical codigo project → GitHub Sync
+#
+# Local run example:
+#   eval $(infisical secrets export --projectId=8491de15-c5c4-4d67-aaf3-c4083161d824 \
+#     --env=prod --domain=https://locker.codigo.sh --format=dotenv)
+
+infisical_encryption_key:  "{{ lookup('env', 'INFISICAL_ENCRYPTION_KEY') }}"
+infisical_auth_secret:     "{{ lookup('env', 'INFISICAL_AUTH_SECRET') }}"
+infisical_db_password:     "{{ lookup('env', 'INFISICAL_DB_PASSWORD') }}"
+infisical_smtp_password:   "{{ lookup('env', 'INFISICAL_SMTP_PASSWORD') }}"
+dozzle_username:           "{{ lookup('env', 'DOZZLE_USERNAME') }}"
+dozzle_password_hash:      "{{ lookup('env', 'DOZZLE_PASSWORD') }}"
+docker_registry:           "{{ lookup('env', 'DOCKER_REGISTRY') }}"
+docker_username:           "{{ lookup('env', 'DOCKER_USERNAME') }}"
+docker_password:           "{{ lookup('env', 'DOCKER_PASSWORD') }}"
+backup_dir:                "{{ lookup('env', 'BACKUP_DIR') }}"
+
+# ── Paths on the remote server ────────────────────────────────────────────────
 codigo_home: /home/codigo
 tooling_dir: /home/codigo/tooling
 bin_dir: /home/codigo/bin
