@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/codigo/basic-infra-setup/compare/v1.7.0...v1.8.0) (2026-03-23)
+
+
+### Features
+
+* **monitoring:** add observability stack — Loki, Prometheus, Grafana, cAdvisor, node-exporter ([#126](https://github.com/codigo/basic-infra-setup/issues/126)) ([b36e3ad](https://github.com/codigo/basic-infra-setup/commit/b36e3add8aa1f9a2bc6e1f1a195ac071e15838a0))
+
 # [1.7.0](https://github.com/codigo/basic-infra-setup/compare/v1.6.0...v1.7.0) (2026-03-22)
 
 
