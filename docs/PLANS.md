@@ -14,11 +14,13 @@ Central index of all planned, in-progress, and completed work for this platform.
 
 ## In Progress
 
-- [Observability stack](./basic-infra-setup-plan.md) (PR #126) — Loki, Prometheus, Grafana,
-  cAdvisor, node-exporter on the tooling VPS. Grafana at `grafana.codigo.sh`. Ansible roles
-  `monitoring-config` + `monitoring-deploy`. Awaiting merge.
-
 ## Completed
+
+- Observability stack — Loki, Prometheus, Grafana, cAdvisor, and node-exporter deployed on the
+  tooling VPS as Ansible roles (`monitoring-config` + `monitoring-deploy`). Grafana at
+  `grafana.codigo.sh` via Caddy/Cloudflare. Prometheus scrapes cAdvisor + node-exporter + Loki.
+  Reporter VPS scrape targets added conditionally once Hetzner private network is deployed.
+  PR #126.
 
 - Ansible migration — Replaced 18 `command.remote.Command` resources with 4 Ansible roles
   (base-server, docker, tooling-files, tooling-deploy). Pulumi provisions cloud resources;

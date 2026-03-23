@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is the **shared platform layer** — a Pulumi-based Infrastructure-as-Code (IaC) repository that provisions and manages the underlying infrastructure for all applications. It does NOT deploy application code; applications deploy themselves via their own CI/CD pipelines.
+This is the **shared platform layer** — a Pulumi + Ansible Infrastructure-as-Code (IaC) repository that provisions and manages the underlying infrastructure for all applications. It does NOT deploy application code; applications deploy themselves via their own CI/CD pipelines.
 
 **Tech Stack:**
 
-- **IaC:** Pulumi (TypeScript)
+- **IaC:** Pulumi (TypeScript) for cloud provisioning, Ansible for server configuration
 - **Cloud Providers:** AWS (S3, IAM), Hetzner Cloud, Cloudflare
 - **Orchestration:** Docker Swarm
+- **Monitoring:** Grafana, Prometheus, Loki, cAdvisor, node-exporter
 - **CI/CD:** GitHub Actions
 - **Runtime:** Node.js 24
 
@@ -24,15 +25,16 @@ This repository follows a clear **platform/application separation** pattern:
 │                  (Shared Platform Layer)                        │
 ├─────────────────────────────────────────────────────────────────┤
 │  • VPS provisioning (Hetzner via Pulumi)                       │
-│  • Docker Swarm initialization + caddy_net network             │
+│  • Server configuration (Ansible roles)                        │
+│  • Docker Swarm initialization + overlay networks              │
 │  • Cloudflare Tunnels (cloudflared containers)                 │
-│  • Caddy reverse proxy (routing + SSL)                         │
-│  • Dozzle (log monitoring)                                     │
+│  • Caddy reverse proxy (routing)                               │
+│  • Dozzle (log viewer)                                         │
+│  • Infisical (secrets management)                              │
+│  • Monitoring stack (Grafana, Prometheus, Loki)                │
 │  • S3 backup infrastructure                                    │
 └─────────────────────────────────────────────────────────────────┘
-                              ↓
-                    caddy_net (overlay network)
-                              ↓
+                    ↓ caddy_net / tooling_net (overlay networks)
 ┌─────────────────────────────────────────────────────────────────┐
 │                Application Repos (deploy themselves)           │
 ├─────────────────────────────────────────────────────────────────┤
@@ -46,22 +48,17 @@ This repository follows a clear **platform/application separation** pattern:
 
 ### Responsibility Boundaries
 
-| Concern             | Owner       | Notes                                 |
-| ------------------- | ----------- | ------------------------------------- |
-| VPS provisioning    | `services/` | Pulumi creates Hetzner server         |
-| Docker Swarm setup  | `services/` | Initializes swarm, creates networks   |
-| Cloudflare Tunnels  | `services/` | Routes traffic without exposing ports |
-| Caddy reverse proxy | `services/` | SSL termination, routing rules        |
-| Caddy route config  | `services/` | Add routes when deploying new apps    |
-| Log monitoring      | `services/` | Dozzle for all containers             |
-| Backups             | `services/` | S3 backup scripts and cron            |
-| App containers      | App repo    | Each app deploys its own containers   |
-| App deployment      | App repo    | GitHub Actions → docker stack deploy  |
-| DB migrations       | App repo    | Handled by app's deployment pipeline  |
-
-### Adding a New Application
-
-See the [README](./README.md#adding-a-new-application) for the full step-by-step guide covering app repo setup, Caddy routing, Cloudflare tunnel/DNS, and deployment.
+| Concern                 | Owner       | Notes                                       |
+| ----------------------- | ----------- | ------------------------------------------- |
+| VPS provisioning        | Pulumi      | Hetzner server, SSH key, Cloudflare tunnels |
+| Server configuration    | Ansible     | User, SSH hardening, Docker, file copies    |
+| Docker Swarm setup      | Ansible     | Install, init swarm, create networks        |
+| Cloudflare Tunnels      | Pulumi      | DNS records, tunnel configs                 |
+| Caddy reverse proxy     | Ansible     | Routes configured via Caddyfile.j2 template |
+| Monitoring              | Ansible     | Grafana, Prometheus, Loki, cAdvisor, node-exporter |
+| Backups                 | Ansible     | S3 backup scripts and cron jobs             |
+| App containers          | App repo    | Each app deploys its own containers         |
+| App deployment          | App repo    | GitHub Actions → docker stack deploy        |
 
 ## Commands
 
@@ -75,12 +72,37 @@ npm run format                 # Format code with Prettier
 ### Pulumi Operations
 
 ```bash
-pulumi preview                 # Preview infrastructure changes before applying
+pulumi preview                 # Preview infrastructure changes
 pulumi up                      # Apply infrastructure changes
-pulumi stack select codigo/<app-name>/prod  # Switch stacks
-pulumi config                  # View current configuration
-pulumi config set <key> <value>             # Set config value
-pulumi config set --secret <key> <value>    # Set secret config value
+pulumi stack select codigo/mau-app/codigo-services
+pulumi config                  # View configuration
+```
+
+### Ansible Operations
+
+```bash
+# Install Ansible + required collections
+pip install ansible pyyaml
+ansible-galaxy collection install -r ansible/requirements.yml
+
+# Full server configuration (dry-run first)
+ansible-playbook \
+  -i ansible/inventory/production/hosts.yml \
+  --private-key <(op read "op://Codigo/Hetzner VPS SSH Key (mau@codigo.sh)/ssh_private_key") \
+  --check --diff \
+  ansible/playbooks/site.yml
+
+# Redeploy tooling stack only
+ansible-playbook ... ansible/playbooks/deploy-tooling.yml
+
+# Redeploy monitoring stack only
+ansible-playbook ... ansible/playbooks/deploy-monitoring.yml
+```
+
+For local Ansible runs, export Category B secrets from Infisical or 1Password first:
+```bash
+eval $(infisical secrets export --projectId=8491de15-c5c4-4d67-aaf3-c4083161d824 \
+  --env=prod --domain=https://locker.codigo.sh --format=dotenv)
 ```
 
 ### Local Development
@@ -89,193 +111,211 @@ Ensure you have:
 
 - Node.js 24+ installed (version specified in `.nvmrc`)
 - Pulumi CLI installed
+- Ansible installed (`pip install ansible`)
 - AWS credentials configured
-- Hetzner Cloud API token (if using Hetzner provider)
-- Cloudflare API token (if working with tunnels)
+- Hetzner Cloud API token
+- Cloudflare API token
+- 1Password CLI (`op`) for local SSH key access
 
 ## Architecture
 
 ### Deployment Flow (index.ts)
 
-The main infrastructure deployment follows a dependency-ordered flow orchestrated in `index.ts`:
+The main infrastructure deployment follows this flow:
 
-1. **Parallel Initial Setup** (Steps 1-4):
+1. **Parallel Cloud Provisioning** (Steps 1-4):
    - S3 bucket creation (`infra/s3.ts`)
    - IAM resources (`infra/iam.ts`)
-   - Server provisioning via provider abstraction (`infra/serverProvider.ts`, `infra/hetznerProvider.ts`)
+   - Server provisioning (`infra/serverProvider.ts`, `infra/hetznerProvider.ts`)
    - Cloudflare Tunnels setup (`infra/cloudflare.ts`)
 
-2. **Server Configuration** (Step 5):
-   - User creation, Node.js installation, SSH hardening (`infra/serverConfig.ts`)
+2. **Bootstrap** (Step 5 — `command.local.Command`):
+   - Runs `ansible/playbooks/bootstrap.yml` as root (first-time only)
+   - Creates `codigo` user, deploys SSH key
 
-3. **Environment Setup** (Step 6):
-   - Configure environment variables and S3 access (`infra/setupEnvs.ts`)
+3. **Server Configuration** (Step 6 — `command.local.Command`):
+   - Runs `ansible/playbooks/site.yml` as codigo
+   - Applies all Ansible roles: base-server → docker → tooling-files → tooling-deploy → monitoring-config → monitoring-deploy
 
-4. **Docker Setup** (Step 7):
-   - Install Docker, initialize Swarm, create networks, setup secrets (`infra/setupDockerInServer.ts`)
+4. **Worker Token** (Step 7):
+   - Reads Docker Swarm worker join token via SSH
 
-5. **File Transfer** (Step 8):
-   - Copy tooling configurations to server (`infra/serverCopyToolingFiles.ts`)
-   - Caddy, Dozzle, Cloudflared configs
+### Ansible Roles
 
-6. **Stack Deployment** (Step 9):
-   - Deploy tooling Docker stack via Swarm (`infra/deployDockerStacks.ts`)
-
-All steps use `pulumi.all()` and `.apply()` to manage dependencies between resources.
-
-### Server Provider Abstraction
-
-The codebase uses a provider abstraction pattern allowing seamless switching between cloud providers:
-
-- **Interface:** `infra/serverProvider.ts` defines the `ServerProvider` interface
-- **Implementation:** `infra/hetznerProvider.ts` implements Hetzner Cloud provisioning
-- **Usage:** Change provider by swapping the instantiation in `index.ts:15`
-
-To add a new provider (e.g., DigitalOcean), implement the `ServerProvider` interface with a new class.
+| Role | Purpose |
+|------|---------|
+| `base-server` | User creation, SSH hardening, UFW firewall, fnm + Node.js, env vars |
+| `docker` | Docker CE install, Swarm init, overlay networks (caddy_net, tooling_net, monitoring_net) |
+| `tooling-files` | Directories, Jinja2 templates (docker-compose.tooling.yaml, Caddyfile, dozzle users), backup scripts, cron |
+| `tooling-deploy` | Docker registry login + `docker stack deploy` tooling stack |
+| `monitoring-config` | Monitoring directories, Loki/Prometheus/Grafana config templates, monitoring compose template |
+| `monitoring-deploy` | `docker stack deploy` monitoring stack |
 
 ### Docker Services
 
-**Tooling Stack** (`docker-compose.tooling.yaml`) — managed by this repo:
+**Tooling Stack** (`docker-compose.tooling.yaml`) — managed by Ansible `tooling-files` + `tooling-deploy` roles:
 
-- `caddy`: Reverse proxy and automatic SSL
+- `caddy`: Reverse proxy
 - `dozzle`: Web-based Docker log viewer
 - `cloudflared-maumercado`, `cloudflared-codigo`: Cloudflare tunnel clients
+- `infisical`: Self-hosted secrets management
+- `infisical-db`: PostgreSQL for Infisical
+- `infisical-redis`: Redis for Infisical
+
+**Monitoring Stack** (`docker-compose.monitoring.yaml`) — managed by Ansible `monitoring-config` + `monitoring-deploy` roles:
+
+- `loki`: Log aggregation (30-day retention)
+- `prometheus`: Metrics collection (30-day TSDB retention)
+- `grafana`: Dashboards and alerting (`grafana.codigo.sh`)
+- `cadvisor`: Container resource metrics (global mode)
+- `node-exporter`: Host-level metrics (global mode)
 
 **Application Stacks** — managed by their own repos:
 
-- `mau-app` stack: mau-app (SvelteKit) + PocketBase — deployed by `mau-app/app/` repo
+- `mau-app` stack: mau-app (SvelteKit) + PocketBase
 
-All services run on Docker Swarm with `caddy_net` overlay network for inter-service communication.
+### Docker Networks
+
+Three overlay networks span the Docker Swarm:
+
+| Network | Purpose | Services |
+|---------|---------|----------|
+| `caddy_net` | HTTP routing (Caddy → services) | caddy, dozzle, cloudflared-*, infisical, grafana, mau-app, pocketbase |
+| `tooling_net` | Internal tooling access (apps → tools) | infisical (+ any app needing direct tooling access) |
+| `monitoring_net` | Monitoring internal communication | loki, prometheus, grafana, cadvisor, node-exporter |
+| `infisical_internal` | DB isolation | infisical, infisical-db, infisical-redis |
 
 ### Caddy Routing
 
-Routes are configured in `tooling/data/caddy/Caddyfile`:
+Routes are configured in `ansible/roles/tooling-files/templates/Caddyfile.j2`:
 
 - `mau-app-codigo:3000` → codigo.sh, maumercado.com
-- `pocketbase:8090` → pocketbase.codigo.sh (admin UI)
-- `dozzle:8080` → dozzle.codigo.sh (monitoring)
-
-When adding a new application, add its route here and deploy via `pulumi up`.
+- `pocketbase:8090` → pocketbase.codigo.sh
+- `dozzle:8080` → dozzle.codigo.sh
+- `infisical:8080` → locker.codigo.sh
+- `grafana:3000` → grafana.codigo.sh
 
 ### Backup System
 
-**Convention:** Any application that stores persistent data in `~/appname/data/` is automatically discovered and backed up. No configuration needed — just follow the convention.
+**Convention:** Any application that stores persistent data in `~/appname/data/` is automatically discovered and backed up.
 
 **How it works:**
 1. `backupData.js` finds all directories under `$HOME` with a `data/` subdirectory
-2. For `tooling/`, it dumps Infisical Postgres (`pg_dump`) and Redis (`BGSAVE` + `docker cp`) to `data/infisical/dumps/` before tarring
-3. Container-owned directories (caddy data/config, raw postgres/redis) are excluded from tar since they're captured via dumps
-4. `uploadToS3.js` uploads new `.tar.gz` files to S3, skipping files already uploaded
-5. S3 bucket has a 90-day lifecycle rule on the `backups/` prefix for automatic cleanup
-6. Local backups older than 7 days are cleaned up
+2. For `tooling/`, it dumps Infisical Postgres and Redis before tarring
+3. `uploadToS3.js` uploads new `.tar.gz` files to S3 (skips already uploaded)
+4. S3 bucket has a 90-day lifecycle rule for automatic cleanup
+5. Local backups older than 7 days are cleaned up
 
-**Scripts in `bin/`:**
-- `backupData.js`: Create tar.gz backups (with database dumps for tooling)
-- `uploadToS3.js`: Upload backups to S3 (skips duplicates)
-- `restoreAndCopyBackup.js`: Restore from S3 — downloads latest backup, extracts, restores databases, restarts services
+**Scripts** (in `bin/`, copied to server by Ansible `tooling-files` role):
+- `backupData.js`, `uploadToS3.js`, `restoreAndCopyBackup.js`
 
-**Cron schedule** (configured via `infra/serverCopyToolingFiles.ts`):
-- Backups run every 12 hours (0:00, 12:00)
-- S3 uploads run every 12 hours at :30 (0:30, 12:30)
-
-**Restore on a new server:**
-```bash
-source ~/.bashrc && node /home/codigo/bin/restoreBackup.js tooling
-source ~/.bashrc && node /home/codigo/bin/restoreBackup.js mau-app
-```
-
-All scripts use AWS SDK v3 (`@aws-sdk/client-s3`).
+**Cron schedule** (managed by Ansible `tooling-files` role):
+- Backups: every 12 hours (0:00, 12:00)
+- S3 uploads: every 12 hours at :30 (0:30, 12:30)
 
 ### CI/CD
 
 **Deploy** (`.github/workflows/deploy-infrastructure.yaml`):
 
-- Triggered on push to `main` branch (ignores docs/markdown changes)
-- Processes configuration file templates (replaces `{{ VAR }}` placeholders with secrets)
-- Configures Pulumi with all required secrets and configurations
-- Executes `pulumi up` to deploy infrastructure
+- Triggered on push to `main` (ignores docs/markdown)
+- Installs Ansible + collections
+- Sets Category A secrets in Pulumi config (cloud provider credentials)
+- Passes Category B secrets as env vars (Ansible reads directly)
+- Runs `pulumi up` → Pulumi provisions cloud → triggers Ansible
 
 **Preview** (`.github/workflows/preview-infrastructure.yaml`):
 
 - Triggered on pull requests
-- Runs `pulumi preview` with full config and posts results as PR comment
-- Pulumi Deployments previews are disabled (config lives in GitHub Actions, not Pulumi Cloud)
-
-**Configuration Management:**
-Secrets are managed in Infisical (locker.codigo.sh) and synced to GitHub via Infisical's GitHub Sync integration. GitHub Actions loads them into Pulumi config during deployment. The workflow processes template variables in Docker Compose and config files before deployment.
+- Same setup as deploy but runs `pulumi preview`
+- Posts results as PR comment
 
 ## Key Files
 
-- `index.ts`: Main Pulumi program, orchestrates all infrastructure
-- `infra/*.ts`: Modular infrastructure components
-- `docker-compose.tooling.yaml`: Platform services definition (template)
-- `tooling/data/caddy/Caddyfile`: Caddy routing configuration
+- `index.ts`: Main Pulumi program — cloud provisioning + Ansible trigger
+- `infra/hetznerProvider.ts`: Hetzner VPS + SSH key provisioning
+- `infra/cloudflare.ts`: DNS records, tunnels, tunnel configs
+- `infra/s3.ts`: S3 backup bucket with lifecycle rules
+- `infra/iam.ts`: IAM user and access key for S3
+- `ansible/`: All server configuration (roles, playbooks, inventory)
+- `bin/*.js`: Backup and maintenance scripts (copied to server by Ansible)
 - `Pulumi.yaml`: Pulumi project configuration
-- `tsconfig.json`: TypeScript configuration with strict mode
-- `bin/*.js`: Backup and maintenance scripts
+- `tsconfig.json`: TypeScript configuration
 
 ## Configuration & Secrets Management
 
+### Two-Category Secrets Architecture
+
+**Category A — Pulumi config (cloud provider credentials):**
+Set via `pulumi config set` in CI/CD. Used by Pulumi providers to provision cloud resources.
+- AWS credentials, Hetzner token, Cloudflare tokens/zone IDs, SSH public key
+
+**Category B — Direct env vars (Ansible-only secrets):**
+Passed as environment variables on the `pulumi/actions` CI/CD step. Ansible reads them via `lookup('env', ...)` in `ansible/inventory/production/group_vars/all.yml`.
+- Infisical bootstrap secrets (`INFISICAL_ENCRYPTION_KEY`, etc. — GitHub-only, circular dependency)
+- Dozzle credentials (`DOZZLE_USERNAME`, `DOZZLE_PASSWORD`)
+- Docker registry credentials (`DOCKER_REGISTRY`, `DOCKER_USERNAME`, `DOCKER_PASSWORD`)
+- Grafana admin password (`GRAFANA_ADMIN_PASSWORD`)
+- Backup directory (`BACKUP_DIR`)
+
 ### Infisical (locker.codigo.sh)
 
-Secrets are the source of truth in Infisical and auto-sync to GitHub repos:
+Secrets source of truth. Auto-syncs to GitHub repos via GitHub Sync:
 
-**`codigo-infra` project** (Production env → `basic-infra-setup` repo):
-- AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
-- Hetzner, Cloudflare tokens and zone IDs
-- SSH keys (base64 encoded)
-- Container registry credentials
-- Dozzle password (bcrypt), Pulumi tokens, Cloudflare tunnel secret
+**`codigo` project** (Production env → `basic-infra-setup` repo):
+- AWS credentials, Hetzner/Cloudflare tokens, SSH keys
+- Container registry credentials, Dozzle credentials
+- Grafana admin password, Pulumi tokens
 
-**`website` project** (Production env → `website` repo):
-- Cloudflare Turnstile keys, PocketBase URL and admin creds
-- OpenAI API key, Semantic Release PAT
-- SSH key, container registry credentials (duplicated from infra)
-- VPS IP
+**`Reporter` project** (Production env → Reporter repo):
+- ~44 secrets across `infrastructure/`, `auth/`, `services/`, `app/` folders
+- CI/CD + runtime machine identities
+- GitHub Sync enabled (infrastructure/ folder)
 
-### GitHub-only secrets (not in Infisical)
+### GitHub-only Secrets (not in Infisical)
 
 Bootstrap secrets for Infisical itself (circular dependency):
 - `INFISICAL_ENCRYPTION_KEY`, `INFISICAL_AUTH_SECRET`, `INFISICAL_DB_PASSWORD`, `INFISICAL_SMTP_PASSWORD`
 
-### GitHub Variables (not secrets, not in Infisical)
+### GitHub Variables
 
-- `CONTAINER_REGISTRY_URL` — set per-repo (`sjc.vultrcr.com`)
-- `AWS_REGION` — `basic-infra-setup` only (`us-west-2`)
-- `BACKUP_DIR` — `basic-infra-setup` only (`/home/codigo/DATA_BACKUP`)
+- `CONTAINER_REGISTRY_URL` (`sjc.vultrcr.com`)
+- `AWS_REGION` (`us-west-2`)
+- `BACKUP_DIR` (`/home/codigo/DATA_BACKUP`)
 
-### Pulumi Config
+### 1Password Backup
 
-GitHub Actions loads secrets into Pulumi config during deployment. Use `pulumi config` to view/modify configuration locally.
+All critical secrets are backed up in 1Password (`Codigo` vault):
+- Hetzner VPS SSH Key
+- Grafana Admin Password
+- Dozzle credentials
+- Infisical login credentials
 
 ## Important Implementation Details
 
-### File Copy Mechanism
-Scripts and config files are copied to the server using heredocs with single-quoted delimiters (`cat << 'ENDSCRIPT'`) to prevent shell expansion. Never use `echo '...'` — it breaks when content contains `$(...)`, backticks, or other shell-sensitive patterns.
+### Pulumi → Ansible Trigger
+`index.ts` uses `command.local.Command` to run `ansible-playbook`. Secrets are passed via `ANSIBLE_VAR_*` environment variables (Category A — Pulumi outputs) and direct env vars (Category B — CI/CD env). A Python script converts env vars to a YAML vars file that Ansible reads.
 
 ### Server Environment
-- `setupEnvs.ts` writes env vars to `/home/codigo/.bashrc` (cleans old entries first to avoid duplicates)
-- Env vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `BACKUP_DIR`, `APP_BUCKET`
+- Ansible `base-server` role writes env vars to `.bashrc` via `blockinfile` (atomic replace)
 - Server uses `fnm` (not `nvm`) for Node.js version management
-- Non-interactive SSH sessions must source fnm: `export PATH="/home/codigo/.local/share/fnm:$PATH" && eval "$(fnm env)"`
-- Cron jobs source `.bashrc` for env vars and use absolute node path (resolved via `which node` after sourcing fnm)
+- Cron jobs use `fnm exec --using=24 node` for Node.js path resolution
 
-### Docker Setup Protection
-- `installDocker` has `ignoreChanges: ["connection", "create"]` to prevent Docker reinstall from breaking the swarm
-- `initDockerSwarm`, `getWorkerToken`, `createDockerNetworks` are idempotent and safe to re-run (no `ignoreChanges`)
-- The Docker Swarm worker join token is exported from Pulumi for future worker nodes
+### Docker Setup
+- Ansible `docker` role uses `community.docker.docker_swarm` (idempotent, no `ignoreChanges` needed)
+- Overlay networks created via `community.docker.docker_network`
+- Swarm worker join token read via SSH after configuration
 
-### Infisical
-- Self-hosted at locker.codigo.sh (deployed as part of the tooling stack)
-- Two projects: `codigo-infra` (infrastructure secrets) and `website` (app secrets)
-- GitHub Sync configured per-project to their respective repos (auto-sync + overwrite)
-- Bootstrap secrets (`INFISICAL_ENCRYPTION_KEY`, `INFISICAL_AUTH_SECRET`, `INFISICAL_DB_PASSWORD`, `INFISICAL_SMTP_PASSWORD`) stay in GitHub only — circular dependency
-- Cross-project secret sharing is not supported in Infisical; shared secrets are duplicated across projects
-- For future apps: consider consolidating into a single project with folders (`/shared`, `/infra`, `/website`, `/new-app`) and using secret imports within the project
+### SSH Key
+- Stored in: local machine (`~/code/codigo-projects/ssh-keys/id_rsa`), 1Password, Infisical
+- Fingerprint: `SHA256:DYyfnWBzX6h1GSZu4a7Yv6Bx74ZhNuIWjEZupUDjyuw`
+- CI/CD: written to `~/.ssh/id_rsa` by the "Setup SSH keys" workflow step
+- Local: Ansible uses `op read` to pull from 1Password at runtime
 
 ## Security Notes
 
 - Root SSH is disabled on servers
-- Only `codigo` user can SSH (key-based authentication)
+- Only `codigo` user can SSH (key-based authentication only)
 - All services behind Cloudflare Tunnels (no direct port exposure)
-- Secrets stored in GitHub and Pulumi config (encrypted)
+- UFW firewall: deny 80/443 (traffic via tunnels only), allow 22/tcp
+- Secrets in Infisical (source of truth) + 1Password (backup) + GitHub (synced)
+- Infisical bootstrap secrets in GitHub only (circular dependency)
