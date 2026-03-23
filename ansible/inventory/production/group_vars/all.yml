@@ -35,12 +35,19 @@ node_version: "24"
 # fnm install path
 fnm_dir: /home/codigo/.local/share/fnm
 
+# Monitoring
+monitoring_dir: /home/codigo/monitoring
+grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') }}"
+
 # Docker overlay networks
 docker_networks:
   - name: caddy_net
     driver: overlay
     attachable: true
   - name: tooling_net
+    driver: overlay
+    attachable: true
+  - name: monitoring_net
     driver: overlay
     attachable: true
 

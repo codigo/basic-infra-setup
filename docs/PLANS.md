@@ -19,9 +19,9 @@ Dependency graph:
 
 - [Observability stack](./basic-infra-setup-plan.md) — Deploy Loki, Prometheus, Grafana, cAdvisor,
   and node-exporter on the tooling VPS as new Ansible roles (`monitoring-config` +
-  `monitoring-deploy`). Loki bound to private network interface for Reporter log driver push.
-  Prometheus scrapes Reporter VPS health endpoint over private IP. Depends on Hetzner private
-  network being deployed first.
+  `monitoring-deploy`). Grafana at `grafana.codigo.sh`. Monitors tooling VPS immediately —
+  no dependency on Hetzner private network. Reporter integration added later once private
+  network is set up.
 
 - [Vultr CR access verification](./basic-infra-setup-plan.md) — Confirm `sjc.vultrcr.com/codigo`
   is reachable from the Reporter VPS and credentials are in Infisical
