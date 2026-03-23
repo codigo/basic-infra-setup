@@ -4,30 +4,19 @@ Central index of all planned, in-progress, and completed work for this platform.
 
 ## Planned
 
-<!--
-Dependency graph:
-
-  [Hetzner private network] ──── [Observability stack]
-
-  [Vultr CR verification] ── blocked on Reporter VPS
--->
-
 - [Hetzner private network](./basic-infra-setup-plan.md) — Create Hetzner Cloud Network in
   `basic-infra-setup` Pulumi, attach tooling VPS, export network ID and tooling VPS private IP
-  to Infisical `infrastructure/HETZNER_PRIVATE_NETWORK_ID` + `TOOLING_VPS_PRIVATE_IP`. Reporter
-  Pulumi reads these to attach the Reporter VPS. No dependency on Reporter running first.
-
-- [Observability stack](./basic-infra-setup-plan.md) — Deploy Loki, Prometheus, Grafana, cAdvisor,
-  and node-exporter on the tooling VPS as new Ansible roles (`monitoring-config` +
-  `monitoring-deploy`). Loki bound to private network interface for Reporter log driver push.
-  Prometheus scrapes Reporter VPS health endpoint over private IP. Depends on Hetzner private
-  network being deployed first.
+  to Infisical. Reporter Pulumi reads these to attach the Reporter VPS. Enables Reporter
+  integration with the observability stack (Loki log push, Prometheus scrape).
 
 - [Vultr CR access verification](./basic-infra-setup-plan.md) — Confirm `sjc.vultrcr.com/codigo`
-  is reachable from the Reporter VPS and credentials are in Infisical
-  `infrastructure/VULTR_CR_USERNAME` + `VULTR_CR_PASSWORD`. Blocked on Reporter VPS existing.
+  is reachable from the Reporter VPS and credentials are in Infisical. Blocked on Reporter VPS.
 
 ## In Progress
+
+- [Observability stack](./basic-infra-setup-plan.md) (PR #126) — Loki, Prometheus, Grafana,
+  cAdvisor, node-exporter on the tooling VPS. Grafana at `grafana.codigo.sh`. Ansible roles
+  `monitoring-config` + `monitoring-deploy`. Awaiting merge.
 
 ## Completed
 

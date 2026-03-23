@@ -215,11 +215,11 @@ manager throughout. Observability is purely a network-level concern handled at d
 | Create Hetzner private network (owned by basic-infra-setup) | ⬜ Pending |
 | Attach tooling VPS to private network | ⬜ Pending |
 | Write network ID + tooling VPS private IP to Infisical | ⬜ Pending |
-| Loki (bound to private interface) | ⬜ Pending |
-| Prometheus (with Reporter VPS scrape config) | ⬜ Pending |
-| Grafana | ⬜ Pending |
-| cAdvisor (tooling VPS only) | ⬜ Pending |
-| node-exporter (tooling VPS only) | ⬜ Pending |
+| Loki | 🔄 PR #126 (deploys on tooling VPS; private interface binding after network) |
+| Prometheus | 🔄 PR #126 (Reporter scrape targets added after private network) |
+| Grafana (grafana.codigo.sh) | 🔄 PR #126 |
+| cAdvisor (tooling VPS only) | 🔄 PR #126 |
+| node-exporter (tooling VPS only) | 🔄 PR #126 |
 | Infisical — Reporter project + secrets | ✅ Done |
 | Infisical — CI/CD machine identity | ✅ Done |
 | Infisical — runtime machine identity | ✅ Done |

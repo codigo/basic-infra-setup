@@ -1,0 +1,48 @@
+---
+# ── Directory structure ───────────────────────────────────────────────────────
+- name: Create monitoring directory structure
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: codigo
+    group: codigo
+    mode: "0755"
+  loop:
+    - "{{ monitoring_dir }}/config/grafana/provisioning/datasources"
+    - "{{ monitoring_dir }}/config/grafana/provisioning/dashboards"
+    - "{{ monitoring_dir }}/data/loki"
+    - "{{ monitoring_dir }}/data/prometheus"
+    - "{{ monitoring_dir }}/data/grafana"
+
+# ── Config file templates ─────────────────────────────────────────────────────
+- name: Template Loki config
+  ansible.builtin.template:
+    src: loki.yml.j2
+    dest: "{{ monitoring_dir }}/config/loki.yml"
+    owner: codigo
+    group: codigo
+    mode: "0644"
+
+- name: Template Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_dir }}/config/prometheus.yml"
+    owner: codigo
+    group: codigo
+    mode: "0644"
+
+- name: Template Grafana datasources
+  ansible.builtin.template:
+    src: grafana-datasources.yml.j2
+    dest: "{{ monitoring_dir }}/config/grafana/provisioning/datasources/datasources.yml"
+    owner: codigo
+    group: codigo
+    mode: "0644"
+
+- name: Copy docker-compose.monitoring.yaml
+  ansible.builtin.template:
+    src: docker-compose.monitoring.yaml.j2
+    dest: "{{ monitoring_dir }}/docker-compose.monitoring.yaml"
+    owner: codigo
+    group: codigo
+    mode: "0644"

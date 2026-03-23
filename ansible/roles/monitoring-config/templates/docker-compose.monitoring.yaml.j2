@@ -1,0 +1,97 @@
+services:
+  loki:
+    image: grafana/loki:3.5.0
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - /home/codigo/monitoring/data/loki:/loki
+      - /home/codigo/monitoring/config/loki.yml:/etc/loki/config.yml:ro
+    networks:
+      - monitoring_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == manager
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - /home/codigo/monitoring/data/prometheus:/prometheus
+      - /home/codigo/monitoring/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - monitoring_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == manager
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD={{ grafana_admin_password }}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=https://grafana.codigo.sh
+      - GF_LOG_LEVEL=warn
+    volumes:
+      - /home/codigo/monitoring/data/grafana:/var/lib/grafana
+      - /home/codigo/monitoring/config/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - monitoring_net
+      - caddy_net
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == manager
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.2
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - monitoring_net
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.0
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring_net
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+
+networks:
+  monitoring_net:
+    external: true
+  caddy_net:
+    external: true

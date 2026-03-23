@@ -1,0 +1,18 @@
+---
+# deploy-monitoring.yml — Redeploy the monitoring Docker stack only.
+# Use when monitoring config or compose files have changed, without
+# re-running the full server configuration.
+#
+# Usage:
+#   ansible-playbook \
+#     -i ansible/inventory/production/hosts.yml \
+#     --private-key <(op read "op://Codigo/Hetzner VPS SSH Key (mau@codigo.sh)/ssh_private_key") \
+#     ansible/playbooks/deploy-monitoring.yml
+
+- name: Redeploy monitoring stack
+  hosts: managers
+  become: true
+  gather_facts: false
+  roles:
+    - monitoring-config
+    - monitoring-deploy
