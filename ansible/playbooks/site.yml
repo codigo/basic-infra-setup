@@ -24,3 +24,5 @@
     - docker
     - tooling-files
     - tooling-deploy
+    - monitoring-config
+    - monitoring-deploy

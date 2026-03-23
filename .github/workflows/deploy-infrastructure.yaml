@@ -97,3 +97,5 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.CONTAINER_REGISTRY_PASSWORD }}
           # Backup (GitHub Variable)
           BACKUP_DIR: ${{ vars.BACKUP_DIR }}
+          # Grafana (Infisical codigo project → GitHub Sync)
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
