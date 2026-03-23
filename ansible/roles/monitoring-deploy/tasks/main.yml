@@ -1,0 +1,28 @@
+---
+# ── Deploy monitoring stack ───────────────────────────────────────────────────
+- name: Deploy monitoring Docker stack
+  community.docker.docker_stack:
+    name: monitoring
+    state: present
+    compose:
+      - "{{ monitoring_dir }}/docker-compose.monitoring.yaml"
+    prune: true
+  register: monitoring_deploy_result
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Wait for monitoring stack services to stabilise
+  ansible.builtin.pause:
+    seconds: 30
+  when: monitoring_deploy_result.changed | default(false)
+
+- name: List monitoring stack services
+  ansible.builtin.command:
+    cmd: docker stack services monitoring
+  register: monitoring_services
+  changed_when: false
+  when: monitoring_deploy_result.changed | default(false)
+
+- name: Show monitoring services
+  ansible.builtin.debug:
+    var: monitoring_services.stdout_lines
+  when: monitoring_deploy_result.changed | default(false) and monitoring_services is defined
