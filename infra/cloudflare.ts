@@ -92,6 +92,12 @@ export const createCloudflareTunnels = () => {
       resourceName: "codigo-locker",
       tunnel: codigoTunnel,
     },
+    {
+      name: "grafana",
+      zoneId: codigoZoneId,
+      resourceName: "codigo-grafana",
+      tunnel: codigoTunnel,
+    },
   ];
 
   const createdRecords = dnsRecords.map(
@@ -165,6 +171,10 @@ export const createCloudflareTunnels = () => {
           },
           {
             hostname: "locker.codigo.sh",
+            service: "http://caddy:80",
+          },
+          {
+            hostname: "grafana.codigo.sh",
             service: "http://caddy:80",
           },
           {
