@@ -33,9 +33,12 @@ const cloudflareResources = createCloudflareTunnels();
 // serverResources IS an Output (HetznerProvider wraps with pulumi.output()).
 // s3Resources and cloudflareResources are plain objects whose properties are Outputs.
 const serverIp = serverResources.apply((r: any) => r.server.ipv4Address);
+const toolingPrivateIpOutput = serverResources.apply((r: any) => r.privateIp);
+const privateNetworkIdOutput = serverResources.apply(
+  (r: any) => r.privateNetwork.id,
+);
 const appBucketName = s3Resources.appBucket.bucket; // Output<string>
-const maumercadoTunnelToken =
-  cloudflareResources.maumercadoTunnel.tunnelToken; // Output<string>
+const maumercadoTunnelToken = cloudflareResources.maumercadoTunnel.tunnelToken; // Output<string>
 const codigoTunnelToken = cloudflareResources.codigoTunnel.tunnelToken; // Output<string>
 
 // Wait for all parallel cloud resources to complete
@@ -110,14 +113,15 @@ yaml.dump(vars, open(sys.argv[1], 'w'))
     `,
     environment: {
       // Category A only — Pulumi outputs not available from CI/CD env
-      ANSIBLE_VAR_SERVER_IP:               serverIp,
-      ANSIBLE_VAR_SSH_PUBLIC_KEY:          sshPublicKey,
-      ANSIBLE_VAR_AWS_ACCESS_KEY_ID:       config.requireSecret("awsAccessKeyId"),
-      ANSIBLE_VAR_AWS_SECRET_ACCESS_KEY:   config.requireSecret("awsSecretAccessKey"),
-      ANSIBLE_VAR_AWS_REGION:              awsConfig.require("region"),
-      ANSIBLE_VAR_APP_BUCKET:              appBucketName,
+      ANSIBLE_VAR_SERVER_IP: serverIp,
+      ANSIBLE_VAR_SSH_PUBLIC_KEY: sshPublicKey,
+      ANSIBLE_VAR_AWS_ACCESS_KEY_ID: config.requireSecret("awsAccessKeyId"),
+      ANSIBLE_VAR_AWS_SECRET_ACCESS_KEY:
+        config.requireSecret("awsSecretAccessKey"),
+      ANSIBLE_VAR_AWS_REGION: awsConfig.require("region"),
+      ANSIBLE_VAR_APP_BUCKET: appBucketName,
       ANSIBLE_VAR_TUNNEL_TOKEN_MAUMERCADO: maumercadoTunnelToken,
-      ANSIBLE_VAR_TUNNEL_TOKEN_CODIGO:     codigoTunnelToken,
+      ANSIBLE_VAR_TUNNEL_TOKEN_CODIGO: codigoTunnelToken,
     },
     // Re-run when any Pulumi-derived trigger value changes
     triggers: [serverIp, appBucketName],
@@ -146,4 +150,6 @@ export const iamUserName = initialSetup.apply((r) => r.iamUser.name);
 export const accessKeyId = initialSetup.apply((r) => r.accessKey.id);
 export const sshKeyId = initialSetup.apply((r) => r.sshKey.id);
 export const cloudflareSetupOutput = cloudflareResources;
+export const toolingPrivateIpOut = toolingPrivateIpOutput;
+export const hetznerPrivateNetworkId = privateNetworkIdOutput;
 export const workerJoinToken = pulumi.secret(workerTokenCmd.stdout);
