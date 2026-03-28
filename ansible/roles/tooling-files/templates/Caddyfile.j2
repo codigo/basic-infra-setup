@@ -43,6 +43,16 @@
 
 	@locker host locker.codigo.sh
 	handle @locker {
+		# Infisical's frontend sends POST /api/v1/auth/token (cookie-based
+		# token refresh) without a Content-Type header. Fastify rejects the
+		# request with "Unsupported Media Type: undefined" (415 → 500).
+		# Default the request header to application/json when not set.
+		@missing_ct {
+			not header Content-Type *
+			method POST PATCH PUT
+		}
+		request_header @missing_ct Content-Type "text/plain"
+
 		reverse_proxy infisical:8080 {
 			header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
 			header_up X-Forwarded-Proto {http.request.header.X-Forwarded-Proto}

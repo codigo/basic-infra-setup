@@ -7,12 +7,25 @@ const {
 const fs = require("fs");
 const path = require("path");
 
-// Configure AWS SDK v3
-const s3 = new S3Client({ region: process.env.AWS_REGION });
+// Configure AWS SDK v3 — explicitly pass credentials from env so the script
+// works both in cron (env injected by the job line) and when run manually
+// without ~/.aws/credentials configured.
+const s3 = new S3Client({
+  region: process.env.AWS_REGION || "us-west-2",
+  ...(process.env.AWS_ACCESS_KEY_ID && {
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  }),
+});
 
-// Configuration
-const S3_BUCKET = process.env.APP_BUCKET;
-const BACKUP_DIR = process.env.BACKUP_DIR;
+// Configuration — fall back to known defaults so the script works even when
+// env vars are not exported into the fnm exec subshell from cron.
+const S3_BUCKET = process.env.APP_BUCKET || "codigo-backups";
+const BACKUP_DIR =
+  process.env.BACKUP_DIR ||
+  require("path").join(process.env.HOME || "/home/codigo", "DATA_BACKUP");
 
 const checkS3BucketExists = async (bucket) => {
   try {

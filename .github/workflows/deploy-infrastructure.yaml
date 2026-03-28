@@ -99,3 +99,44 @@ jobs:
           BACKUP_DIR: ${{ vars.BACKUP_DIR }}
           # Grafana (Infisical codigo project → GitHub Sync)
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+
+      - name: Publish private network outputs to Reporter Infisical
+        continue-on-error: true
+        run: |
+          if [ -z "$REPORTER_INFISICAL_PROJECT_ID" ] || [ -z "$INFISICAL_SYNC_CLIENT_ID" ] || [ -z "$INFISICAL_SYNC_CLIENT_SECRET" ]; then
+            echo "Skipping Reporter Infisical sync; missing project ID or machine identity credentials."
+            exit 0
+          fi
+
+          npm install -g @infisical/cli
+
+          export INFISICAL_DISABLE_UPDATE_CHECK=true
+          export INFISICAL_TOKEN=$(infisical login \
+            --method=universal-auth \
+            --domain="$INFISICAL_DOMAIN" \
+            --client-id="$INFISICAL_SYNC_CLIENT_ID" \
+            --client-secret="$INFISICAL_SYNC_CLIENT_SECRET" \
+            --silent \
+            --plain)
+
+          STACK_OUTPUTS=$(pulumi stack output --json --stack codigo/mau-app/codigo-services)
+          export STACK_OUTPUTS
+
+          HETZNER_PRIVATE_NETWORK_ID=$(python3 -c 'import json, os; print(json.loads(os.environ["STACK_OUTPUTS"])["hetznerPrivateNetworkId"])')
+
+          TOOLING_VPS_PRIVATE_IP=$(python3 -c 'import json, os; print(json.loads(os.environ["STACK_OUTPUTS"])["toolingPrivateIpOut"])')
+
+          infisical secrets set \
+            HETZNER_PRIVATE_NETWORK_ID="$HETZNER_PRIVATE_NETWORK_ID" \
+            TOOLING_VPS_PRIVATE_IP="$TOOLING_VPS_PRIVATE_IP" \
+            --projectId="$REPORTER_INFISICAL_PROJECT_ID" \
+            --env=production \
+            --path=/infrastructure \
+            --silent
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+          INFISICAL_DOMAIN: https://locker.codigo.sh
+          REPORTER_INFISICAL_PROJECT_ID: ${{ secrets.REPORTER_INFISICAL_PROJECT_ID }}
+          INFISICAL_SYNC_CLIENT_ID: ${{ secrets.INFISICAL_SYNC_CLIENT_ID }}
+          INFISICAL_SYNC_CLIENT_SECRET: ${{ secrets.INFISICAL_SYNC_CLIENT_SECRET }}

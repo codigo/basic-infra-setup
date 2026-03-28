@@ -43,6 +43,8 @@ services:
     image: cloudflare/cloudflared:latest
     command:
       - tunnel
+      - --protocol
+      - http2
       - run
       - --token
       - "{{ tunnel_token_maumercado }}"
@@ -57,6 +59,8 @@ services:
     image: cloudflare/cloudflared:latest
     command:
       - tunnel
+      - --protocol
+      - http2
       - run
       - --token
       - "{{ tunnel_token_codigo }}"
@@ -97,6 +101,11 @@ services:
       - POSTGRES_USER=infisical
       - POSTGRES_PASSWORD={{ infisical_db_password }}
       - POSTGRES_DB=infisical
+      # Explicit PGDATA so the bind-mount path is version-independent.
+      # postgres 18 changed the default from /var/lib/postgresql/data to
+      # /var/lib/postgresql/18/docker — pinning it prevents silent fallback
+      # to an anonymous volume when the default changes again.
+      - PGDATA=/var/lib/postgresql/data
     volumes:
       - /home/codigo/tooling/data/infisical/postgres:/var/lib/postgresql/data
     networks:
@@ -114,6 +123,9 @@ services:
 
   infisical-redis:
     image: redis:7-alpine
+    # Disable stop-writes-on-bgsave-error so a failed RDB snapshot does not
+    # block Redis writes and cascade into Infisical startup failures.
+    command: redis-server --stop-writes-on-bgsave-error no
     volumes:
       - /home/codigo/tooling/data/infisical/redis:/data
     networks:

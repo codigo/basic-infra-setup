@@ -44,16 +44,16 @@ The Hetzner Cloud Network is **created and owned by `basic-infra-setup`** (this 
 
 **Data produced:**
 
-| Key                    | Where to store                                    | Consumed by                                    |
-| ---------------------- | ------------------------------------------------- | ---------------------------------------------- |
+| Key                    | Where to store                                        | Consumed by                                      |
+| ---------------------- | ----------------------------------------------------- | ------------------------------------------------ |
 | Hetzner network ID     | Infisical `infrastructure/HETZNER_PRIVATE_NETWORK_ID` | Reporter Pulumi — attach Reporter VPS to network |
-| Tooling VPS private IP | Infisical `infrastructure/TOOLING_VPS_PRIVATE_IP` | Reporter Ansible `deploy` role — Loki push URL |
+| Tooling VPS private IP | Infisical `infrastructure/TOOLING_VPS_PRIVATE_IP`     | Reporter Ansible `deploy` role — Loki push URL   |
 
 **Data consumed from Reporter (after Reporter VPS is provisioned):**
 
-| Key                        | Written by                | Where                                                 |
-| -------------------------- | ------------------------- | ----------------------------------------------------- |
-| Reporter VPS private IP    | Reporter Pulumi           | Infisical `infrastructure/REPORTER_VPS_PRIVATE_IP`    |
+| Key                     | Written by      | Where                                              |
+| ----------------------- | --------------- | -------------------------------------------------- |
+| Reporter VPS private IP | Reporter Pulumi | Infisical `infrastructure/REPORTER_VPS_PRIVATE_IP` |
 
 ---
 
@@ -80,7 +80,7 @@ Deploy as a Docker Compose stack (or Docker Swarm stack) on the tooling VPS. Ser
 logging:
   driver: loki
   options:
-    loki-url: 'http://<TOOLING_VPS_PRIVATE_IP>:3100/loki/api/v1/push'
+    loki-url: "http://<TOOLING_VPS_PRIVATE_IP>:3100/loki/api/v1/push"
 ```
 
 If it fails, Docker's default JSON-file driver is used. No overlay DNS, no Swarm needed.
@@ -91,16 +91,16 @@ If it fails, Docker's default JSON-file driver is used. No overlay DNS, no Swarm
 - [ ] Add scrape config entries for the Reporter VPS using its **private IP** (not overlay DNS — different Swarms):
 
   ```yaml
-  - job_name: 'reporter-api-health'
+  - job_name: "reporter-api-health"
     metrics_path: /api/health/ready
     static_configs:
       # REPORTER_VPS_PRIVATE_IP written to Infisical by Reporter Pulumi (Phase 2)
-      - targets: ['<REPORTER_VPS_PRIVATE_IP>:3000']
+      - targets: ["<REPORTER_VPS_PRIVATE_IP>:3000"]
 
-  - job_name: 'reporter-api-metrics'
+  - job_name: "reporter-api-metrics"
     metrics_path: /api/metrics
     static_configs:
-      - targets: ['<REPORTER_VPS_PRIVATE_IP>:3000']
+      - targets: ["<REPORTER_VPS_PRIVATE_IP>:3000"]
     # /api/metrics does not exist yet — add scrape config now, endpoint added later
   ```
 
@@ -169,7 +169,8 @@ These items may already be done. Verify each before the Reporter production depl
 
 | Value | Written by | Infisical key | Consumed in Reporter |
 |-------|-----------|--------------|---------------------|
-| Tooling VPS private IP | `basic-infra-setup` (manual or Pulumi) | `infrastructure/TOOLING_VPS_PRIVATE_IP` | Reporter Ansible `deploy` role — Loki push URL |
+| Hetzner private network ID | `basic-infra-setup` Pulumi + deploy workflow | `infrastructure/HETZNER_PRIVATE_NETWORK_ID` | Reporter Pulumi — attach Reporter VPS to network |
+| Tooling VPS private IP | `basic-infra-setup` Pulumi + deploy workflow | `infrastructure/TOOLING_VPS_PRIVATE_IP` | Reporter Ansible `deploy` role — Loki push URL |
 | Infisical CI/CD identity | Infisical admin | GitHub repo secrets (auto-synced) | GitHub Actions build + deploy workflows |
 | Infisical runtime identity | Infisical admin | `infrastructure/INFISICAL_CLIENT_ID` + `INFISICAL_CLIENT_SECRET` | Swarm stack env → Varlock |
 | Vultr CR credentials | Vultr dashboard | `infrastructure/VULTR_CR_USERNAME` + `VULTR_CR_PASSWORD` | Ansible `docker` role login |
@@ -178,7 +179,6 @@ These items may already be done. Verify each before the Reporter production depl
 
 | Value | Written by | Infisical key | Consumed in basic-infra-setup |
 |-------|-----------|--------------|------------------------------|
-| Hetzner private network ID | Reporter Pulumi (Phase 2) | `infrastructure/HETZNER_PRIVATE_NETWORK_ID` | Attach tooling VPS to the network |
 | Reporter VPS private IP | Reporter Pulumi (Phase 2) | `infrastructure/REPORTER_VPS_PRIVATE_IP` | Prometheus scrape config targets |
 
 ---
@@ -212,9 +212,9 @@ manager throughout. Observability is purely a network-level concern handled at d
 
 | Item | Status |
 |------|--------|
-| Create Hetzner private network (owned by basic-infra-setup) | ⬜ Pending |
-| Attach tooling VPS to private network | ⬜ Pending |
-| Write network ID + tooling VPS private IP to Infisical | ⬜ Pending |
+| Create Hetzner private network (owned by basic-infra-setup) | 🔄 Current branch (`10.42.0.0/16`, subnet `10.42.1.0/24`) |
+| Attach tooling VPS to private network | 🔄 Current branch (static IP `10.42.1.2`) |
+| Write network ID + tooling VPS private IP to Infisical | 🔄 Current branch (deploy workflow → Reporter `production/infrastructure`) |
 | Loki | 🔄 PR #126 (deploys on tooling VPS; private interface binding after network) |
 | Prometheus | 🔄 PR #126 (Reporter scrape targets added after private network) |
 | Grafana (grafana.codigo.sh) | 🔄 PR #126 |
@@ -225,3 +225,4 @@ manager throughout. Observability is purely a network-level concern handled at d
 | Infisical — runtime machine identity | ✅ Done |
 | Infisical — GitHub sync enabled (infrastructure/ → Reporter repo) | ✅ Done |
 | Vultr CR credentials in Infisical | ⬜ Pending |
+```

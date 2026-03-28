@@ -24,7 +24,7 @@ This repository follows a clear **platform/application separation** pattern:
 │                    services/ (this repo)                        │
 │                  (Shared Platform Layer)                        │
 ├─────────────────────────────────────────────────────────────────┤
-│  • VPS provisioning (Hetzner via Pulumi)                       │
+│  • VPS provisioning + private network (Hetzner via Pulumi)     │
 │  • Server configuration (Ansible roles)                        │
 │  • Docker Swarm initialization + overlay networks              │
 │  • Cloudflare Tunnels (cloudflared containers)                 │
@@ -48,17 +48,17 @@ This repository follows a clear **platform/application separation** pattern:
 
 ### Responsibility Boundaries
 
-| Concern                 | Owner       | Notes                                       |
-| ----------------------- | ----------- | ------------------------------------------- |
-| VPS provisioning        | Pulumi      | Hetzner server, SSH key, Cloudflare tunnels |
-| Server configuration    | Ansible     | User, SSH hardening, Docker, file copies    |
-| Docker Swarm setup      | Ansible     | Install, init swarm, create networks        |
-| Cloudflare Tunnels      | Pulumi      | DNS records, tunnel configs                 |
-| Caddy reverse proxy     | Ansible     | Routes configured via Caddyfile.j2 template |
-| Monitoring              | Ansible     | Grafana, Prometheus, Loki, cAdvisor, node-exporter |
-| Backups                 | Ansible     | S3 backup scripts and cron jobs             |
-| App containers          | App repo    | Each app deploys its own containers         |
-| App deployment          | App repo    | GitHub Actions → docker stack deploy        |
+| Concern              | Owner    | Notes                                                        |
+| -------------------- | -------- | ------------------------------------------------------------ |
+| VPS provisioning     | Pulumi   | Hetzner server, SSH key, private network, Cloudflare tunnels |
+| Server configuration | Ansible  | User, SSH hardening, Docker, file copies                     |
+| Docker Swarm setup   | Ansible  | Install, init swarm, create networks                         |
+| Cloudflare Tunnels   | Pulumi   | DNS records, tunnel configs                                  |
+| Caddy reverse proxy  | Ansible  | Routes configured via Caddyfile.j2 template                  |
+| Monitoring           | Ansible  | Grafana, Prometheus, Loki, cAdvisor, node-exporter           |
+| Backups              | Ansible  | S3 backup scripts and cron jobs                              |
+| App containers       | App repo | Each app deploys its own containers                          |
+| App deployment       | App repo | GitHub Actions → docker stack deploy                         |
 
 ## Commands
 
@@ -100,6 +100,7 @@ ansible-playbook ... ansible/playbooks/deploy-monitoring.yml
 ```
 
 For local Ansible runs, export Category B secrets from Infisical or 1Password first:
+
 ```bash
 eval $(infisical secrets export --projectId=8491de15-c5c4-4d67-aaf3-c4083161d824 \
   --env=prod --domain=https://locker.codigo.sh --format=dotenv)
@@ -126,7 +127,7 @@ The main infrastructure deployment follows this flow:
 1. **Parallel Cloud Provisioning** (Steps 1-4):
    - S3 bucket creation (`infra/s3.ts`)
    - IAM resources (`infra/iam.ts`)
-   - Server provisioning (`infra/serverProvider.ts`, `infra/hetznerProvider.ts`)
+   - Server provisioning + Hetzner private network (`infra/serverProvider.ts`, `infra/hetznerProvider.ts`)
    - Cloudflare Tunnels setup (`infra/cloudflare.ts`)
 
 2. **Bootstrap** (Step 5 — `command.local.Command`):
@@ -142,14 +143,14 @@ The main infrastructure deployment follows this flow:
 
 ### Ansible Roles
 
-| Role | Purpose |
-|------|---------|
-| `base-server` | User creation, SSH hardening, UFW firewall, fnm + Node.js, env vars |
-| `docker` | Docker CE install, Swarm init, overlay networks (caddy_net, tooling_net, monitoring_net) |
-| `tooling-files` | Directories, Jinja2 templates (docker-compose.tooling.yaml, Caddyfile, dozzle users), backup scripts, cron |
-| `tooling-deploy` | Docker registry login + `docker stack deploy` tooling stack |
-| `monitoring-config` | Monitoring directories, Loki/Prometheus/Grafana config templates, monitoring compose template |
-| `monitoring-deploy` | `docker stack deploy` monitoring stack |
+| Role                | Purpose                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `base-server`       | User creation, SSH hardening, UFW firewall, fnm + Node.js, env vars                                        |
+| `docker`            | Docker CE install, Swarm init, overlay networks (caddy_net, tooling_net, monitoring_net)                   |
+| `tooling-files`     | Directories, Jinja2 templates (docker-compose.tooling.yaml, Caddyfile, dozzle users), backup scripts, cron |
+| `tooling-deploy`    | Docker registry login + `docker stack deploy` tooling stack                                                |
+| `monitoring-config` | Monitoring directories, Loki/Prometheus/Grafana config templates, monitoring compose template              |
+| `monitoring-deploy` | `docker stack deploy` monitoring stack                                                                     |
 
 ### Docker Services
 
@@ -178,12 +179,12 @@ The main infrastructure deployment follows this flow:
 
 Three overlay networks span the Docker Swarm:
 
-| Network | Purpose | Services |
-|---------|---------|----------|
-| `caddy_net` | HTTP routing (Caddy → services) | caddy, dozzle, cloudflared-*, infisical, grafana, mau-app, pocketbase |
-| `tooling_net` | Internal tooling access (apps → tools) | infisical (+ any app needing direct tooling access) |
-| `monitoring_net` | Monitoring internal communication | loki, prometheus, grafana, cadvisor, node-exporter |
-| `infisical_internal` | DB isolation | infisical, infisical-db, infisical-redis |
+| Network              | Purpose                                | Services                                                               |
+| -------------------- | -------------------------------------- | ---------------------------------------------------------------------- |
+| `caddy_net`          | HTTP routing (Caddy → services)        | caddy, dozzle, cloudflared-\*, infisical, grafana, mau-app, pocketbase |
+| `tooling_net`        | Internal tooling access (apps → tools) | infisical (+ any app needing direct tooling access)                    |
+| `monitoring_net`     | Monitoring internal communication      | loki, prometheus, grafana, cadvisor, node-exporter                     |
+| `infisical_internal` | DB isolation                           | infisical, infisical-db, infisical-redis                               |
 
 ### Caddy Routing
 
@@ -200,6 +201,7 @@ Routes are configured in `ansible/roles/tooling-files/templates/Caddyfile.j2`:
 **Convention:** Any application that stores persistent data in `~/appname/data/` is automatically discovered and backed up.
 
 **How it works:**
+
 1. `backupData.js` finds all directories under `$HOME` with a `data/` subdirectory
 2. For `tooling/`, it dumps Infisical Postgres and Redis before tarring
 3. `uploadToS3.js` uploads new `.tar.gz` files to S3 (skips already uploaded)
@@ -207,9 +209,11 @@ Routes are configured in `ansible/roles/tooling-files/templates/Caddyfile.j2`:
 5. Local backups older than 7 days are cleaned up
 
 **Scripts** (in `bin/`, copied to server by Ansible `tooling-files` role):
+
 - `backupData.js`, `uploadToS3.js`, `restoreAndCopyBackup.js`
 
 **Cron schedule** (managed by Ansible `tooling-files` role):
+
 - Backups: every 12 hours (0:00, 12:00)
 - S3 uploads: every 12 hours at :30 (0:30, 12:30)
 
@@ -232,7 +236,7 @@ Routes are configured in `ansible/roles/tooling-files/templates/Caddyfile.j2`:
 ## Key Files
 
 - `index.ts`: Main Pulumi program — cloud provisioning + Ansible trigger
-- `infra/hetznerProvider.ts`: Hetzner VPS + SSH key provisioning
+- `infra/hetznerProvider.ts`: Hetzner VPS + SSH key + private network provisioning
 - `infra/cloudflare.ts`: DNS records, tunnels, tunnel configs
 - `infra/s3.ts`: S3 backup bucket with lifecycle rules
 - `infra/iam.ts`: IAM user and access key for S3
@@ -247,10 +251,17 @@ Routes are configured in `ansible/roles/tooling-files/templates/Caddyfile.j2`:
 
 **Category A — Pulumi config (cloud provider credentials):**
 Set via `pulumi config set` in CI/CD. Used by Pulumi providers to provision cloud resources.
+
 - AWS credentials, Hetzner token, Cloudflare tokens/zone IDs, SSH public key
+
+**Pulumi outputs handed off to Reporter via Infisical:**
+
+- `hetznerPrivateNetworkId` → Reporter Infisical `production/infrastructure/HETZNER_PRIVATE_NETWORK_ID`
+- `toolingPrivateIpOut` → Reporter Infisical `production/infrastructure/TOOLING_VPS_PRIVATE_IP`
 
 **Category B — Direct env vars (Ansible-only secrets):**
 Passed as environment variables on the `pulumi/actions` CI/CD step. Ansible reads them via `lookup('env', ...)` in `ansible/inventory/production/group_vars/all.yml`.
+
 - Infisical bootstrap secrets (`INFISICAL_ENCRYPTION_KEY`, etc. — GitHub-only, circular dependency)
 - Dozzle credentials (`DOZZLE_USERNAME`, `DOZZLE_PASSWORD`)
 - Docker registry credentials (`DOCKER_REGISTRY`, `DOCKER_USERNAME`, `DOCKER_PASSWORD`)
@@ -262,18 +273,22 @@ Passed as environment variables on the `pulumi/actions` CI/CD step. Ansible read
 Secrets source of truth. Auto-syncs to GitHub repos via GitHub Sync:
 
 **`codigo` project** (Production env → `basic-infra-setup` repo):
+
 - AWS credentials, Hetzner/Cloudflare tokens, SSH keys
 - Container registry credentials, Dozzle credentials
 - Grafana admin password, Pulumi tokens
 
 **`Reporter` project** (Production env → Reporter repo):
+
 - ~44 secrets across `infrastructure/`, `auth/`, `services/`, `app/` folders
 - CI/CD + runtime machine identities
+- Pulumi handoff values from this repo (`HETZNER_PRIVATE_NETWORK_ID`, `TOOLING_VPS_PRIVATE_IP`)
 - GitHub Sync enabled (infrastructure/ folder)
 
 ### GitHub-only Secrets (not in Infisical)
 
 Bootstrap secrets for Infisical itself (circular dependency):
+
 - `INFISICAL_ENCRYPTION_KEY`, `INFISICAL_AUTH_SECRET`, `INFISICAL_DB_PASSWORD`, `INFISICAL_SMTP_PASSWORD`
 
 ### GitHub Variables
@@ -282,9 +297,16 @@ Bootstrap secrets for Infisical itself (circular dependency):
 - `AWS_REGION` (`us-west-2`)
 - `BACKUP_DIR` (`/home/codigo/DATA_BACKUP`)
 
+### GitHub Secrets for Reporter Infisical Sync
+
+- `REPORTER_INFISICAL_PROJECT_ID` (Reporter project ID for cross-repo handoff)
+- `INFISICAL_SYNC_CLIENT_ID`
+- `INFISICAL_SYNC_CLIENT_SECRET`
+
 ### 1Password Backup
 
 All critical secrets are backed up in 1Password (`Codigo` vault):
+
 - Hetzner VPS SSH Key
 - Grafana Admin Password
 - Dozzle credentials
@@ -293,19 +315,27 @@ All critical secrets are backed up in 1Password (`Codigo` vault):
 ## Important Implementation Details
 
 ### Pulumi → Ansible Trigger
+
 `index.ts` uses `command.local.Command` to run `ansible-playbook`. Secrets are passed via `ANSIBLE_VAR_*` environment variables (Category A — Pulumi outputs) and direct env vars (Category B — CI/CD env). A Python script converts env vars to a YAML vars file that Ansible reads.
 
+### Pulumi → Reporter Infisical Handoff
+
+After `pulumi up`, the deploy workflow reads stack outputs and writes `HETZNER_PRIVATE_NETWORK_ID` and `TOOLING_VPS_PRIVATE_IP` into the Reporter Infisical project's `production/infrastructure` path using an Infisical machine identity. Reporter Pulumi and Ansible consume those values to attach the Reporter VPS to the same Hetzner network and point Loki log shipping at the tooling VPS private IP.
+
 ### Server Environment
+
 - Ansible `base-server` role writes env vars to `.bashrc` via `blockinfile` (atomic replace)
 - Server uses `fnm` (not `nvm`) for Node.js version management
 - Cron jobs use `fnm exec --using=24 node` for Node.js path resolution
 
 ### Docker Setup
+
 - Ansible `docker` role uses `community.docker.docker_swarm` (idempotent, no `ignoreChanges` needed)
 - Overlay networks created via `community.docker.docker_network`
 - Swarm worker join token read via SSH after configuration
 
 ### SSH Key
+
 - Stored in: local machine (`~/code/codigo-projects/ssh-keys/id_rsa`), 1Password, Infisical
 - Fingerprint: `SHA256:DYyfnWBzX6h1GSZu4a7Yv6Bx74ZhNuIWjEZupUDjyuw`
 - CI/CD: written to `~/.ssh/id_rsa` by the "Setup SSH keys" workflow step

@@ -6,3 +6,7 @@
 mau-app/
 
 .DS_Store
+
+# Pulumi per-stack config (generated locally via pulumi config set; CI/CD uses Pulumi backend)
+Pulumi.*.yaml
+!Pulumi.yaml
