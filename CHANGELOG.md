@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/codigo/basic-infra-setup/compare/v1.8.0...v1.9.0) (2026-03-28)
+
+
+### Features
+
+* Hetzner private network + Ansible idempotency fixes + monitoring data dir permissions ([#127](https://github.com/codigo/basic-infra-setup/issues/127)) ([d839cd2](https://github.com/codigo/basic-infra-setup/commit/d839cd21459caa3ec1e8a22a03f60ca77b180da3))
+
 # [1.8.0](https://github.com/codigo/basic-infra-setup/compare/v1.7.0...v1.8.0) (2026-03-23)
 
 
