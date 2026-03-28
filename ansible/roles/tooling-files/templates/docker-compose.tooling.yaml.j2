@@ -43,6 +43,8 @@ services:
     image: cloudflare/cloudflared:latest
     command:
       - tunnel
+      - --protocol
+      - http2
       - run
       - --token
       - "{{ tunnel_token_maumercado }}"
@@ -57,6 +59,8 @@ services:
     image: cloudflare/cloudflared:latest
     command:
       - tunnel
+      - --protocol
+      - http2
       - run
       - --token
       - "{{ tunnel_token_codigo }}"
@@ -119,6 +123,9 @@ services:
 
   infisical-redis:
     image: redis:7-alpine
+    # Disable stop-writes-on-bgsave-error so a failed RDB snapshot does not
+    # block Redis writes and cascade into Infisical startup failures.
+    command: redis-server --stop-writes-on-bgsave-error no
     volumes:
       - /home/codigo/tooling/data/infisical/redis:/data
     networks:
