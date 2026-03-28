@@ -1,6 +1,6 @@
 ---
 # ── Directory structure ───────────────────────────────────────────────────────
-- name: Create tooling directory structure
+- name: Create tooling directory structure (owned by codigo)
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -14,8 +14,31 @@
     - "{{ tooling_dir }}/data/caddy/data"
     - "{{ tooling_dir }}/data/dozzle"
     - "{{ tooling_dir }}/bin/cloudflared"
-    - "{{ tooling_dir }}/data/infisical/postgres"
     - "{{ tooling_dir }}/data/infisical/redis"
+
+# postgres:18-alpine runs as UID 70 and requires its data dir to be owned by
+# that UID with mode 0700 — if the dir is owned by a different UID postgres
+# cannot initialise and silently falls back to an anonymous Docker volume,
+# which is destroyed by `docker stack rm`. This task is idempotent: if the
+# dir already has the correct owner/mode Ansible makes no change.
+- name: Create Infisical postgres data directory (UID 70 — postgres:alpine)
+  ansible.builtin.file:
+    path: "{{ tooling_dir }}/data/infisical/postgres"
+    state: directory
+    owner: "70"
+    group: "70"
+    mode: "0700"
+
+# Remove any stale non-postgres files that would prevent postgres from
+# initialising the data directory (e.g. a backup.sql left by an old backup run).
+- name: Remove stale files from postgres data directory
+  ansible.builtin.shell: |
+    find {{ tooling_dir }}/data/infisical/postgres -maxdepth 1 -type f \
+      ! -name 'PG_VERSION' ! -name 'postgresql.conf' ! -name 'pg_hba.conf' \
+      -delete
+  args:
+    executable: /bin/bash
+  changed_when: false
 
 # ── Config file templates ─────────────────────────────────────────────────────
 - name: Template docker-compose.tooling.yaml
@@ -45,7 +68,9 @@
 # ── Backup scripts ────────────────────────────────────────────────────────────
 - name: Copy backup scripts to bin/
   ansible.builtin.copy:
-    src: "{{ item.src }}"
+    # Source is the repo-root bin/ directory — single source of truth.
+    # The role files/ copies were duplicates; using absolute src avoids drift.
+    src: "{{ playbook_dir }}/../../bin/{{ item.src }}"
     dest: "{{ bin_dir }}/{{ item.dest }}"
     owner: codigo
     group: codigo
@@ -111,8 +136,14 @@
     name: "Run data backup"
     minute: "0"
     hour: "{{ backup_cron_hour }}"
+    # Explicitly export required env vars so they survive the fnm exec subshell.
+    # The scripts also have hardcoded fallbacks for safety.
     job: >-
-      source {{ codigo_home }}/.bashrc &&
+      BACKUP_DIR={{ backup_dir }}
+      APP_BUCKET={{ app_bucket }}
+      AWS_REGION={{ aws_region }}
+      AWS_ACCESS_KEY_ID={{ aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key }}
       {{ fnm_dir }}/fnm exec --using={{ node_version }}
       node {{ bin_dir }}/backupData.js >> {{ logs_dir }}/backup.log 2>&1
     user: codigo
@@ -124,7 +155,11 @@
     minute: "30"
     hour: "{{ upload_cron_hour }}"
     job: >-
-      source {{ codigo_home }}/.bashrc &&
+      BACKUP_DIR={{ backup_dir }}
+      APP_BUCKET={{ app_bucket }}
+      AWS_REGION={{ aws_region }}
+      AWS_ACCESS_KEY_ID={{ aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY={{ aws_secret_access_key }}
       {{ fnm_dir }}/fnm exec --using={{ node_version }}
       node {{ bin_dir }}/uploadToS3.js >> {{ logs_dir }}/upload.log 2>&1
     user: codigo

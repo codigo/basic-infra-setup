@@ -5,8 +5,9 @@ const util = require("util");
 
 const execAsync = util.promisify(exec);
 
-const BASE_DIR = process.env.HOME;
-const BACKUP_DIR = process.env.BACKUP_DIR;
+const BASE_DIR = process.env.HOME || "/home/codigo";
+const BACKUP_DIR =
+  process.env.BACKUP_DIR || path.join(BASE_DIR, "DATA_BACKUP");
 
 const ensureBackupDirectoryExists = () => {
   if (!fs.existsSync(BACKUP_DIR)) {
@@ -60,13 +61,19 @@ const dumpDatabases = async (dir) => {
   }
 };
 
-// Directories owned by Docker container UIDs that codigo can't read.
-// We back up their data via docker exec dumps instead.
+// Directories owned by Docker container UIDs that the codigo user can't read.
+// These are either backed up via docker exec dumps (infisical postgres/redis)
+// or are ephemeral time-series data that can be recovered from source
+// (Grafana dashboards are provisioned from config; Loki/Prometheus from scrape).
 const TAR_EXCLUDES = [
   "tooling/data/caddy/data",
   "tooling/data/caddy/config",
   "tooling/data/infisical/postgres",
   "tooling/data/infisical/redis",
+  // Monitoring data dirs — owned by container UIDs (472, 10001, 65534)
+  "monitoring/data/grafana",
+  "monitoring/data/loki",
+  "monitoring/data/prometheus",
 ];
 
 const createBackup = async (dir, timestamp) => {
