@@ -7,6 +7,15 @@
     password: "{{ docker_password }}"
     reauthorize: true
 
+# ── Rotate secrets (Docker Swarm forbids updating secret content in-place) ────
+- name: Remove existing tooling secrets so stack deploy can recreate them
+  ansible.builtin.command:
+    cmd: docker secret rm {{ item }}
+  loop:
+    - tooling_users
+  ignore_errors: true
+  changed_when: false
+
 # ── Deploy tooling stack ──────────────────────────────────────────────────────
 - name: Deploy tooling Docker stack
   community.docker.docker_stack:

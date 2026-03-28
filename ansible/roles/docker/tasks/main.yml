@@ -80,5 +80,7 @@
     scope: swarm
     state: present
   loop: "{{ docker_networks }}"
-  # In check mode, python3-docker may not yet be installed
-  ignore_errors: "{{ ansible_check_mode }}"
+  # Ignore errors if network already exists and is in use by a running service
+  # (community.docker.docker_network raises 400 on live networks); networks
+  # are verified by the tooling/monitoring deploy tasks that follow.
+  ignore_errors: true

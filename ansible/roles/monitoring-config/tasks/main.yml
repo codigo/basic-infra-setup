@@ -1,6 +1,6 @@
 ---
 # ── Directory structure ───────────────────────────────────────────────────────
-- name: Create monitoring directory structure
+- name: Create monitoring config/compose directory structure (owned by codigo)
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -10,9 +10,34 @@
   loop:
     - "{{ monitoring_dir }}/config/grafana/provisioning/datasources"
     - "{{ monitoring_dir }}/config/grafana/provisioning/dashboards"
-    - "{{ monitoring_dir }}/data/loki"
-    - "{{ monitoring_dir }}/data/prometheus"
-    - "{{ monitoring_dir }}/data/grafana"
+
+# Data directories must be owned by the UIDs the containers run as:
+#   Loki      → UID 10001
+#   Prometheus → UID 65534 (nobody)
+#   Grafana   → UID 472
+- name: Create Loki data directory (UID 10001)
+  ansible.builtin.file:
+    path: "{{ monitoring_dir }}/data/loki"
+    state: directory
+    owner: "10001"
+    group: "10001"
+    mode: "0755"
+
+- name: Create Prometheus data directory (UID 65534 / nobody)
+  ansible.builtin.file:
+    path: "{{ monitoring_dir }}/data/prometheus"
+    state: directory
+    owner: "65534"
+    group: "65534"
+    mode: "0755"
+
+- name: Create Grafana data directory (UID 472)
+  ansible.builtin.file:
+    path: "{{ monitoring_dir }}/data/grafana"
+    state: directory
+    owner: "472"
+    group: "472"
+    mode: "0755"
 
 # ── Config file templates ─────────────────────────────────────────────────────
 - name: Template Loki config
