@@ -4,15 +4,15 @@ Central index of all planned, in-progress, and completed work for this platform.
 
 ## Planned
 
-- [Hetzner private network](./basic-infra-setup-plan.md) — Create Hetzner Cloud Network in
-  `basic-infra-setup` Pulumi, attach tooling VPS, export network ID and tooling VPS private IP
-  to Infisical. Reporter Pulumi reads these to attach the Reporter VPS. Enables Reporter
-  integration with the observability stack (Loki log push, Prometheus scrape).
-
 - [Vultr CR access verification](./basic-infra-setup-plan.md) — Confirm `sjc.vultrcr.com/codigo`
   is reachable from the Reporter VPS and credentials are in Infisical. Blocked on Reporter VPS.
 
 ## In Progress
+
+- [Hetzner private network](./basic-infra-setup-plan.md) — Create Hetzner Cloud Network in
+  `basic-infra-setup` Pulumi, attach tooling VPS with static private IP `10.42.1.2`, export the
+  network ID and tooling VPS private IP, and publish both to Reporter Infisical
+  `production/infrastructure` for Reporter VPS attachment and observability integration.
 
 ## Completed
 
